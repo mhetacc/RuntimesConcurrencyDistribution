@@ -28,3 +28,29 @@ When getting started, a single Consul server is put into "**bootstrap**" mode. T
 |5|2|2|
 |6|4|2|
 |7|4|3|
+
+### Container Linux 
+https://en.wikipedia.org/wiki/Container_Linux#ETCD
+
+Container Linux (formerly CoreOS Linux) is a discontinued open-source lightweight operating system based on the Linux kernel and designed for providing infrastructure for clustered deployments. One of its focuses was scalability. 
+provided only the minimal functionality required for deploying applications inside *software containers*[^1] 
+[^1]: *OS-level virtualization is an operating system (OS) virtualization paradigm in which the kernel allows the existence of multiple isolated user space instances, including containers (LXC, Solaris Containers, AIX WPARs, HP-UX SRP Containers, Docker, Podman), zones (Solaris Containers), virtual private servers (OpenVZ), partitions, virtual environments (VEs), virtual kernels (DragonFly BSD), and jails (FreeBSD jail and chroot)*
+Container Linux provides **etcd**, a daemon that runs across all computers in a cluster and provides a dynamic configuration registry. Since the **key–value** data stored within etcd is automatically distributed and replicated with automated master election and consensus establishment using the **Raft** algorithm, all changes in stored data are reflected across the entire cluster, while the achieved redundancy prevents failures of single cluster members from causing data loss
+
+### MongoDB
+https://www.usenix.org/conference/nsdi21/presentation/zhou
+MongoDB provides linearizability and tolerates any minority of failures through a novel consensus protocol that derives from Raft. A major difference between our protocol and vanilla Raft is that MongoDB deploys a unique pull-based data synchronization model: a replica pulls new data from another replica. This pull-based data synchronization in MongoDB can be initiated by any replica and can happen between any two replicas, as opposed to vanilla Raft, where new data can only be pushed from the primary to other replicas. 
+in MongoDB, the primary waits for the secondaries to
+pull the new entries that are to be replicated.
+Similar to Raft, once an entry is committed, all prior
+entries are committed indirectly.
+the sec-
+ondary can pull new entries from any (nearby) servers.
+A secondary continuously sends PullEntries to the selected
+sync source to retrieve new log entries when they become
+available.
+https://stackoverflow.com/questions/21018090/raft-vs-mongodb-primary-election
+ - less strong leader model
+ - additional node states 
+ - mongo's nodes can either not vote or have multiple votes
+ - during config change mongo does not allow operation
