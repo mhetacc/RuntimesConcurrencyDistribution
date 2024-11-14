@@ -54,3 +54,29 @@ https://stackoverflow.com/questions/21018090/raft-vs-mongodb-primary-election
  - additional node states 
  - mongo's nodes can either not vote or have multiple votes
  - during config change mongo does not allow operation
+
+https://medium.com/geekculture/raft-consensus-algorithm-and-leader-election-in-mongodb-vs-coachroachdb-19b767c87f95
+you can consider all of the state machines (replicated state machines) as if they’re one entity.
+The systems are non-byzantine: AKA, we can trust all machines in our cluster.
+
+### RabbitMQ
+https://en.wikipedia.org/wiki/RabbitMQ
+is an open-source message-broker software (sometimes called message-oriented middleware)
+
+https://www.rabbitmq.com/docs/publishers
+RabbitMQ is a messaging broker. It accepts messages from publishers (*producers*), routes them and, if there were queues to route to, stores them for consumption or immediately delivers to consumers, if any.
+
+https://www.rabbitmq.com/docs/quorum-queues
+The RabbitMQ quorum queue is a modern queue type which implements a durable, replicated queue based on the Raft consensus algorithm and should be considered the default choice when needing a replicated, highly available queue
+
+![](./imgs/rabbitMQ_examples1to3.png)
+![](./imgs/rabbitMQ_examples4to6.png)
+
+### ScyllaDB
+https://en.wikipedia.org/wiki/ScyllaDB
+ScyllaDB is an open-source distributed NoSQL wide-column data store. It was designed to be compatible with Apache Cassandra while achieving significantly higher throughputs and lower latencies.
+
+https://opensource.docs.scylladb.com/stable/architecture/raft.html
+ScyllaDB uses Raft to:
+
+    Manage schema updates in every node.
