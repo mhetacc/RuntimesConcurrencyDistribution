@@ -78,5 +78,30 @@ ScyllaDB is an open-source distributed NoSQL wide-column data store. It was desi
 
 https://opensource.docs.scylladb.com/stable/architecture/raft.html
 ScyllaDB uses Raft to:
+- Manage schema updates in every node (eg DROP TABLE)
+- Manage cluster topology
 
-    Manage schema updates in every node.
+In summary, Raft makes schema changes safe, but it requires that a quorum of nodes in the cluster is available.
+
+
+### Apache Kafka
+https://kafka.apache.org/intro
+Technically speaking, event streaming is the practice of capturing data in real-time from event sources like databases, sensors, mobile devices, cloud services, and software applications in the form of streams of events
+
+Event streaming thus ensures a continuous flow and interpretation of data so that the right information is at the right place, at the right time. 
+
+Kafka is a distributed system consisting of servers and clients that communicate via a high-performance TCP network protocol
+
+https://developer.confluent.io/learn/kraft/
+**Apache Kafka Raft (KRaft)** is kafka without zookeeper,  uses Raft for metadata management
+
+### NATS
+https://en.wikipedia.org/wiki/NATS_Messaging
+NATS is an open-source messaging system (sometimes called message-oriented middleware).
+
+https://docs.nats.io/running-a-nats-service/configuration/clustering/jetstream_clustering
+NATS has a built-in persistence engine called JetStream which enables messages to be stored and replayed at a later time.
+
+JetStream was created to address the problems identified with streaming technology today - complexity, fragility, and a lack of scalability.
+
+Clustering in JetStream is required for a highly available and scalable system. Behind clustering is RAFT.
