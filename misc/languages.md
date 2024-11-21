@@ -1,4 +1,4 @@
-
+# Game Engines
 https://www.reddit.com/r/gamedev/comments/17v7b8p/a_good_c_game_engine/
 
  Most engines are built around the idea of having a core language they're implemented in, and a more flexible scripting language that most gameplay logic is written in. \
@@ -49,9 +49,10 @@ https://www.slashdata.co/post/did-you-know-that-60-of-game-developers-use-game-e
 - Godot 25%
 - Phaser 17%
 
-## Programming Languages
+# Programming Languages
 
-### Popularity
+## Popularity
+### Statista
 https://www.statista.com/statistics/793628/worldwide-developer-survey-most-used-languages/ \
 **By Usage**
 
@@ -63,7 +64,8 @@ https://www.statista.com/statistics/793628/worldwide-developer-survey-most-used-
 - Go 13.5%
 - Rust 12.6%
 - Lua 6.2%
-  
+
+### TIOBE Index  
 https://www.tiobe.com/tiobe-index/ \
 **What is TIOBE Index?**\
 [...] is an indicator of the popularity of programming languages. The index is updated once a month. The ratings are based on the number of skilled engineers world-wide, courses and third party vendors. \
@@ -90,22 +92,42 @@ Finally, if we look at ancient history we can see that C++ reign supreme. \
 ![](./imgs/TIOBE_ancient_history.png)
 
 
-**IEEE** \
+### IEEE
 https://spectrum.ieee.org/top-programming-languages-2024
 
-**Spectrum:**
+**Spectrum:** *(ie used by typical IEEE members)*
 1. Python 100%
 2. Java 49%
 3. JavaScript 45%
 4. C++ 37%
-7. C# 
-8. Go 21%
-11.  Rust 15%
+5. C# 
+6. Go 21%
+7.   Rust 15%
     
-**Jobs**
+**Jobs** *(ie in demand by employers)*
 2. Python 98%
 3. Java 88%
 6. JavaScript 50%
 7. C# 43%
 10. C++ 23%   
 
+At the top, Python continues to cement its overall dominance, buoyed by things like popular libraries for hot fields such as AI as well as its pedagogical prominence.
+Stalwarts like Java, Javascript, and C++ also retain high rankings
+Typescript (JS with static typing) moves up several places on all the rankings, especially for Jobs.
+Another climber is Rust, a language aimed at creating system software, like C or C++. But unlike those two languages, Rust is “memory safe”.
+Indeed, C’s popularity appears to be on the wane
+
+### Misc
+https://www.codecademy.com/resources/blog/programming-languages-for-game-development/ \
+JavaScript is the language behind gaming hits like American Girl, Angry Birds,
+Python’s Pygame library offers a solid foundation for developers to create engaging 2D games
+
+https://www.index.dev/blog/6-top-programming-languages-to-level-up-your-game-development \
+**JavaScript** integrate with web, available with Phaser engine, used for Angry Birds and Cross Code.
+[...] is a natural choice for online game development
+
+**Python**'s [...] with the PyGame library's convenience, make it an attractive choice for game development, particularly for beginners and small-scale projects
+
+**Wrapping up**
+- Simplicity: Python, JS
+- Web Games: JS, Python
