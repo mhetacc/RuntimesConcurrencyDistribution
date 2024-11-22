@@ -108,20 +108,20 @@ Finally, if we look at ancient history we can see that C++ reign supreme. \
 https://spectrum.ieee.org/top-programming-languages-2024
 
 **Spectrum:** *(ie used by typical IEEE members)*
-1. Python 100%
-2. Java 49%
-3. JavaScript 45%
-4. C++ 37%
-5. C# 
-6. Go 21%
-7.   Rust 15%
-    
+- 1st  Python 100%
+- 2nd  Java 49%
+- 3rd  JavaScript 45%
+- 4th  C++ 37%
+- 7th  C# 
+- 8th  Go 21%
+- 10th Rust 15%
+
 **Jobs** *(ie in demand by employers)*
-2. Python 98%
-3. Java 88%
-6. JavaScript 50%
-7. C# 43%
-10. C++ 23%   
+- 2nd  Python 98%
+- 3rd  Java 88%
+- 6th  JavaScript 50%
+- 7th  C# 43%
+- 10th C++ 23%   
 
 At the top, Python continues to cement its overall dominance, buoyed by things like popular libraries for hot fields such as AI as well as its pedagogical prominence.
 Stalwarts like Java, Javascript, and C++ also retain high rankings
@@ -143,3 +143,6 @@ https://www.index.dev/blog/6-top-programming-languages-to-level-up-your-game-dev
 **Wrapping up**
 - Simplicity: Python, JS
 - Web Games: JS, Python
+
+## Languages' Features
+There are three main programming languages that have emerged after careful consideration: 
