@@ -144,5 +144,56 @@ https://www.index.dev/blog/6-top-programming-languages-to-level-up-your-game-dev
 - Simplicity: Python, JS
 - Web Games: JS, Python
 
-## Languages' Features
-There are three main programming languages that have emerged after careful consideration: 
+## Ease of Use 
+There are three main programming languages that have emerged after careful consideration: Python, Javascript and C++. \
+For them to work with this project they should provide (or someone else should provide) a way to implement Raft's basic concepts (ie RPCs).Bonus points if they also have libraries to easly implement a simple GUI, allowing us to skip using a game engine entirely.
+
+### C++
+**RPCs support** \
+https://github.com/rpclib/rpclib \
+rpclib is a modern C++ msgpack-RPC server and client library.
+
+https://github.com/grpc/grpc/tree/master/src/cpp \
+gRPC is a modern, open source, high-performance remote procedure call (RPC) framework that can run anywhere.
+
+https://github.com/baidu/sofa-pbrpc \
+A light-weight RPC implementation of Google's protobuf RPC framework
+
+https://github.com/madwyn/libpbrpc
+The aim is to build a minimal protobuf RPC lib using Google's Protocol Buffers.
+
+https://xmlrpc-c.sourceforge.io/
+XML-RPC is a quick-and-easy way to make procedure calls over the Internet. It converts the procedure call into an XML document, sends it to a remote server using HTTP, and gets back the response as XML.
+
+**GUI Support**
+https://www.wxwidgets.org/ \
+wxWidgets gives you a single, easy-to-use API for writing GUI applications on multiple platforms
+
+https://www.qt.io/ \
+maybe too much? but great support
+
+### Javascript
+**RPCs Support** \
+AJAX i guess
+
+**GUI Support** \
+Just user Phaser at this point
+
+### Python
+**RPCs Support** \
+https://docs.python.org/3/library/xmlrpc.html \
+Native python3 support for RPC. \
+XML-RPC is a Remote Procedure Call method that uses XML passed via HTTP as a transport. 
+
+**GUI Support**
+Of course already mentioned Pygame
+
+https://wiki.python.org/moin/TkInter \
+Tkinter is Python's de-facto standard GUI 
+
+https://github.com/webui-dev/webui \
+` pip install --upgrade webui2 `
+Use any web browser or WebView as GUI, with your preferred language in the backend and modern web technologies in the frontend, all in a lightweight portable library
+
+https://dearpygui.readthedocs.io/en/latest/ \
+Dear PyGui is an easy-to-use, dynamic, GPU-Accelerated, cross-platform graphical user interface toolkit(GUI) for Python
