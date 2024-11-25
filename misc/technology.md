@@ -165,14 +165,14 @@ The aim is to build a minimal protobuf RPC lib using Google's Protocol Buffers.
 https://xmlrpc-c.sourceforge.io/
 XML-RPC is a quick-and-easy way to make procedure calls over the Internet. It converts the procedure call into an XML document, sends it to a remote server using HTTP, and gets back the response as XML.
 
-**GUI Support**
+**GUI Support** \
 https://www.wxwidgets.org/ \
 wxWidgets gives you a single, easy-to-use API for writing GUI applications on multiple platforms
 
 https://www.qt.io/ \
 maybe too much? but great support
 
-### Javascript
+### Javascript 
 **RPCs Support** \
 AJAX i guess
 
@@ -185,7 +185,7 @@ https://docs.python.org/3/library/xmlrpc.html \
 Native python3 support for RPC. \
 XML-RPC is a Remote Procedure Call method that uses XML passed via HTTP as a transport. 
 
-**GUI Support**
+**GUI Support** \
 Of course already mentioned Pygame
 
 https://wiki.python.org/moin/TkInter \
@@ -197,3 +197,27 @@ Use any web browser or WebView as GUI, with your preferred language in the backe
 
 https://dearpygui.readthedocs.io/en/latest/ \
 Dear PyGui is an easy-to-use, dynamic, GPU-Accelerated, cross-platform graphical user interface toolkit(GUI) for Python
+
+# Development
+
+## Technologies 
+We have two main roads to follow: Python & Pygame or Godot & C++.
+
+### Godot and C++
+Godot seems a top-down approach: you make everyting trough the editor and then go down to code as needed for scripting. \
+Moreover, most of the tutorials use Godot own scripting language, which is:
+1. Similar to Python
+2. Only useful in Godot
+
+Making it a bit pointless. To find resources in C++ would probabily be a bit harder, similar to the mess that is the whole Kotlin/Java affair in Android programming. 
+
+Godot is a "real" engine and would produce a better game, but it could prove to be an obstacle to the project we want to make, which put the focus on the algorithm underneath (ie it would be better a bottom-up approach).
+
+### Pyhon and Pygame
+
+### Just Using a GUI
+There is also the approach of not going trhought an engine, but simply using TkInter or wxWidgets. In this case choosing between Python or C++ comes down to:
+1. Ease of use
+2. RPC support
+
+And in both cases Python wins hands down: it is the fastest language to work with, with a lot of expressivty and libraries available, and it provides native RPCs' support. 
