@@ -148,6 +148,8 @@ https://www.index.dev/blog/6-top-programming-languages-to-level-up-your-game-dev
 There are three main programming languages that have emerged after careful consideration: Python, Javascript and C++. \
 For them to work with this project they should provide (or someone else should provide) a way to implement Raft's basic concepts (ie RPCs).Bonus points if they also have libraries to easly implement a simple GUI, allowing us to skip using a game engine entirely.
 
+*Oss: better to read [gRPC section](#grpc) first*
+
 ### C++
 **RPCs support** \
 https://github.com/rpclib/rpclib \
@@ -174,10 +176,15 @@ maybe too much? but great support
 
 ### Javascript 
 **RPCs Support** \
-AJAX i guess
+https://github.com/grpc/grpc-web \
+A JavaScript implementation of gRPC for browser clients. \
+*gRPC: open source RPC framework*
+
 
 **GUI Support** \
-Just user Phaser at this point
+https://phaser.io/ 
+
+Or just a combination of HTML and CSS
 
 ### Python
 **RPCs Support** \
@@ -186,7 +193,7 @@ Native python3 support for RPC. \
 XML-RPC is a Remote Procedure Call method that uses XML passed via HTTP as a transport. 
 
 **GUI Support** \
-Of course already mentioned Pygame
+Of course already mentioned [Pygame](https://www.pygame.org/news)
 
 https://wiki.python.org/moin/TkInter \
 Tkinter is Python's de-facto standard GUI 
@@ -203,6 +210,24 @@ Dear PyGui is an easy-to-use, dynamic, GPU-Accelerated, cross-platform graphical
 ## Technologies 
 We have two main roads to follow: Python & Pygame or Godot & C++.
 
+### gRPC
+https://grpc.io/
+gRPC is a modern open source high performance Remote Procedure Call (RPC) framework that can run in any environment. \
+Used by:
+- Google
+- Netflix
+- Slack
+- Cisco
+- Cockroach Labs
+- and more
+
+Uses **Protocol Buffer** which is a language and platform agnostic data passing mechanism which supports strong typing. \
+Theese buffers are up to 5 times faster than JSON. \
+Browsers still not suport HTTP/2 primitives which gRPC relies upon, making it necessary to use a proxy called gRPC-web that does not provide all speed-up advantages of gRPC. \
+**So where it is used?**  Microservices communications in data centers and in native mobile clients. 
+
+This is all well and good, **BUT** it may be a complication that is way out of scope for this project. 
+
 ### Godot and C++
 Godot seems a top-down approach: you make everyting trough the editor and then go down to code as needed for scripting. \
 Moreover, most of the tutorials use Godot own scripting language, which is:
@@ -214,6 +239,39 @@ Making it a bit pointless. To find resources in C++ would probabily be a bit har
 Godot is a "real" engine and would produce a better game, but it could prove to be an obstacle to the project we want to make, which put the focus on the algorithm underneath (ie it would be better a bottom-up approach).
 
 ### Pyhon and Pygame
+Event Loop -> what makes a game a game, ie:
+- player inputs
+- game outputs
+- automatic events
+
+Pygame basically does:
+- draw images
+- play sounds
+- check player input
+- expose gamedev tools:
+  - collisions
+  - text
+  - timers
+  - etc
+
+It is not a "real" game engine, but it is **more akin to a UI module**, without a real editor instead relies on **code only bottom-up approach**. \
+Installation is extremely easy and lightweight since it is just a Python module: 
+```pip install pygame```
+
+### Phaser and JavaScript
+Phaser actually uses 3 "languages":
+- JavaScript
+- HTML
+- CSS
+
+Because it uses web tech to make browser games (run in localhost). This allow us to make better looking games (real-er) but at the same time increase complexity.
+
+Phaser is:
+- bottom up
+- code first
+- browser native
+
+Similiar to pygame, phaser is basically a UI module to attach to JS.
 
 ### Just Using a GUI
 There is also the approach of not going trhought an engine, but simply using TkInter or wxWidgets. In this case choosing between Python or C++ comes down to:
