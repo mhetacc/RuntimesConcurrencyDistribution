@@ -1,3 +1,26 @@
 {
+    "macros": {
+        "italic_latex": [
+            {
+                "command": "type",
+                "args": {
+                    "text": "\\textit{}"
+                }
+            },
+            "cursorLeft"
+        ],
+        "markdown_code_block": [
+            {
+                "command": "type",
+                "args": {
+                    "text": "``````"
+                }
+            },
+            "cursorLeft",
+            "cursorLeft",
+            "cursorLeft"
+        ]
+
+},
 "editor.wordWrap": "on",
 }
