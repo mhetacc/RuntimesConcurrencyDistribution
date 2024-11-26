@@ -7,19 +7,18 @@ Design philosophy of the infrastructure, from why a technology has been chosen i
 
 ## Requirements
 Since the focus is showing a fun implementation of the Raft algorithm, a complex overhead is not needed i.e. there is no need to use advanced game engines with multiple languages involved (e.g. Godot, Unity, Cocos, etc.). \
-It would be instead preferable to make the whole project with a single language, to simplify the programming process and, since Raft is an algorithm made for *shared consensus*, hence for the web, it would be ideal to use a framework with native networking components. Moreover, to ensure easy and maximum portability we want our game to run in a web browser (eg Chromium). Lastly, we want our game to be 2D, for ease of development of course, hence we don't need a powerful 3D game engine. \
+It would be instead preferable to make the whole project with a single language, to simplify the programming process and, since Raft is an algorithm made for *shared consensus*, hence for the web, it would be ideal to use a framework with native networking components. Moreover we want our game to be 2D, for ease of development of course, hence we don't need a powerful 3D game engine. Lastly, we don't really care about portability since we are not making a "real" game. \
 To summarize, our core ideal requirements are:
-
+ 
 1. One language
-2. Browser and web native
-3. 2D graphics
+2. 2D graphics
 
 This is all done to keep things outside "doing Raft" as simple as possible.
 
 Lets talk about language requirements:
 1. Native RPC support
 2. Native image processing support
-
+ 
 Theese conditions (for engines and languages) are both complementary and exclusive: if a language (eg Go) has a built-in image processing tool (eg Go's *image* module) a **game engine might not be necessary**.
 
 ## Technology  
@@ -33,7 +32,7 @@ Having done a bit of research, it is clear that there are two extremely dominant
 While, in the "serious" game development world, we can once again see two (three) languages coming on top:
 1. JavaScript (scripting)
 2. C++ (core engine)
-3. C# beacouse of Unity
+3. C# (beacouse of Unity)
 
 It can be easly inferred that having a solid base in either of theese three languages (JS, Python, C++) will be greatly beneficial.
 
