@@ -7,19 +7,21 @@ Design philosophy of the infrastructure, from why a technology has been chosen i
 
 ## Requirements
 Since the focus is showing a fun implementation of the Raft algorithm, a complex overhead is not needed i.e. there is no need to use advanced game engines with multiple languages involved (e.g. Godot, Unity, Cocos, etc.). \
-It would be instead preferable to make the whole project with a single language, to simplify the programming process and, since Raft is an algorithm made for *shared consensus*, hence for the web, it would be ideal to use a framework with native networking components. Moreover we want our game to be 2D, for ease of development of course, hence we don't need a powerful 3D game engine. Lastly, we don't really care about portability since we are not making a "real" game. \
-To summarize, our core ideal requirements are:
+It would be instead preferable to make the whole project with a single language, to simplify the programming process and we want our game to be 2D for ease of development. Moreover, we don't really care about portability since we are not making a "real" game. \
+Hence, our **GUI-engine requirements** are:
  
 1. One language
 2. 2D graphics
 
-This is all done to keep things outside "doing Raft" as simple as possible.
+This is all done to keep things outside "doing Raft" as simple as possible. Lets talk about **language requirements**:
 
-Lets talk about language requirements:
 1. Native RPC support
-2. Native image processing support
+2. Native, bottom-up image processing support
  
-Theese conditions (for engines and languages) are both complementary and exclusive: if a language (eg Go) has a built-in image processing tool (eg Go's *image* module) a **game engine might not be necessary**.
+By "bottom-up" we mean a "code-first" approach, i.e. instead of making the graphical elements first and then going down-to-code as-need for scripting, we want to start from the code in order to create the graphical components. \
+This should facilitate the development process since we will "implant" the UI on our Raft elements which are, and should be, the better part of the project both in term of lines of code and complexity.
+
+Theese conditions (for engines and languages) are both complementary and exclusive: if a language (eg Go) has a built-in image processing tool (eg Go's *image* module) a game engine might not be necessary.
 
 ## Technology  
 
@@ -71,3 +73,42 @@ Here follows the most interesting engines we found:
   - Multi platform
 
 Godot and Cocos are more "serious" engines, used to make a lot of famous and successful games but, at the same time, are of course more complex to use.
+
+### gRPC
+https://grpc.io/
+gRPC is a modern open source high performance Remote Procedure Call (RPC) framework that can run in any environment. \
+Used by:
+- Google
+- Netflix
+- Slack
+- Cisco
+- Cockroach Labs
+- and more
+
+Uses **Protocol Buffer** which is a language and platform agnostic data passing mechanism which supports strong typing. \
+Theese buffers are up to 5 times faster than JSON. \
+Browsers still not suport HTTP/2 primitives [(source)](https://learn.microsoft.com/en-us/aspnet/core/grpc/browser?view=aspnetcore-9.0) which gRPC relies upon, making it necessary to use a proxy called gRPC-web that does not provide all speed-up advantages of gRPC. \
+**So where it is used?**  Microservices communications in data centers and in native mobile clients. 
+
+### Putting Things Toghether 
+- C++:
+  - [xmlrpc](https://xmlrpc-c.sourceforge.io/) non-native RPCs support
+  - [gRPC](https://github.com/grpc/grpc/tree/master) non-native high performance RPCs support
+  - [Godot](https://godotengine.org/) top-down game engine
+  - [wxWidget](https://www.wxwidgets.org/) native bottom-up UI 
+- JavaScript:
+  - [gRPC-web](https://github.com/grpc/grpc-web) non-native high performance RPCs support
+  - [Phaser](https://phaser.io/) bottom-up game engine
+  - HTML+CSS native bottom-up UI 
+- Python:
+  - [xmlrpc](https://docs.python.org/3/library/xmlrpc.html) native RPCs support
+  - [Pygame](https://www.pygame.org/news) bottom-up game engine
+  - [TkInter](https://docs.python.org/3/library/tkinter.html) native bottom-up UI support
+  - [Deat PyGui](https://dearpygui.readthedocs.io/en/latest/) non-native bottom-up UI support
+
+Python is the only language that has both:
+1. Native RPCs support
+2. Bottom-Up (code-first) UI approach
+
+Hence it is the language of choice to make this project. 
+Moreover: it is one of the mosst promiment languages today, without any sign of stopping in popularity, coveted by both companies and public institutions and it is also widely used in research, from data science to cyber security to machine learning and AI. 
