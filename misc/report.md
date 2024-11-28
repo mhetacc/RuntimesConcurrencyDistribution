@@ -1,4 +1,4 @@
-*This document is not intended to be the actual final report, it is just a place to keep important informations and intuitions that would otherwise be lost during the development of the project.*
+*This document is not intended to be the actual final report, it is just a place to keep important information and intuitions that would otherwise be lost during the development of the project.*
 
 ---
 
@@ -21,7 +21,7 @@ This is all done to keep things outside "doing Raft" as simple as possible. Lets
 By "bottom-up" we mean a "code-first" approach, i.e. instead of making the graphical elements first and then going down-to-code as-need for scripting, we want to start from the code in order to create the graphical components. \
 This should facilitate the development process since we will "implant" the UI on our Raft elements which are, and should be, the better part of the project both in term of lines of code and complexity.
 
-Theese conditions (for engines and languages) are both complementary and exclusive: if a language (eg Go) has a built-in image processing tool (eg Go's *image* module) a game engine might not be necessary.
+These conditions (for engines and languages) are both complementary and exclusive: if a language (eg Go) has a built-in image processing tool (eg Go's *image* module) a game engine might not be necessary.
 
 ## Technology  
 
@@ -34,9 +34,9 @@ Having done a bit of research, it is clear that there are two extremely dominant
 While, in the "serious" game development world, we can once again see two (three) languages coming on top:
 1. JavaScript (scripting)
 2. C++ (core engine)
-3. C# (beacouse of Unity)
+3. C# (because of Unity)
 
-It can be easly inferred that having a solid base in either of theese three languages (JS, Python, C++) will be greatly beneficial.
+It can be easily inferred that having a solid base in either of these three languages (JS, Python, C++) will be greatly beneficial.
 
 Finally we cannot forget that we want to implement Raft, and the official page collect a lot of implementations in various languages, whose most popular (and supported) are:
 1. C++
@@ -86,11 +86,11 @@ Used by:
 - and more
 
 Uses **Protocol Buffer** which is a language and platform agnostic data passing mechanism which supports strong typing. \
-Theese buffers are up to 5 times faster than JSON. \
-Browsers still not suport HTTP/2 primitives [(source)](https://learn.microsoft.com/en-us/aspnet/core/grpc/browser?view=aspnetcore-9.0) which gRPC relies upon, making it necessary to use a proxy called gRPC-web that does not provide all speed-up advantages of gRPC. \
+These buffers are up to 5 times faster than JSON. \
+Browsers still not support HTTP/2 primitives [(source)](https://learn.microsoft.com/en-us/aspnet/core/grpc/browser?view=aspnetcore-9.0) which gRPC relies upon, making it necessary to use a proxy called gRPC-web that does not provide all speed-up advantages of gRPC. \
 **So where it is used?**  Microservices communications in data centers and in native mobile clients. 
 
-### Putting Things Toghether 
+### Putting Things Together  
 - C++:
   - [xmlrpc](https://xmlrpc-c.sourceforge.io/) non-native RPCs support
   - [gRPC](https://github.com/grpc/grpc/tree/master) non-native high performance RPCs support
@@ -104,11 +104,11 @@ Browsers still not suport HTTP/2 primitives [(source)](https://learn.microsoft.c
   - [xmlrpc](https://docs.python.org/3/library/xmlrpc.html) native RPCs support
   - [Pygame](https://www.pygame.org/news) bottom-up game engine
   - [TkInter](https://docs.python.org/3/library/tkinter.html) native bottom-up UI support
-  - [Deat PyGui](https://dearpygui.readthedocs.io/en/latest/) non-native bottom-up UI support
+  - [Dear PyGui](https://dearpygui.readthedocs.io/en/latest/) non-native bottom-up UI support
 
 Python is the only language that has both:
 1. Native RPCs support
 2. Bottom-Up (code-first) UI approach
 
 Hence it is the language of choice to make this project. 
-Moreover: it is one of the mosst promiment languages today, without any sign of stopping in popularity, coveted by both companies and public institutions and it is also widely used in research, from data science to cyber security to machine learning and AI. 
+Moreover: it is one of the most prominent languages today, without any sign of stopping in popularity, coveted by both companies and public institutions and it is also widely used in research, from data science to cyber security to machine learning and AI. 

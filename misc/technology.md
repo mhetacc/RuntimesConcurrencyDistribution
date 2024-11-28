@@ -50,7 +50,7 @@ https://www.slashdata.co/post/did-you-know-that-60-of-game-developers-use-game-e
 - Phaser 17%
 
 ## Some More Engines
-- ![](https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/29e25571-eb24-4381-9a2d-bde0ba52be2e/df3uxma-90078aec-f043-423b-8adf-68b0db323607.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7InBhdGgiOiJcL2ZcLzI5ZTI1NTcxLWViMjQtNDM4MS05YTJkLWJkZTBiYTUyYmUyZVwvZGYzdXhtYS05MDA3OGFlYy1mMDQzLTQyM2ItOGFkZi02OGIwZGIzMjM2MDcucG5nIn1dXSwiYXVkIjpbInVybjpzZXJ2aWNlOmZpbGUuZG93bmxvYWQiXX0.Pap7EkIxDlgZ1dFLyEK_MOlPIQGjvJVm5T8adKtnAn0)Pygame
+- ![](https://www.pygame.org/docs/_static/pygame_powered_lowres.png)Pygame
   - Python module for 2D games
   - Multi platform
   - Small community
@@ -146,7 +146,7 @@ https://www.index.dev/blog/6-top-programming-languages-to-level-up-your-game-dev
 
 ## Ease of Use 
 There are three main programming languages that have emerged after careful consideration: Python, Javascript and C++. \
-For them to work with this project they should provide (or someone else should provide) a way to implement Raft's basic concepts (ie RPCs).Bonus points if they also have libraries to easly implement a simple GUI, allowing us to skip using a game engine entirely.
+For them to work with this project they should provide (or someone else should provide) a way to implement Raft's basic concepts (ie RPCs).Bonus points if they also have libraries to easily implement a simple GUI, allowing us to skip using a game engine entirely.
 
 *Oss: better to read [gRPC section](#grpc) first*
 
@@ -222,23 +222,23 @@ Used by:
 - and more
 
 Uses **Protocol Buffer** which is a language and platform agnostic data passing mechanism which supports strong typing. \
-Theese buffers are up to 5 times faster than JSON. \
-Browsers still not suport HTTP/2 primitives which gRPC relies upon, making it necessary to use a proxy called gRPC-web that does not provide all speed-up advantages of gRPC. \
+These buffers are up to 5 times faster than JSON. \
+Browsers still not support HTTP/2 primitives which gRPC relies upon, making it necessary to use a proxy called gRPC-web that does not provide all speed-up advantages of gRPC. \
 **So where it is used?**  Microservices communications in data centers and in native mobile clients. 
 
 This is all well and good, **BUT** it may be a complication that is way out of scope for this project. 
 
 ### Godot and C++
-Godot seems a top-down approach: you make everyting trough the editor and then go down to code as needed for scripting. \
+Godot seems a top-down approach: you make everything trough the editor and then go down to code as needed for scripting. \
 Moreover, most of the tutorials use Godot own scripting language, which is:
 1. Similar to Python
 2. Only useful in Godot
 
-Making it a bit pointless. To find resources in C++ would probabily be a bit harder, similar to the mess that is the whole Kotlin/Java affair in Android programming. 
+Making it a bit pointless. To find resources in C++ would likely be a bit harder, similar to the mess that is the whole Kotlin/Java affair in Android programming. 
 
 Godot is a "real" engine and would produce a better game, but it could prove to be an obstacle to the project we want to make, which put the focus on the algorithm underneath (ie it would be better a bottom-up approach).
 
-### Pyhon and Pygame
+### Python and Pygame
 Event Loop -> what makes a game a game, ie:
 - player inputs
 - game outputs
@@ -271,11 +271,11 @@ Phaser is:
 - code first
 - browser native
 
-Similiar to pygame, phaser is basically a UI module to attach to JS.
+Similar to pygame, phaser is basically a UI module to attach to JS.
 
 ### Just Using a GUI
-There is also the approach of not going trhought an engine, but simply using TkInter or wxWidgets. In this case choosing between Python or C++ comes down to:
+There is also the approach of not going trough an engine, but simply using TkInter or wxWidgets. In this case choosing between Python or C++ comes down to:
 1. Ease of use
 2. RPC support
 
-And in both cases Python wins hands down: it is the fastest language to work with, with a lot of expressivty and libraries available, and it provides native RPCs' support. 
+And in both cases Python wins hands down: it is the fastest language to work with, with a lot of expressivity and libraries available, and it provides native RPCs' support. 

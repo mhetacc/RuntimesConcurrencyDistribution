@@ -39,16 +39,7 @@ Container Linux provides **etcd**, a daemon that runs across all computers in a 
 
 ### MongoDB
 https://www.usenix.org/conference/nsdi21/presentation/zhou \
-MongoDB provides linearizability and tolerates any minority of failures through a novel consensus protocol that derives from Raft. A major difference between our protocol and vanilla Raft is that MongoDB deploys a unique pull-based data synchronization model: a replica pulls new data from another replica. This pull-based data synchronization in MongoDB can be initiated by any replica and can happen between any two replicas, as opposed to vanilla Raft, where new data can only be pushed from the primary to other replicas. 
-in MongoDB, the primary waits for the secondaries to
-pull the new entries that are to be replicated.
-Similar to Raft, once an entry is committed, all prior
-entries are committed indirectly.
-the sec-
-ondary can pull new entries from any (nearby) servers.
-A secondary continuously sends PullEntries to the selected
-sync source to retrieve new log entries when they become
-available.
+MongoDB provides linearizability and tolerates any minority of failures through a novel consensus protocol that derives from Raft. A major difference between our protocol and vanilla Raft is that MongoDB deploys a unique pull-based data synchronization model: a replica pulls new data from another replica. This pull-based data synchronization in MongoDB can be initiated by any replica and can happen between any two replicas, as opposed to vanilla Raft, where new data can only be pushed from the primary to other replicas. in MongoDB, the primary waits for the secondaries to pull the new entries that are to be replicated. Similar to Raft, once an entry is committed, all prior entries are committed indirectly. the secondary can pull new entries from any (nearby) servers. A secondary continuously sends PullEntries to the selected sync source to retrieve new log entries when they become available.
 https://stackoverflow.com/questions/21018090/raft-vs-mongodb-primary-election 
  - less strong leader model
  - additional node states 
@@ -74,7 +65,7 @@ The RabbitMQ quorum queue is a modern queue type which implements a durable, rep
 
 ### ScyllaDB
 https://en.wikipedia.org/wiki/ScyllaDB \
-ScyllaDB is an open-source distributed NoSQL wide-column data store. It was designed to be compatible with Apache Cassandra while achieving significantly higher throughputs and lower latencies.
+ScyllaDB is an open-source distributed NoSQL wide-column data store. It was designed to be compatible with Apache Cassandra while achieving significantly higher throughput and lower latencies.
 
 https://opensource.docs.scylladb.com/stable/architecture/raft.html \
 ScyllaDB uses Raft to:
