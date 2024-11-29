@@ -13,7 +13,7 @@
             {
                 "command": "type",
                 "args": {
-                    "text": "``````"
+                    "text": "```python```"
                 }
             },
             "cursorLeft",
@@ -22,5 +22,17 @@
         ]
 
 },
-"editor.wordWrap": "on"
+"editor.wordWrap": "on",
+"cSpell.enabled": true,
+"cSpell.words": [
+    "gameplay",
+    "Haxe",
+    "Kimball",
+    "linearizability",
+    "Pygame",
+    "Statista",
+    "TIOBE",
+    "Tkinter"
+]
 }
+ 
