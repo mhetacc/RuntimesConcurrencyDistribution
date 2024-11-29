@@ -1,6 +1,25 @@
 # Python 
 
+## Conventions
+
+```python
+class UpperCamelCase:
+    self
+
+def lowercase_with_underscore():
+    """docstring"""
+    pass
+```
+
 ## Basics
+
+Everything is an object
+
+### Assignment
+
+
+
+### Division
 
 ```shell
 >>> 8 / 5  # division always returns floating-point
@@ -95,6 +114,10 @@ print(y) # [2, 3]
 ```
 Oss: operator * syntax is before variable: *\*var* and not *var\**
 
+Oss2: i can also unpack JSON: (dictionaries)
+- *\*tuple*
+- *\*\*dict*
+
 ## Flow Control
 
 ### if
@@ -107,6 +130,16 @@ if cond:
 elif :
     # something
 else:
+```
+
+*in* keyword
+
+```python
+reply = input('Insert yes or no')
+if reply in {'y', 'ye', 'yes'}:
+    return True
+if reply in {'n', 'no', 'nop', 'nope'}:
+    return False
 ```
 
 ### for
@@ -143,10 +176,123 @@ sum(range(4))  # 0 + 1 + 2 + 3
 ### Functions
 
 ```python
-def fun():
+def fun(var1, var2='default'):
     """docstring"""
     # make it habit to use it
 
-fun() # calling the function
+fun(0) # calling the function
+
+# I can call also by keyword
+fun(0,0) # positional arguments
+fun(var1=0, 0) # keyword and positional arguments
+
+# if we need to divide clearly pos/key arguments 
+# eg to prevent ambiguity
+def foo(name, /, **kwargs)
+    return 'name' in kwargs
+``` 
+
+Warning: default value is evaluated only once, so aggregators could work strangely
+
+```python
+def f(a, L=[]):
+    L.append(a)
+    return L
+
+print(f(1))
+print(f(2))
+print(f(3))
 ```
 
+Will print
+
+```shell
+>>>[1]
+>>>[1, 2]
+>>>[1, 2, 3]
+```
+
+## Data Structures 
+
+### List
+
+Can be used as array, stack, queue, everything
+
+```python
+# list comprehension 
+from math import pi
+[str(round(pi, i)) for i in range(1, 6)]
+
+# ['3.1', '3.14', '3.142', '3.1416', '3.14159']
+# i dont like this
+```
+
+But thankfully there exists built-in functions instead of complex flow statements
+
+```python
+[[row[i] for row in matrix] for i in range(4)]
+
+# this produces
+# [[1, 5, 9], [2, 6, 10], [3, 7, 11], [4, 8, 12]]
+
+# and is equivalent to
+transposed = []
+for i in range(4):
+    transposed_row = []
+    for row in matrix:
+        transposed_row.append(row[i])
+    transposed.append(transposed_row)
+
+# or we can use zip
+list(zip(*matrix))
+
+# which produces
+# [(1, 5, 9), (2, 6, 10), (3, 7, 11), (4, 8, 12)]
+```
+
+*pop* vs *del*
+
+```python
+vec = [1, 2]
+vec.pop()  # return value
+del vec[0] # delete by index
+
+# delete by slices
+vec = [1, 2, 3, 4]
+del vec[1:3]
+
+# [1]
+```
+
+### Set
+
+Unordered collection without duplicates
+
+```python
+set1 = {1,2,3}
+empty_set = set()
+```
+
+## Modules
+
+*file.py* is a module
+
+I can import a module into other modules (or in the interpreter cmd)
+
+```shell
+>>>from my_class import method1
+>>>method1(0,0)
+
+# some output
+```
+
+### dir()
+
+*dir()* function prints which names a module defines. \
+Without arguments it lists the name defined in the current session.
+
+### Packages
+
+Higher directory level for collection of modules. \
+Use dot notation. \
+There **must** be a *__init__.py* to make Python treat a directory as a package.
