@@ -13,11 +13,22 @@ def lowercase_with_underscore():
 
 ## Basics
 
-Everything is an object
+Everything is an object, and therefore has a *class* (also called its *type*). \
+It is stored as `object.__class__`
 
 ### Assignment
 
+Multi line assignment
 
+```python
+a, b = 0, 1 
+# is equal to
+a=1 
+b=0
+
+# and also (i dont like it)
+a, b = b, a+b 
+```
 
 ### Division
 
@@ -75,20 +86,6 @@ True
 ```
 
 On the other hand all slice operations return a new list containing the requested elements (ie slice returns a shallow copy)
-
-### Assignment
-
-Multi line assignment
-
-```python
-a, b = 0, 1 
-# is equal to
-a=1 
-b=0
-
-# and also (i dont like it)
-a, b = b, a+b 
-```
 
 ### Unpacking
 
@@ -406,6 +403,8 @@ raise NameError('HiThere')
 
 ## Classes
 
+[...] nothing in Python makes it possible to enforce data hiding, it is all based upon convention.
+
 By default class memebers are *public* and all member functions are *virtual*.
 
 [...] *aliases* behave like pointers in some respects. For example, passing an object is cheap since only a pointer is passed. 
@@ -413,6 +412,184 @@ By default class memebers are *public* and all member functions are *virtual*.
 [...] all operations that introduce new names use the local scope: in particular, `import` statements bind the module name in the local scope.
 
 Assignments do not copy data, they just bind names to objects. The same is true for deletions: `del x` just removes binding of `x` from the local scope. \
-**ie everything is a pointer :)**
+**i.e. everything is a pointer :)**
 
+```python
+class MyClass:
+    class_variable = 'I am shared by all instances'
+
+    def __init__(self, name):
+        self.instanceName = name 
+```
+
+### Cosa Stampa - Scope
+
+```python
+def scope_test():
+    def do_local():
+        spam = "local spam"
+
+    def do_nonlocal():
+        nonlocal spam
+        spam = "nonlocal spam"
+
+    def do_global():
+        global spam
+        spam = "global spam"
+
+    spam = "test spam"
+
+    do_local()
+    print("After local assignment:", spam) # test spam
+
+    do_nonlocal()
+    print("After nonlocal assignment:", spam) # nonlocal spam
+
+    do_global()
+    print("After global assignment:", spam) # nonlocal spam   <--- OSS
+                                            # more-local scope takes precedence 
+
+scope_test()
+print("In global scope:", spam) # global spam
+```
+
+Scope Modifiers:
+- None: default local scope
+- `nonlocal`: local of father (i.e. closest outside scope)
+- `global`: holds for entire current code block
+
+**Nearer** scope always has **precedence**: \
+local > non local > global
+
+### Constructor
+
+```python
+class Class:
+    def __init__(self, data):
+        self.data = data
+```
+
+**Warning**: instance variables are named and created only inside `__init__`
+
+```python
+class Dog:
+    genus = 'Canis' # class variable
+                    # shared by all istances
+    def __init__(self, name):
+        self.name = name # unique to each istance
+```
+
+This could lead to very bad very fast
+
+
+```python
+class Container:
+    elements = []  # SHARED by all containers
+
+    def __init__(self, id):
+        self.id = id
+    
+    def push(self, element):
+        self.elements.append(element)
+```
+
+### Methods
+
+[...] the special thing about methods is that the instance object is passed as the first argument of the function
+
+```python
+# the two following lines are equivalent
+x.f()
+
+MyClass.f(x) 
+
+# we call f() of class MyClass on object x
+```
+
+Often, the first argument of a method is called `self`. This is nothing more than a convention: the name `self` has absolutely no special meaning to Python
+
+### Inheritance
+
+[...] For C++ programmers: all methods in Python are effectively `virtual`
+
+```python
+class ChildClass(ParentClass):
+    # class body
+```
+
+If i want to call a parent class method explicitly
+
+```python
+ParentClass.methodName(self, arguments)
+```
+
+### Private Variables
+
+They don't exists, but by convention `_variable` should be treated as such.
+
+Any identifier in the form `__var` is textually replaced by `_className_var` to help privacy of variables.
+
+### Iterators
+
+We can manually reproduce `for` loop behavior with `iter()` and `next()` functions
+
+```python
+string = 'abc'
+
+for w in string:
+    print(w)
+# abc
+
+# or we can explicitly do it
+iterator = iter(string)
+next(iterator) # a
+next(iterator) # b
+next(iterator) # c
+next(iterator) # StopIteration exception
+```
+
+Therefore, we can add iterator behavior to our custom classes 
+
+```python
+class Reverse:
+    """Iterator for looping over a sequence backwards."""
+    def __init__(self, data):
+        self.data = data
+        self.index = len(data)
+
+    # implement iterator function
+    def __iter__(self):
+        return self
+
+    # implement next function
+    # returns and decrement index
+    def __next__(self):
+        if self.index == 0:
+            raise StopIteration
+        self.index = self.index - 1
+        return self.data[self.index]
+```
+
+We can then use `Reverse` with a `for` directly
+
+```python
+rev_string = Reverse('suck')
+
+for char in rev_string:
+    print(char)
+
+# the opposite of suck which
+# as we all know is kcus 
+```
+
+### Generators
+
+All this above mentioned stuff with `__iter__()` and `__next__()` can be done automagically with `yield` statement. \
+It is a sort of `return` but it resumes where it left off each time `next()` is called on it.
+
+```python
+def reverse(data):
+    for index in range(len(data)-1, -1, -1):
+        yield data[index] # returns data and resumes from index next time
+```
 
