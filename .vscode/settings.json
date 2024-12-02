@@ -19,6 +19,15 @@
             "cursorLeft",
             "cursorLeft",
             "cursorLeft"
+        ],
+        "markdown_code_word": [
+            {
+                "command": "type",
+                "args": {
+                    "text": "``"
+                }
+            },
+            "cursorLeft"
         ]
 
 },
