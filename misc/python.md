@@ -379,3 +379,29 @@ for line in f:
 Writing requires only to call `f.write('Some line\n')`
 
 ## Errors and Exceptions
+
+`except` can have an optional `else` clause that gets executed if `try` does **not** raises an exception
+
+```python
+for arg in sys.argv[1:]:
+    try:
+        f = open(arg, 'r')
+    except OSError:
+        print('cannot open', arg)
+    else:
+        print(arg, 'has', len(f.readlines()), 'lines')
+        f.close()
+```
+
+I can also force `raise` specified exceptions
+
+```python
+raise NameError('HiThere')
+```
+
+### Multiple Unrelated Exceptions
+
+[8.9](https://docs.python.org/3.12/tutorial/errors.html#raising-and-handling-multiple-unrelated-exceptions): sometimes several exceptions occurs, this is often the case in concurrency frameworks. \
+[ExceptionGroup](https://docs.python.org/3.12/library/exceptions.html#ExceptionGroup) wraps a list of exception instances so that they can be raised together.
+
+## Classes
