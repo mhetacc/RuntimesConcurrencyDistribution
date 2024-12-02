@@ -405,3 +405,14 @@ raise NameError('HiThere')
 [ExceptionGroup](https://docs.python.org/3.12/library/exceptions.html#ExceptionGroup) wraps a list of exception instances so that they can be raised together.
 
 ## Classes
+
+By default class memebers are *public* and all member functions are *virtual*.
+
+[...] *aliases* behave like pointers in some respects. For example, passing an object is cheap since only a pointer is passed. 
+
+[...] all operations that introduce new names use the local scope: in particular, `import` statements bind the module name in the local scope.
+
+Assignments do not copy data, they just bind names to objects. The same is true for deletions: `del x` just removes binding of `x` from the local scope. \
+**ie everything is a pointer :)**
+
+
