@@ -1,4 +1,4 @@
-# Python 
+# Python Language 
 
 ## Conventions
 
@@ -592,4 +592,94 @@ def reverse(data):
     for index in range(len(data)-1, -1, -1):
         yield data[index] # returns data and resumes from index next time
 ```
+
+## Virtual Environments and Packages
+
+### venv 
+
+Virtual Environment: self-contained directory tree that contains a Python installation for a particular version of Python, plus a number of additional packages.
+
+### pip
+
+Display all installed packages
+
+`python -m pip list`
+
+Display information about a specific package
+
+`python -m pip show package_name`
+
+Upgrade all packages
+
+`python -m pip install --upgrade`
+
+# Specific Tools
+
+## Making Logs
+`logging` module: https://docs.python.org/3/library/logging.html
+
+Standard module to logs stuff
+
+### Basics
+
+```python
+import logging
+
+logging.basicConfig(**kwargs) # a dict of attribute passed by keyword 
+# e.g. filename : 'name'
+#      filemode : 'w'
+
+logger = logging.getLogger(__name__)
+
+logger.debug('Debug message')
+logger.info('Info message')
+logger.warning('Warning message')
+logger.error('Error message')
+```
+
+Some basic config could be
+
+```python
+logging.basicConfig(filename='myLog.log')
+# this should appen all logs in file myLog
+
+logging.basicConfig(filename='myLog.log', filemode='w')
+# while this should re-write it every time
+
+logging.basicConfig(format='%(asctime)s %(message)s')
+# this would append datetime at the start of every logged string
+```
+
+To embed variables and such
+
+```python
+logging.warning('%s and %s', var1, var2)
+# var1 and var2
+```
+
+### Ideal Structure 
+- RuntimesConcurrency
+  - misc
+  - logs
+    - script1
+      - datetime_s1.log
+      - datetime_s1.log
+      - datetime_s1.log
+    - script2
+      - datetime_s2.log
+  - some other folder
+
+### Advanced Stuff
+
+
+
+## queue
+https://docs.python.org/3.12/library/collections.html#collections.deque
+
+ Deques support thread-safe, memory efficient appends and pops from either side of the deque with approximately the same O(1) performance in either direction.
+
+## deque 
+https://docs.python.org/3.12/library/queue.html#module-queue
+
+The queue module implements multi-producer, multi-consumer queues. It is especially useful in threaded programming when information must be exchanged safely between multiple threads.
 
