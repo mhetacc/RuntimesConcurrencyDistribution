@@ -299,3 +299,83 @@ There **must** be a *__init__.py* to make Python treat a directory as a package.
 
 ## Input and Output
 
+The standard output file is `sys.stdout`
+
+### Formatting 
+
+By prefixing either `f` or `F` i can insert variables directly into strings by using curled brackets
+
+```python
+var1 = 0
+var2 = 1
+f'Variables are {var1} and {var2}'
+```
+
+Expressions inside brackets can be further formatted
+
+```python
+# minimum number of characters
+# useful to line up columns
+f'{name:10} ==> {phone:10d}'
+
+# auto to-string
+f'{var!s}'
+
+# using dict 
+table = {
+    'first' : 1352,
+    'second' : 8462,
+    'third' : 7401
+}
+
+print('{first:d}, {second:d}, {third:d}'.format(**table))
+# 1352, 8462, 7401
+```
+
+### To String
+
+Function `str()` translates any object in a somewhat human readable string
+
+```python
+var1 = 'something'
+str(var1)
+```
+
+### Reading and Writing Files
+
+`open()` returns a *file object* 
+
+```python
+mode = 'w'  # r for reading
+            # a for appending
+f = open('filename', mode, encoding="utf-8")
+```
+
+Closing the file can be done in two main ways
+
+```python
+# using with keyword automatically closes the file
+# PREFERRED 
+with open('file') as f:
+    read_data = f.read()
+
+f.closed # True
+
+# otherwise call close function
+f = open('file')
+read_data = f.read()
+f.close()
+```
+
+Using `close()` could make `f.write()` behave incorrectly.
+
+A **very nice** way to read is to loop each line
+
+```python
+for line in f:
+    print(line, end='')
+```
+
+Writing requires only to call `f.write('Some line\n')`
+
+## Errors and Exceptions
