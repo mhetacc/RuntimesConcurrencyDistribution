@@ -112,17 +112,17 @@ vector = (1,2,3,4)
 
 print(y) # [2, 3]
 ```
-Oss: operator * syntax is before variable: *\*var* and not *var\**
+Oss: operator * syntax is before variable: `*var` and not `var*`
 
 Oss2: i can also unpack JSON: (dictionaries)
-- *\*tuple*
-- *\*\*dict*
+- `*tuple`
+- `**dict`
 
 ## Flow Control
 
 ### if
 
-elif and else are optional, there is no switch-case statement
+`elif` and `else` are optional, there is no switch-case statement
 
 ```python
 if cond:
@@ -132,7 +132,7 @@ elif :
 else:
 ```
 
-*in* keyword
+`in` keyword
 
 ```python
 reply = input('Insert yes or no')
@@ -144,7 +144,7 @@ if reply in {'n', 'no', 'nop', 'nope'}:
 
 ### for
 
-Similar to *for each*, iterate on elements of any sequence, contrary to what C does (define iteration step and halt condition)
+Similar to `for each`, iterate on elements of any sequence, contrary to what C does (define iteration step and halt condition)
 
 ```python
 for w in words:
@@ -163,8 +163,8 @@ for user, status in users.items():
         active_users[user] = status
 ```
 
-We also have *brake* and *continue* statements, the latter skip to next loop iteration. \
-*break* can be paired with *else*: if no break after loop ended, else clause is executed.
+We also have `brake` and `continue` statements, the latter skip to next loop iteration. \
+`break` can be paired with `else`: if no break after loop ended, else clause is executed.
 
 ### sum
 
@@ -250,7 +250,7 @@ list(zip(*matrix))
 # [(1, 5, 9), (2, 6, 10), (3, 7, 11), (4, 8, 12)]
 ```
 
-*pop* vs *del*
+`pop` vs `del`
 
 ```python
 vec = [1, 2]
@@ -288,7 +288,7 @@ I can import a module into other modules (or in the interpreter cmd)
 
 ### dir()
 
-*dir()* function prints which names a module defines. \
+`dir()` function prints which names a module defines. \
 Without arguments it lists the name defined in the current session.
 
 ### Packages
@@ -298,3 +298,4 @@ Use dot notation. \
 There **must** be a *__init__.py* to make Python treat a directory as a package.
 
 ## Input and Output
+
