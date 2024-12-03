@@ -615,12 +615,16 @@ Upgrade all packages
 
 # Specific Tools
 
-## Making Logs
+## Logging (debug)
 `logging` module: https://docs.python.org/3/library/logging.html
 
 Standard module to logs stuff
 
+Loggin is performed by calling methods on instances of the `Logger` class 
+
 ### Basics
+
+Oss: `__name__` as in "the name of the logger file we want to create eg `my_logger`
 
 ```python
 import logging
@@ -657,6 +661,17 @@ logging.warning('%s and %s', var1, var2)
 # var1 and var2
 ```
 
+Log events gets passed around in a `LogRecord` instance 
+
+Root logger is top-hierarchhy of loggers, is used by core function (eg `debug()` or `error()`)
+
+```python
+logger = logging.getLogger(__name__)
+
+# root logger
+# name is 'root' in output
+```
+
 ### Ideal Structure 
 - RuntimesConcurrency
   - misc
@@ -669,17 +684,86 @@ logging.warning('%s and %s', var1, var2)
       - datetime_s2.log
   - some other folder
 
-### Advanced Stuff
+### Handlers
+
+Handlers send log records to appropriate destination
+
+Should not use `Handler ` directly, instead use as interface for child custom handlers 
+
+Useful `Handlers`:
+- `FileHandler` send messages to disk files
+- `RotatingFileHandler` to disk files, support max log sizes and file rotation
+- `StreamHandler` send to stream (file-like objects)
+
+**FileHandler:**
+
+```python
+class logging.FileHandler(filename, mode='a', encoding=None, delay=False, errors=None)
+
+# specified file is opened and used for logging
+# by default, file grows indefinitely
+# Path object are accepted in filename argument
+```
+
+So as far as i can tell, to get what I want, i need:
+
+- [datetime](https://docs.python.org/3/library/datetime.html#datetime.datetime.today)
+- [Path](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
+- [FileHandler](https://docs.python.org/3/library/logging.handlers.html#logging.FileHandler) 
+
+```python
+from pathlib import Path
+import logging
+
+# basic config is skipped since all is done with specific thingies 
+
+filename = 'script1'
+
+# create logger
+logger = logging.getLogger(__name__)
+
+log_path = Path(f'../logs/{datetime.now()}.{filename}')
+
+# create log file handler
+filehandle = logging.FileHandler(log_path, encoding = 'utf-8')
+
+logger.addHandler(filehandle)
+```
+
+### Configuration
+
+Three ways to configure logging:
+- explicitly in Python code
+- create config file and use `fileConfig()`
+- create config dictionary and use `dictConfig()`
+
+```python
+logging.config.fileConfig('logging.conf')
+```
+
+Warning: `fileConfig()` has default parameter which will cause any pre-existing non-root loggers to be disabled, unless explicitly named in the Configuration
+
+```python
+fileConfig(disable_existing_loggers = True)
+
+# can call it False
+```
 
 
+## Queues and Logs (data) 
 
-## queue
+### list
+
+Standard built-in Python module to make lists. 
+
+### queue
 https://docs.python.org/3.12/library/collections.html#collections.deque
 
  Deques support thread-safe, memory efficient appends and pops from either side of the deque with approximately the same O(1) performance in either direction.
 
-## deque 
+### deque 
 https://docs.python.org/3.12/library/queue.html#module-queue
 
 The queue module implements multi-producer, multi-consumer queues. It is especially useful in threaded programming when information must be exchanged safely between multiple threads.
 
+# PEP 8 - Format Conventions
