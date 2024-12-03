@@ -40,7 +40,7 @@ import os
 import sys
 ``` 
 
-### Programming Tips
+### Programming Conventions
 
 Comparison to singletons (like `None`) should always be done with 
 - `is`
@@ -64,6 +64,62 @@ b=0
 # and also (i dont like it)
 a, b = b, a+b 
 ```
+
+Expression assignment: assign and evaluate (`if true`). \
+To be precise:
+
+- assigns value
+- returns it
+
+```python
+# read chunk and check whether it is empty or not
+while chunk := file.read(9000):
+    process(chunk)
+
+# could get same result with
+chunk = file.read(9000)
+while chunk:
+    process(chunk)
+    chunk = file.read(9000)
+
+# or with do while if we had one
+```
+
+
+### Logical Operations
+
+**Connectives**  
+
+```python
+# boolean operators
+x and y  
+x or y
+not x
+
+# bitwise operators
+# works only with integers
+x & b  # AND
+x | b  # OR
+x ^ b  # XOR
+```
+
+**Comparisons** 
+
+- By value:
+  - `<`
+  - `<=`
+  - `!=`
+  - etc
+- By reference (ie pointed object):
+  - `is`
+  - `is not`
+- By class / container:
+  - `in`
+  - `not in`
+
+
+
+
 
 ### Division
 
@@ -90,6 +146,8 @@ a, b = b, a+b
 ### Strings
 
 Python strings are ![immutable](https://docs.python.org/3.12/glossary.html#term-immutable).
+
+Python doesn't have a `char` type, uses instead string objects with length `1`
 
 ```python
 "this is the same"
@@ -280,6 +338,16 @@ list(zip(*matrix))
 
 # which produces
 # [(1, 5, 9), (2, 6, 10), (3, 7, 11), (4, 8, 12)]
+```
+
+`zip(*iterables, strict=False)` iterates over several iterables in parallel, producing tuples with an item from each one.\
+By default it stops once shortest iterable is exhausted.\
+With `strict=True` an `ValueError` exception is raised if one iterable is exhausted before the others.
+
+```python
+list(zip(range(3), ['fee', 'fi', 'fo', 'fum']))
+
+# [(0, 'fee'), (1, 'fi'), (2, 'fo')]
 ```
 
 `pop` vs `del`
@@ -528,6 +596,13 @@ class Container:
         self.elements.append(element)
 ```
 
+```python
+class super(type, object_or_type=None):
+    # stuff
+
+# returns a proxy object to access parent class of type
+```
+
 ### Methods
 
 [...] the special thing about methods is that the instance object is passed as the first argument of the function
@@ -647,6 +722,37 @@ Display information about a specific package
 Upgrade all packages
 
 `python -m pip install --upgrade`
+
+## Miscellaneous 
+
+### Explicit Line Joining
+
+Backslash allows to break line without logical break
+
+```python
+if 1900 < year < 2100 and 1 <= month <= 12 \
+   and 1 <= day <= 31 and 0 <= hour < 24 \
+   and 0 <= minute < 60 and 0 <= second < 60:   
+        return 1
+```
+
+### Operators
+
+```
++       -       *       **      /       //      %      @
+<<      >>      &       |       ^       ~       :=
+<       >       <=      >=      ==      !=
+```
+
+### Delimiters
+
+```
+(       )       [       ]       {       }
+,       :       !       .       ;       @       =
+->      +=      -=      *=      /=      //=     %=
+@=      &=      |=      ^=      >>=     <<=     **=
+```
+
 
 # Specific Tools
 
@@ -790,7 +896,7 @@ fileConfig(disable_existing_loggers = True)
 ### list
 https://docs.python.org/3.12/library/stdtypes.html#list
 
-Standard built-in Python module to make lists. 
+Standard Library module to make lists (standard is good). Is a mutable sequence type (and we need it to mute).
 
 ### queue
 https://docs.python.org/3.12/library/collections.html#collections.deque
@@ -801,4 +907,6 @@ https://docs.python.org/3.12/library/collections.html#collections.deque
 https://docs.python.org/3.12/library/queue.html#module-queue
 
 The queue module implements multi-producer, multi-consumer queues. It is especially useful in threaded programming when information must be exchanged safely between multiple threads.
+
+# Python Standard Library
 
