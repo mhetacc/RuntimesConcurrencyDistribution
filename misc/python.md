@@ -53,6 +53,20 @@ It is stored as `object.__class__`
 
 ### Assignment
 
+Simple assignment is **always by-reference**
+
+```shell
+>>> rgb = ["Red", "Green", "Blue"]
+>>> rgba = rgb
+>>> id(rgb) == id(rgba)  # they reference the same object
+True
+
+>>> a = 1
+>>> b = a
+>>> b is a  # they reference the same object
+True
+```
+
 Multi line assignment
 
 ```python
@@ -61,7 +75,7 @@ a, b = 0, 1
 a=1 
 b=0
 
-# and also (i dont like it)
+# and also (i don't like it)
 a, b = b, a+b 
 ```
 
@@ -84,7 +98,6 @@ while chunk:
 
 # or with do while if we had one
 ```
-
 
 ### Logical Operations
 
@@ -118,9 +131,6 @@ x ^ b  # XOR
   - `not in`
 
 
-
-
-
 ### Division
 
 ```shell
@@ -145,7 +155,7 @@ x ^ b  # XOR
 
 ### Strings
 
-Python strings are ![immutable](https://docs.python.org/3.12/glossary.html#term-immutable).
+Python strings are [immutable](https://docs.python.org/3.12/glossary.html#term-immutable).
 
 Python doesn't have a `char` type, uses instead string objects with length `1`
 
@@ -167,18 +177,7 @@ Out of range strings handled gracefully when **slicing**
 ''
 ```
 
-### Lists
-
-Simple assignment in Python never copies data
-
-```shell
->>> rgb = ["Red", "Green", "Blue"]
->>> rgba = rgb
->>> id(rgb) == id(rgba)  # they reference the same object
-True
-```
-
-On the other hand all slice operations return a new list containing the requested elements (ie slice returns a shallow copy)
+All slice operations return a new list containing the requested elements (ie slice returns a shallow copy)
 
 ### Unpacking
 
@@ -202,11 +201,16 @@ vector = (1,2,3,4)
 
 print(y) # [2, 3]
 ```
-Oss: operator * syntax is before variable: `*var` and not `var*`
+Oss: operator * syntax is before variable: `*var` 
 
-Oss2: i can also unpack JSON: (dictionaries)
+Oss2: i can also unpack dictionaries
 - `*tuple`
 - `**dict`
+
+Often used in positional and by-keyword arguments in functions:
+```python
+def fun(*posvar, **kwargs)
+```
 
 ## Flow Control
 
@@ -251,6 +255,11 @@ active_users = {}
 for user, status in users.items():
     if status == 'active':
         active_users[user] = status
+
+# basically you can use a sort-of zip() implicitly in the for loop
+for key, value in collection.items():
+    if key:
+        # use value
 ```
 
 We also have `brake` and `continue` statements, the latter skip to next loop iteration. \
@@ -267,8 +276,7 @@ sum(range(4))  # 0 + 1 + 2 + 3
 
 ```python
 def fun(var1, var2='default'):
-    """docstring"""
-    # make it habit to use it
+    """docstring""" # make it habit to use it
 
 fun(0) # calling the function
 
@@ -314,7 +322,7 @@ from math import pi
 [str(round(pi, i)) for i in range(1, 6)]
 
 # ['3.1', '3.14', '3.142', '3.1416', '3.14159']
-# i dont like this
+# i don't like this
 ```
 
 But thankfully there exists built-in functions instead of complex flow statements
@@ -340,7 +348,8 @@ list(zip(*matrix))
 # [(1, 5, 9), (2, 6, 10), (3, 7, 11), (4, 8, 12)]
 ```
 
-`zip(*iterables, strict=False)` iterates over several iterables in parallel, producing tuples with an item from each one.\
+`zip(*iterables, strict=False)` \
+Iterates over several iterables in parallel, producing tuples with an item from each one.\
 By default it stops once shortest iterable is exhausted.\
 With `strict=True` an `ValueError` exception is raised if one iterable is exhausted before the others.
 
@@ -380,8 +389,8 @@ empty_set = set()
 I can import a module into other modules (or in the interpreter cmd)
 
 ```shell
->>>from my_class import method1
->>>method1(0,0)
+>>> from my_class import method1
+>>> method1(0,0)
 
 # some output
 ```
@@ -395,7 +404,7 @@ Without arguments it lists the name defined in the current session.
 
 Higher directory level for collection of modules. \
 Use dot notation. \
-There **must** be a *__init__.py* to make Python treat a directory as a package.
+There **must** be a *\__init__.py* to make Python treat a directory as a package.
 
 ## Input and Output
 
@@ -448,35 +457,34 @@ str(var1)
 ```python
 mode = 'w'  # r for reading
             # a for appending
+
 f = open('filename', mode, encoding="utf-8")
 ```
 
 Closing the file can be done in two main ways
 
 ```python
-# using with keyword automatically closes the file
-# PREFERRED 
+# BETTER: using with keyword automatically closes the file 
 with open('file') as f:
     read_data = f.read()
 
 f.closed # True
 
 # otherwise call close function
+# can make stuff mis-behave 
 f = open('file')
 read_data = f.read()
 f.close()
 ```
 
-Using `close()` could make `f.write()` behave incorrectly.
-
-A **very nice** way to read is to loop each line
+A *very* nice way to read is to loop each line
 
 ```python
 for line in f:
     print(line, end='')
 ```
 
-Writing requires only to call `f.write('Some line\n')`
+To write the syntax is similar: `f.write('Some line\n')`
 
 ## Errors and Exceptions
 
@@ -506,16 +514,17 @@ raise NameError('HiThere')
 
 ## Classes
 
-[...] nothing in Python makes it possible to enforce data hiding, it is all based upon convention.
+- [...] nothing in Python makes it possible to enforce data hiding, it is all based upon convention.
+  
+- By default class members are *public* and all member functions are *virtual*.
 
-By default class memebers are *public* and all member functions are *virtual*.
+- [...] *aliases* behave like pointers in some respects. For example, passing an object is cheap since only a pointer is passed. 
 
-[...] *aliases* behave like pointers in some respects. For example, passing an object is cheap since only a pointer is passed. 
+- [...] all operations that introduce new names use the local scope: in particular, `import` statements bind the module name in the local scope.
 
-[...] all operations that introduce new names use the local scope: in particular, `import` statements bind the module name in the local scope.
+- Assignments do not copy data, they just bind names to objects. The same is true for deletions: `del x` just removes binding of `x` from the local scope. 
 
-Assignments do not copy data, they just bind names to objects. The same is true for deletions: `del x` just removes binding of `x` from the local scope. \
-**i.e. everything is a pointer :)**
+- **everything is a pointer**
 
 ```python
 class MyClass:
@@ -561,7 +570,7 @@ Scope Modifiers:
 - `nonlocal`: local of father (i.e. closest outside scope)
 - `global`: holds for entire current code block
 
-**Nearer** scope always has **precedence**: \
+**Nearer** scope always has **precedence**: 
 local > non local > global
 
 ### Constructor
@@ -577,9 +586,10 @@ class Class:
 ```python
 class Dog:
     genus = 'Canis' # class variable
-                    # shared by all istances
+                    # shared by all instances
+
     def __init__(self, name):
-        self.name = name # unique to each istance
+        self.name = name # unique to each instance
 ```
 
 This could lead to very bad very fast
@@ -596,12 +606,16 @@ class Container:
         self.elements.append(element)
 ```
 
+There are some ways other than scope to access parent stuff
+
 ```python
 class super(type, object_or_type=None):
     # stuff
 
 # returns a proxy object to access parent class of type
 ```
+
+Or I could call explicitly `ParentClass.parent_function()` 
 
 ### Methods
 
@@ -610,28 +624,12 @@ class super(type, object_or_type=None):
 ```python
 # the two following lines are equivalent
 x.f()
-
 MyClass.f(x) 
 
 # we call f() of class MyClass on object x
 ```
 
 Often, the first argument of a method is called `self`. This is nothing more than a convention: the name `self` has absolutely no special meaning to Python
-
-### Inheritance
-
-[...] For C++ programmers: all methods in Python are effectively `virtual`
-
-```python
-class ChildClass(ParentClass):
-    # class body
-```
-
-If i want to call a parent class method explicitly
-
-```python
-ParentClass.methodName(self, arguments)
-```
 
 ### Private Variables
 
@@ -761,7 +759,7 @@ if 1900 < year < 2100 and 1 <= month <= 12 \
 
 Standard module to logs stuff
 
-Loggin is performed by calling methods on instances of the `Logger` class 
+Logging is performed by calling methods on instances of the `Logger` class 
 
 ### Basics
 
@@ -786,7 +784,7 @@ Some basic config could be
 
 ```python
 logging.basicConfig(filename='myLog.log')
-# this should appen all logs in file myLog
+# this should append all logs in file myLog
 
 logging.basicConfig(filename='myLog.log', filemode='w')
 # while this should re-write it every time
@@ -829,12 +827,11 @@ logger = logging.getLogger(__name__)
 
 Handlers send log records to appropriate destination
 
-Should not use `Handler ` directly, instead use as interface for child custom handlers 
+Should not use `Handler` directly, instead use as interface for child custom handlers, like the following useful `Handlers`:
 
-Useful `Handlers`:
-- `FileHandler` send messages to disk files
-- `RotatingFileHandler` to disk files, support max log sizes and file rotation
-- `StreamHandler` send to stream (file-like objects)
+- `FileHandler`: send messages to disk files
+- `RotatingFileHandler`: to disk files, support max log sizes and file rotation
+- `StreamHandler`: send to stream (file-like objects)
 
 **FileHandler:**
 
@@ -885,9 +882,7 @@ logging.config.fileConfig('logging.conf')
 Warning: `fileConfig()` has default parameter which will cause any pre-existing non-root loggers to be disabled, unless explicitly named in the Configuration
 
 ```python
-fileConfig(disable_existing_loggers = True)
-
-# can call it False
+fileConfig(disable_existing_loggers = True) # can call it False
 ```
 
 
@@ -907,6 +902,3 @@ https://docs.python.org/3.12/library/collections.html#collections.deque
 https://docs.python.org/3.12/library/queue.html#module-queue
 
 The queue module implements multi-producer, multi-consumer queues. It is especially useful in threaded programming when information must be exchanged safely between multiple threads.
-
-# Python Standard Library
-
