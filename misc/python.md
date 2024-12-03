@@ -2,14 +2,49 @@
 
 ## Conventions
 
+### Naming Conventions
+
 ```python
+# Comments should start capitalized unless 
+# keyword (i will not follow this)
+
 class UpperCamelCase:
     self
 
+# They actually use lowerCamelCase 
+# but say it should be avoided
 def lowercase_with_underscore():
     """docstring"""
     pass
-```
+
+# same for variables
+def _private_fun()
+def __very_private_fun()
+
+
+some_variable = 'Correct'
+SomeOtherVariable = 'Correct'
+someOtherOtherVariable = 'Wrong'
+CONSTANT = 'Correct'
+
+
+# Line break before binary operator
+income = (gross_wages
+          + taxable_interest
+          + (dividends - qualified_dividends)
+          - ira_deduction
+          - student_loan_interest)
+
+# import on separate lines
+import os
+import sys
+``` 
+
+### Programming Tips
+
+Comparison to singletons (like `None`) should always be done with 
+- `is`
+- `is not`
 
 ## Basics
 
@@ -753,6 +788,7 @@ fileConfig(disable_existing_loggers = True)
 ## Queues and Logs (data) 
 
 ### list
+https://docs.python.org/3.12/library/stdtypes.html#list
 
 Standard built-in Python module to make lists. 
 
@@ -766,4 +802,3 @@ https://docs.python.org/3.12/library/queue.html#module-queue
 
 The queue module implements multi-producer, multi-consumer queues. It is especially useful in threaded programming when information must be exchanged safely between multiple threads.
 
-# PEP 8 - Format Conventions
