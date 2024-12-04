@@ -79,7 +79,7 @@ b=0
 a, b = b, a+b 
 ```
 
-Expression assignment: assign and evaluate (`if true`). \
+Expression assignment \[Python 3.8]: assign and evaluate (`if true`). \
 To be precise:
 
 - assigns value
@@ -116,6 +116,14 @@ x | b  # OR
 x ^ b  # XOR
 ```
 
+I can do chaining
+
+```python
+# following expressions are equivalent
+x < y <= z
+(x < y) and (y <= z)
+```
+
 **Comparisons** 
 
 - By value:
@@ -150,7 +158,17 @@ x ^ b  # XOR
 25
 >>> 5 ** 2  # operator ** to calculate powers
 25
->>> 
+```
+
+Warning: with operator `**` expressions are evaluated from right to left, so a leftmost `-` will change result sign
+
+```shell
+>>> -2**4
+-16
+>>> pow(-2,4)
+16
+>>> (-2)**4
+16
 ```
 
 ### Strings
@@ -178,6 +196,8 @@ Out of range strings handled gracefully when **slicing**
 ```
 
 All slice operations return a new list containing the requested elements (ie slice returns a shallow copy)
+
+To append strings the most efficient way is to call `str.join()`
 
 ### Unpacking
 
