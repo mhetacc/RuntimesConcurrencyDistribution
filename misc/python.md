@@ -905,7 +905,6 @@ Warning: `fileConfig()` has default parameter which will cause any pre-existing 
 fileConfig(disable_existing_loggers = True) # can call it False
 ```
 
-
 ## Queues and Logs (data) 
 
 ### list
@@ -922,3 +921,96 @@ https://docs.python.org/3.12/library/collections.html#collections.deque
 https://docs.python.org/3.12/library/queue.html#module-queue
 
 The queue module implements multi-producer, multi-consumer queues. It is especially useful in threaded programming when information must be exchanged safely between multiple threads.
+
+## Remote Procedure Calls - xmlrpc 
+
+To do RPCs Python provides a core library module called xmlrpc. 
+
+# ServerProxy 
+
+A `ServerProxy` instance is an *object* that manages communication with a remote XML-RPC server.
+
+```python
+import xmlrpc.client
+
+proxyobject = xmlrpc.client.ServerProxy(
+    uri,                # target, usually server URL 
+    *defaultOK,         # some values that are ok to leave as is
+    allow_none = True,  # translates None in XML, otherwise TypeError exception is raised
+    headers = (),       # Py 3.8 and above, allows HTTP headers to be included
+)
+```
+
+Lets see an example client-side
+
+```python
+import xmlrpc.client
+
+with xmlrpc.client.ServerProxy(
+    'http://localhost:8080/',   # target, server URL and port
+    allow_none = True,          # translates XML
+    ) as proxyobject            # automatically closes resource when not in use anymore
+
+# use RPC i.e. make a request to the server to return
+# a value as if it was a local function, parameters and all
+print(proxyobject.function_name(42))
+
+# prints 'The number is 42'
+```
+
+On the server-side
+
+```python
+from xmlrpc.server import SimpleXMLRPCServer
+
+def server_function(n):
+    return f'The number is {n}'
+
+# create server on localhost, port 8080
+server = SimpleXMLRPCServer (('localhost', 8080))
+
+# register the function in the server 
+# and gives it a callable name
+server.register_function(server_function, 'function_name')  # (name, callable name) tuple
+                                                            # maybe better if they are the same idk
+server.serve_forever()  # idk
+```
+
+# Fault Objects
+
+A `Fault` object encapsulates an XML-RPC fault tag, it has:
+
+- `faultCode`: `int` indicates fault type
+- `faultString`: contains diagnostic message
+
+It is needed in cases of type problems and such, so we *should* be safe since all we intend to pass around are strings or dictionaries.
+
+# ProtocolError 
+
+A `ProtocolError` object is like *"404 not found"*, i.e. problems in the underlying transport layer. \
+It has the following attributes:
+
+- `url`: who triggered the error
+- `errcode`: error type
+- `errmsg`: diagnostic string
+- `headers`: HTTP requests that triggered the error
+
+They are propagated automatically by the server, and handled by the client
+
+```python
+import xmlrpc.client
+
+# server that does not respond to XMLRPC requests
+proxy = xmlrpc.client.ServerProxy("http://google.com/")
+
+# protocol errors are exceptions
+try:
+    proxy.some_method()                         # some.method() didnt work
+except: xmlrpc.client.ProtocolError as error:   # so a error has been caught
+    print(f'Error URL: {error.url}')
+    print(f'Error code: {error.errocode}')
+    print(f'Error message: {error.errmsg}')
+```
+
+
+
