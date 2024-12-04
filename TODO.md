@@ -1,7 +1,7 @@
 # TODO
 ## Project's Roadmap
 
-1. POC logging in Python
+1. ~~POC logging in Python~~
 2. POC RPCs in Python
 3. POC UI implementation with one of the various solutions
 4. POC mounting UI on some custom classes
