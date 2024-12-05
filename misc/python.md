@@ -1058,39 +1058,61 @@ PROBLEM: can the server forward messages to the clients? Only time will tell, so
 - server create a response to a non-existent request
 - use explicit modules like tpc (is it still an rpc a that point?)
 
+## Mixed Approach
 
-## Problem
+Since `xmlrpc.server` only exposes functions to be called by a `xmlrpc.client`, which in turns can only call exposed functions, a Raft node cannot be either. But it can be both i.e. 
 
-Everything works quite nicely: `server` makes into existence a simple HTTP localhost server that communicates with its `client`s via XML-RPCs.\
-Raft requires nodes to communicate directly with each other (technically only with the Leader but since anyone can be one, anyone must be able to speak) and so any single node should be able to become either a `server` or a `client`. \
-The flow would be something like this:
+```python
+# server without exposed functions
+with SimpleXMLRPCServer (('localhost', 8080)) as server:
 
-- Follower timeout
-  - Becomes `SimpleXMLRPCServer` i.e. becomes *http://localhost:8080*
-    - `xmlrpc` reject since server already exists 
-      - remain Follower 
-      - reset timer
-    - Server created
-      - becomes Candidate
-- Candidate request vote RPC
-  - rejected
-    - returns Follower
-    - shuts down `Server`
-  - accepted
-    - becomes Leader
-- Leader is `SimpleXMLRPCServer`
-  - sends heartbeat
+    # client inside server
+    with xmlrpc.client.ServerProxy('http://localhost:8080', allow_none=True) as proxy:
+        print(proxy.test_foo(42))
 
-Real problem: `xmlrpc.server` only exposes functions and methods, so it is not able to propagate RPCs itself (also only one candidate at a time)
 
-What could we do: invert heartbeat propagation so using MariaDB approach of pulling instead of pushing i.e *Candidates* periodically asks *Leader* if its still there. \
-Advantage: leader doesn't need to keep track of 
+    server.serve_forever()
+```
 
-Unhinged workaround (possibly very stable): 
+Oss: if `serve_forever()` use client inside `service_actions()` or set `Timeout = None`.
 
-- Followers are all `SimpleXMLRPCServer`s, each with its own port
-- Leader is the only `client`
+Advantages of this approach:
+- `xmlrpc` does everything by itself:
+  - establish server
+  - expose functionality 
+  - handle common tcp errors
+- no need to use `socket.socket()` directly
+- `xmlrpc` is a standard library module hence great compatibility
+- actually uses rpcs since I didn't made the module
+- mixed server/client means that nodes are real servers
+  - coherent to Raft specifications
+  - future expandability: they can be enhanced to expose whatever  
+  - long lived
 
-**WHAT IF**: every node is both a server and a client
+## socketserver.TCPServer
 
-**It works!** In a simple proof of concept at least.
+`SimpleXMLRPCServer` extends class `socketserver.TCPServer` hence can use its functionalities.\
+It is synchronous: each request must be completed before the next can be started (should be fine for Raft specs)
+
+### serve_forever(poll_interval=0.5)
+
+Handle requests until explicit `shutdown()` (not necessary if used `with`). Poll for shutdown every *poll_interval* seconds. 
+
+Ignores `timeout` attribute hence server does not shuts down automatically.
+
+Loops on `service_actions()`
+
+### service_actions()
+
+> added in version 3.3
+Called in the `serve_forever()` loop, can be overridden.
+
+### shutdown()
+
+Stops `serve_forever()` loop and wait until it is done.
+
+If `serve_forever()` is running in the same thread it will deadlock.
+
+### timeout
+
+Measured in seconds, can be set to `None`
