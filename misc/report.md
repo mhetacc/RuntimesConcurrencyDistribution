@@ -151,6 +151,7 @@ The latter, on the other hand, shouldn't prove to be much of an issue.\
 
 The real reason to follow trough with this approach, which of course modify Raft quite a bit, is to avoid creating RPCs from scratch using lower-level modules like `socket`. 
 
+Unhinged workaround (possibly very stable): 
 
-
-```python```
+- Followers are all `SimpleXMLRPCServer`s, each with its own port
+- Leader is the only `client`

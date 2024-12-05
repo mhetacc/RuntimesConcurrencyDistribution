@@ -1086,4 +1086,7 @@ Real problem: `xmlrpc.server` only exposes functions and methods, so it is not a
 What could we do: invert heartbeat propagation so using MariaDB approach of pulling instead of pushing i.e *Candidates* periodically asks *Leader* if its still there. \
 Advantage: leader doesn't need to keep track of 
 
+Unhinged workaround (possibly very stable): 
 
+- Followers are all `SimpleXMLRPCServer`s, each with its own port
+- Leader is the only `client`
