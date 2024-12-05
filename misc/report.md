@@ -113,3 +113,44 @@ Python is the only language that has both:
 Hence it is the language of choice to make this project. 
 Moreover: it is one of the most prominent languages today, without any sign of stopping in popularity, coveted by both companies and public institutions and it is also widely used in research, from data science to cyber security to machine learning and AI. Lastly, thanks to it being an interpreted language, considerable time during program development should be saved because no compilation and linking is necessary. \
 The interpreter can be used interactively, which makes it easy to experiment with features of the language, to write throw-away programs, or to test functions during bottom-up program development.
+
+# Development
+
+## Remote Procedure Calls 
+
+### xmlrpc
+
+Standard-library provided module to handle RPCs in Python, it provides both a ``server`` and a ``client`` module which makes everything quite trivial: \
+`server` makes into existence a simple HTTP localhost server that communicates with its `client`s via XML-RPCs.\
+Raft requires nodes to communicate directly with each other (technically only with the Leader but since anyone can be one, anyone must be able to speak) and so any single node should be able to become either a `server` or a `client`. \
+The flow would be something like this:
+
+- Follower timeout
+  - Becomes `SimpleXMLRPCServer` i.e. becomes *http://localhost:8080*
+    - `xmlrpc` reject since server already exists 
+      - remain Follower 
+      - reset timer
+    - Server created
+      - becomes Candidate
+- Candidate request vote RPC
+  - rejected
+    - returns Follower
+    - shuts down `Server`
+  - accepted
+    - becomes Leader
+- Leader is `SimpleXMLRPCServer`
+  - sends heartbeat
+
+Problems:
+- `xmlrpc.server` only exposes functions and methods, so it is not able to propagate RPCs itself 
+- There can be ony one "active" client at a time
+
+A possible workaround for the former would be to invert the whole algorithm flow, using (sort of) MongoDB approach of pulling instead of pushing i.e. *Candidates* periodically asks *Leader* if its still there. \
+Advantage: leader doesn't need to keep track of candidates and becomes a sort if passive orchestrator, while clients are active but not independent. \
+The latter, on the other hand, shouldn't prove to be much of an issue.\
+
+The real reason to follow trough with this approach, which of course modify Raft quite a bit, is to avoid creating RPCs from scratch using lower-level modules like `socket`. 
+
+
+
+```python```
