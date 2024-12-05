@@ -926,7 +926,20 @@ The queue module implements multi-producer, multi-consumer queues. It is especia
 
 To do RPCs Python provides a core library module called xmlrpc. 
 
-# ServerProxy 
+### Start a localhost server
+
+```shell
+python -m http.server port
+```
+
+If you want it in a specific directory
+
+```shell
+cd /my_dir
+python -m http.server 8080
+```
+
+### ServerProxy 
 
 A `ServerProxy` instance is an *object* that manages communication with a remote XML-RPC server.
 
@@ -966,17 +979,18 @@ from xmlrpc.server import SimpleXMLRPCServer
 def server_function(n):
     return f'The number is {n}'
 
-# create server on localhost, port 8080
-server = SimpleXMLRPCServer (('localhost', 8080))
+# create server on localhost, port 8000
+server = SimpleXMLRPCServer (('localhost', 8000))
 
 # register the function in the server 
 # and gives it a callable name
+# as usual it is good practice to use with
 server.register_function(server_function, 'function_name')  # (name, callable name) tuple
                                                             # maybe better if they are the same idk
 server.serve_forever()  # idk
 ```
 
-# Fault Objects
+### Fault Objects
 
 A `Fault` object encapsulates an XML-RPC fault tag, it has:
 
@@ -985,7 +999,7 @@ A `Fault` object encapsulates an XML-RPC fault tag, it has:
 
 It is needed in cases of type problems and such, so we *should* be safe since all we intend to pass around are strings or dictionaries.
 
-# ProtocolError 
+### ProtocolError 
 
 A `ProtocolError` object is like *"404 not found"*, i.e. problems in the underlying transport layer. \
 It has the following attributes:
@@ -1012,5 +1026,64 @@ except: xmlrpc.client.ProtocolError as error:   # so a error has been caught
     print(f'Error message: {error.errmsg}')
 ```
 
+### SimpleXMLRPCServer
+
+A `SimpleXMLRPCServer` object provides a means to create a basic sand alone XML-RPC server. 
+
+```python
+# Constructor
+
+xmlrpc.server.SimpleXMLRPCServer(
+    addr,  # ('url', port)
+    requestHandler=SimpleXMLRPCRequestHandler,
+    **kwargs,
+)
+```
+
+Method `register_function` expose functions that can respond to XML-RPC requests
+
+```python
+server.register_function(
+    fun_name,
+    "function",     # if not provided function.__name__ 
+                    # will be used instead
+                    # in this case it will be fun_name
+)
+```
+
+Method `register_instance` expose an object to call its methods.
+
+PROBLEM: can the server forward messages to the clients? Only time will tell, some sparse ideas:
+
+- server create a response to a non-existent request
+- use explicit modules like tpc (is it still an rpc a that point?)
+
+
+### Problem
+
+Everything works quite nicely: `server` makes into existence a simple HTTP localhost server that communicates with its `client`s via XML-RPCs.\
+Raft requires nodes to communicate directly with each other (technically only with the Leader but since anyone can be one, anyone must be able to speak) and so any single node should be able to become either a `server` or a `client`. \
+The flow would be something like this:
+
+- Follower timeout
+  - Becomes `SimpleXMLRPCServer` i.e. becomes *http://localhost:8080*
+    - `xmlrpc` reject since server already exists 
+      - remain Follower 
+      - reset timer
+    - Server created
+      - becomes Candidate
+- Candidate request vote RPC
+  - rejected
+    - returns Follower
+    - shuts down `Server`
+  - accepted
+    - becomes Leader
+- Leader is `SimpleXMLRPCServer`
+  - sends heartbeat
+
+Real problem: `xmlrpc.server` only exposes functions and methods, so it is not able to propagate RPCs itself (also only one candidate at a time)
+
+What could we do: invert heartbeat propagation so using MariaDB approach of pulling instead of pushing i.e *Candidates* periodically asks *Leader* if its still there. \
+Advantage: leader doesn't need to keep track of 
 
 
