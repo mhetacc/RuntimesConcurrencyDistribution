@@ -1,4 +1,5 @@
 from pathlib import Path
+import xmlrpc.client
 import logging
 import datetime
 
@@ -12,3 +13,8 @@ logpath = Path(f'logs/{filename}/{datetime.datetime.now()}.{filename}.log')
 filehandle = logging.FileHandler(logpath)
 logger.addHandler(filehandle)
 
+
+
+with xmlrpc.client.ServerProxy('http://localhost:8080', allow_none=True) as server:
+    
+    print(server.test_foo(42))  # working
