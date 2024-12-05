@@ -922,11 +922,11 @@ https://docs.python.org/3.12/library/queue.html#module-queue
 
 The queue module implements multi-producer, multi-consumer queues. It is especially useful in threaded programming when information must be exchanged safely between multiple threads.
 
-## Remote Procedure Calls - xmlrpc 
+# Remote Procedure Calls - xmlrpc 
 
 To do RPCs Python provides a core library module called xmlrpc. 
 
-### Start a localhost server
+## Start a localhost server
 
 ```shell
 python -m http.server port
@@ -939,7 +939,7 @@ cd /my_dir
 python -m http.server 8080
 ```
 
-### ServerProxy 
+## ServerProxy 
 
 A `ServerProxy` instance is an *object* that manages communication with a remote XML-RPC server.
 
@@ -990,7 +990,7 @@ server.register_function(server_function, 'function_name')  # (name, callable na
 server.serve_forever()  # idk
 ```
 
-### Fault Objects
+## Fault Objects
 
 A `Fault` object encapsulates an XML-RPC fault tag, it has:
 
@@ -999,7 +999,7 @@ A `Fault` object encapsulates an XML-RPC fault tag, it has:
 
 It is needed in cases of type problems and such, so we *should* be safe since all we intend to pass around are strings or dictionaries.
 
-### ProtocolError 
+## ProtocolError 
 
 A `ProtocolError` object is like *"404 not found"*, i.e. problems in the underlying transport layer. \
 It has the following attributes:
@@ -1026,7 +1026,7 @@ except: xmlrpc.client.ProtocolError as error:   # so a error has been caught
     print(f'Error message: {error.errmsg}')
 ```
 
-### SimpleXMLRPCServer
+## SimpleXMLRPCServer
 
 A `SimpleXMLRPCServer` object provides a means to create a basic sand alone XML-RPC server. 
 
@@ -1059,7 +1059,7 @@ PROBLEM: can the server forward messages to the clients? Only time will tell, so
 - use explicit modules like tpc (is it still an rpc a that point?)
 
 
-### Problem
+## Problem
 
 Everything works quite nicely: `server` makes into existence a simple HTTP localhost server that communicates with its `client`s via XML-RPCs.\
 Raft requires nodes to communicate directly with each other (technically only with the Leader but since anyone can be one, anyone must be able to speak) and so any single node should be able to become either a `server` or a `client`. \
@@ -1090,3 +1090,7 @@ Unhinged workaround (possibly very stable):
 
 - Followers are all `SimpleXMLRPCServer`s, each with its own port
 - Leader is the only `client`
+
+**WHAT IF**: every node is both a server and a client
+
+**It works!** In a simple proof of concept at least.
