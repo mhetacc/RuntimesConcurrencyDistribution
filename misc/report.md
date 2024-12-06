@@ -1,4 +1,4 @@
-*This document is not intended to be the actual final report, it is just a place to keep important information and intuitions that would otherwise be lost during the development of the project.*
+*This document is not intended to be the actual final report, it is just a place to keep track of important information and intuitions that would otherwise be lost during the development of the project.*
 
 ---
 

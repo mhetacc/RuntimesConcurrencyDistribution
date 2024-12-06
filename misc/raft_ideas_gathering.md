@@ -1,3 +1,7 @@
+*Preliminary phase: what can be done to show Raft's potential?*
+
+---
+
 ## Raft-using products and services
 ### CockroachDB
 https://en.wikipedia.org/wiki/CockroachDB \

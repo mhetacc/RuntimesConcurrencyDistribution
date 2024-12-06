@@ -1,3 +1,7 @@
+*Information repository: all there is to know (for this project at least) on Python. First section is about language in general (conventions, types, etc) while second section is about specific Python modules (like ui or rpcs modules)*
+
+---
+
 # Python Language 
 
 ## Conventions
@@ -772,7 +776,7 @@ if 1900 < year < 2100 and 1 <= month <= 12 \
 ```
 
 
-# Specific Tools
+# Python Modules
 
 ## Logging (debug)
 `logging` module: https://docs.python.org/3/library/logging.html
@@ -922,11 +926,11 @@ https://docs.python.org/3.12/library/queue.html#module-queue
 
 The queue module implements multi-producer, multi-consumer queues. It is especially useful in threaded programming when information must be exchanged safely between multiple threads.
 
-# Remote Procedure Calls - xmlrpc 
+## xmlrpc (Remote Procedure Calls) 
 
 To do RPCs Python provides a core library module called xmlrpc. 
 
-## Start a localhost server
+### Start a localhost server
 
 ```shell
 python -m http.server port
@@ -939,7 +943,7 @@ cd /my_dir
 python -m http.server 8080
 ```
 
-## ServerProxy 
+### ServerProxy 
 
 A `ServerProxy` instance is an *object* that manages communication with a remote XML-RPC server.
 
@@ -990,7 +994,7 @@ server.register_function(server_function, 'function_name')  # (name, callable na
 server.serve_forever()  # idk
 ```
 
-## Fault Objects
+### Fault Objects
 
 A `Fault` object encapsulates an XML-RPC fault tag, it has:
 
@@ -999,7 +1003,7 @@ A `Fault` object encapsulates an XML-RPC fault tag, it has:
 
 It is needed in cases of type problems and such, so we *should* be safe since all we intend to pass around are strings or dictionaries.
 
-## ProtocolError 
+### ProtocolError 
 
 A `ProtocolError` object is like *"404 not found"*, i.e. problems in the underlying transport layer. \
 It has the following attributes:
@@ -1026,7 +1030,7 @@ except: xmlrpc.client.ProtocolError as error:   # so a error has been caught
     print(f'Error message: {error.errmsg}')
 ```
 
-## SimpleXMLRPCServer
+### SimpleXMLRPCServer
 
 A `SimpleXMLRPCServer` object provides a means to create a basic sand alone XML-RPC server. 
 
@@ -1058,7 +1062,7 @@ PROBLEM: can the server forward messages to the clients? Only time will tell, so
 - server create a response to a non-existent request
 - use explicit modules like tpc (is it still an rpc a that point?)
 
-## Mixed Approach
+### Mixed Approach
 
 Since `xmlrpc.server` only exposes functions to be called by a `xmlrpc.client`, which in turns can only call exposed functions, a Raft node cannot be either. But it can be both i.e. 
 
@@ -1089,7 +1093,7 @@ Advantages of this approach:
   - future expandability: they can be enhanced to expose whatever  
   - long lived
 
-## socketserver.TCPServer
+### socketserver.TCPServer
 
 `SimpleXMLRPCServer` extends class `socketserver.TCPServer` hence can use its functionalities.\
 It is synchronous: each request must be completed before the next can be started (should be fine for Raft specs)

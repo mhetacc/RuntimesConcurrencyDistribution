@@ -1,3 +1,7 @@
+*Tech-choosing phase: what language to use? What game engine (if any) to use?*
+
+---
+
 # Game Engines
 https://www.reddit.com/r/gamedev/comments/17v7b8p/a_good_c_game_engine/
 
