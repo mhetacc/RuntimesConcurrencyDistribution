@@ -1098,7 +1098,7 @@ Advantages of this approach:
 `SimpleXMLRPCServer` extends class `socketserver.TCPServer` hence can use its functionalities.\
 It is synchronous: each request must be completed before the next can be started (should be fine for Raft specs)
 
-### serve_forever(poll_interval=0.5)
+#### serve_forever(poll_interval=0.5)
 
 Handle requests until explicit `shutdown()` (not necessary if used `with`). Poll for shutdown every *poll_interval* seconds. 
 
@@ -1106,17 +1106,17 @@ Ignores `timeout` attribute hence server does not shuts down automatically.
 
 Loops on `service_actions()`
 
-### service_actions()
+#### service_actions()
 
 > added in version 3.3
 Called in the `serve_forever()` loop, can be overridden.
 
-### shutdown()
+#### shutdown()
 
 Stops `serve_forever()` loop and wait until it is done.
 
 If `serve_forever()` is running in the same thread it will deadlock.
 
-### timeout
+#### timeout
 
 Measured in seconds, can be set to `None`
