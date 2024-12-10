@@ -1123,5 +1123,113 @@ Measured in seconds, can be set to `None`
 
 ## Tkinter 
 
+Version: 8.6.14
+
+- Uses a classic widget object model, in a parent-child structure (kinda like html or Dart)
+- Widgets are not automatically added to the UI, a *geometry manager* like `grid` is needed to control their placement
+- Every UI update (user input, refreshes, etc) can happen only if an *event loop* like `mainloop` is running 
+
+Every time we create a widget we must specify its parent
+
+```python
+# new widget will be placed inside parent widget
+newwidget = ttk.Widget (parent, **kwargs)
+```
+
+```python
+# standard Tkinter import practice
+from tkinter import *
+from tkinter import ttk
+
+root = Tk() # main window   
+            # likely not a UI element
+frm = ttk.Frame(root, padding=10) # fit inside window
+                                  # matches new-tk style while main window does not
+frm.grid() # relative grid layout 
+
+# label widgets that holds a static text string
+ttk.Label(frm, text="Hello World!").grid(column=0, row=0)
+
+# button widget, destroy() on_pressed()
+ttk.Button(frm, text="Quit", command=root.destroy).grid(column=1, row=0)
+
+# puts element on display
+# responds to user input
+root.mainloop() 
+```
+
+Introspection as reference documentation
+
+```python
+button = ttk.Button()
+print(button.configure().keys()) # dict with all object's config options 
+                                 # keys() gets just the names of each option
+
+# finds specific class config options
+print(
+    set(button.configure().keys()) 
+    - set(frame.configure().keys())
+)
+
+# similarly to get all object's methods 
+print(dir(button)) # will gets me over 200 methods
+print(
+    set(dir(button))
+    - set(dir(frame))
+)
+```
 
 
+### Threading model
+
+Python and Tcl/Tk have different threading models, which `tkinter` tries to bridge. \
+Each thread has a separate Tcl interpreter instance associated to it.\
+Each Tk object created by `tkinter` contains a Tcl interpreter.
+
+Since `Tk.mainloop()` is single threaded, event handler could block other events from being processed. To avoid this, any long running computations should not run in an event handler, but either broken int smaller pieces using timers, or run in another thread entirely.\
+*i.e GUI runs in the same thread as all application code including event handlers.*
+
+### Setting options
+
+Controls things like color and border width of a widget. We have three ways to set them
+
+```python
+# set widget object options
+
+# at creation time using **kwargs
+button = Button(self, foreground="red", background="blue")
+
+# at creation time using dict-like
+button["foreground"] = "red"
+button["background"] = "blue"
+
+# using config() method after object creation 
+button.config(foreground="red", background="blue")
+```
+
+### React Hooks
+
+Of course the concept of hooks does not exists in tkinter, but coupled variables provide a similar functionality: variable's change produces an update in the widget.\
+Such variables (hooks) must be subclassed from `tkinter.Variable`.
+
+There are many subclasses already defined, like `StringVar`, `IntVar`, `DoubleVar` and `BooleanVar`. \
+To read current value use `get()`, to change it use `set()`. Following this protocol ensures widget always tracks variable's value.
+
+```python
+class App (tk.Frame):
+    def __init__():
+        self.hook = tk.StringVar()
+        self.hook.set("Default value")
+
+
+# i guess that if an outsider calls hook.set() the UI will update accordingly
+```
+
+### Data Types 
+
+Tk add some custom optional data types, like:
+
+- color eg `"#RGB"`
+- distance eg `35m` means 35mm
+- geometry eg `button["geometry"] = "200x100"` usually in pixels
+- images eg subclasses of `tkinter.Image` like `PhotoImage` for pngs or gifs. 
