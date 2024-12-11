@@ -1358,4 +1358,65 @@ If i want to delete elements (de-grid them) i can use :
 - `forget(*elem)`: takes off the screen a list of one or more widget, does not destroy the widgets
 - `remove(*elem)`: same but grid options will be remembered
 
+#### Canvas
 
+Opposite approach: extremely manual but because of this it is easier to do things in a specific way (ie don't need as many workarounds)
+
+```python
+# create canvas
+canvas = Canvas(parent, width=500, height=400, background='gray75')
+
+# line
+canvas.create_line(10, 10, 200, 50, 90, 150, 50, 80)
+
+# rectangle
+canvas.create_rectangle(10, 10, 200, 50, fill='red', outline='blue')
+
+# arbitrary shape
+canvas.create_polygon(10, 10, 200, 50, 90, 150, 50, 80, 120, 55, fill='red', outline='blue')
+
+# image
+myimg = PhotoImage(file='pretty.png')
+canvas.create_image(
+    10, 10,        # coordinates
+    image=myimg,   #  
+    anchor='nw'    # where to put top left of img
+    )
+
+# text
+canvas.create_text(100, 100, text='A wonderful story', anchor='nw', font='TkMenuFont', fill='red')
+
+# widget
+button = ttk.Button(canvas, text='Implode!')
+canvas.create_window(10, 10, anchor='nw', window=button)
+```
+
+To act on item we have options:
+
+- `delete`: delete item
+- `coords`: change size and position
+- `move`: offset position
+
+Items are drawn upon each other in what is called the **stacking order**: basically levels. We can change them by using:
+
+- `raise()` (or `lift`)
+- `lower()`
+
+We have a custom `bind` command specific for canvases 
+
+```python
+# specifies canvas number
+# works exactly like normal bind
+canvas.tag_bing(id, '<1>', ...)
+```
+
+Any time i can use `id` to modify specific widget, i can use a `tag` to modify **multiple** widgets that share that specific `tag`.
+
+```python
+# use in construction
+c = canvas.create_line(10, 10, 20, 20, tags=('gridline','verticalline'))
+
+# add later
+c.addtag('tag1','tag2', 'tag3')
+c.dtag(1, 'tag1') # credo
+```
