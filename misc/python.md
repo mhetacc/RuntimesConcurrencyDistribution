@@ -554,6 +554,9 @@ raise NameError('HiThere')
 class MyClass:
     class_variable = 'I am shared by all instances'
 
+    # Oss: self is not a keyword
+    # it is the pointer to the object itself
+    # must be made explicit 
     def __init__(self, name):
         self.instanceName = name 
 ```
@@ -1157,6 +1160,31 @@ ttk.Button(frm, text="Quit", command=root.destroy).grid(column=1, row=0)
 # responds to user input
 root.mainloop() 
 ```
+Options controls things like color and border width of a widget. We have three ways to set them
+
+```python
+# set widget object options
+
+# at creation time using **kwargs
+button = Button(self, foreground="red", background="blue")
+
+# at creation time using dict-like
+button["foreground"] = "red"
+button["background"] = "blue"
+
+# using config() method after object creation 
+button.config(foreground="red", background="blue")
+```
+
+Tk add some custom optional data types, like:
+
+- color eg `"#RGB"`
+- distance eg `35m` means 35mm
+- geometry eg `button["geometry"] = "200x100"` usually in pixels
+- images eg subclasses of `tkinter.Image` like `PhotoImage` for pngs or gifs. 
+
+
+### Introspection
 
 Introspection as reference documentation
 
@@ -1179,6 +1207,53 @@ print(
 )
 ```
 
+`configure()` will produce something like the following
+
+```shell
+>>> button.configure()
+{'cursor': ('cursor', 'cursor', 'Cursor', '', ''), 'style': ('style', 'style', 'Style', '', ''), 
+'default': ('default', 'default', 'Default', <index object at 0x00DFFD10>, <index object at 0x00DFFD10>), 
+'text': ('text', 'text', 'Text', '', 'goodbye'), 'image': ('image', 'image', 'Image', '', ''), 
+'class': ('class', '', '', '', ''), 'padding': ('padding', 'padding', 'Pad', '', ''), 
+'width': ('width', 'width', 'Width', '', ''), 
+'state': ('state', 'state', 'State', <index object at 0x0167FA20>, <index object at 0x0167FA20>), 
+'command': ('command', 'command' , 'Command', '', 'buttonpressed'), 
+'textvariable': ('textvariable', 'textVariable', 'Variable', '', ''), 
+'compound': ('compound', 'compound', 'Compound', <index object at 0x0167FA08>, <index object at 0x0167FA08>), 
+'underline': ('underline', 'underline', 'Underline', -1, -1), 
+'takefocus': ('takefocus', 'takeFocus', 'TakeFocus', '', 'ttk::takefocus')}
+```
+
+Which should be treated as
+
+```python
+# most useful are first (name), last (current value) and fourth (default value) 
+{
+    'key' : ('option name',*args,'default value', 'current value')
+}
+
+# button.configure() output
+{'cursor': ('cursor', 'cursor', 'Cursor', '', ''), 'style': ('style', 'style', 'Style', '', ''), 
+'default': ('default', 'default', 'Default', <index object at 0x00DFFD10>, <index object at 0x00DFFD10>),}
+```
+
+Using `winfo` we can get information on the widget
+
+```python
+# uses each widget winfo_children() to traverse widgets hierarchy
+def print_hierarchy(w, depth=0):
+    print('  '*depth + w.winfo_class() + ' w=' + str(w.winfo_width()) + ' h=' + str(w.winfo_height()) + ' x=' + str(w.winfo_x()) + ' y=' + str(w.winfo_y()))
+    for i in w.winfo_children():
+        print_hierarchy(i, depth+1)
+```
+
+Some of the most useful methods are:
+
+- `winfo_class`: widget type
+- `winfo_children`: list of children widgets
+- `winfo_parent`
+- `winfo_toplevel`
+- `winfo_width`
 
 ### Threading model
 
@@ -1189,35 +1264,62 @@ Each Tk object created by `tkinter` contains a Tcl interpreter.
 Since `Tk.mainloop()` is single threaded, event handler could block other events from being processed. To avoid this, any long running computations should not run in an event handler, but either broken int smaller pieces using timers, or run in another thread entirely.\
 *i.e GUI runs in the same thread as all application code including event handlers.*
 
-### Setting options
+### Event Handling 
 
-Controls things like color and border width of a widget. We have three ways to set them
+Simple callbacks are used eg when pressing a button. Most of he time I want my callback to call some other procedure.
 
 ```python
-# set widget object options
+def dostuff():
+    # fun body
 
-# at creation time using **kwargs
-button = Button(self, foreground="red", background="blue")
 
-# at creation time using dict-like
-button["foreground"] = "red"
-button["background"] = "blue"
-
-# using config() method after object creation 
-button.config(foreground="red", background="blue")
+# this button calls the function 
+ttk.Button(parent, text="Press Me", command=dostuff)
 ```
 
-### React Hooks
+To produce an action after an input, or for events that don't have a widget specific command callback associated to them (eg `button:command`) we can `bind` them together
 
-Of course the concept of hooks does not exists in tkinter, but coupled variables provide a similar functionality: variable's change produces an update in the widget.\
-Such variables (hooks) must be subclassed from `tkinter.Variable`.
+```python
+# calls function() after <Return> key is pressed
+# in modern computer it is Enter key
+root.bind("<Return>", function)
+
+
+# or we can make a label respond to different mouse commands
+l =ttk.Label(root, text="Starting...")
+l.grid()
+l.bind('<Enter>', lambda e: l.configure(text='Moved mouse inside'))
+l.bind('<Leave>', lambda e: l.configure(text='Moved mouse outside'))
+# left (main) click
+l.bind('<ButtonPress-1>', lambda e: l.configure(text='Clicked left mouse button'))
+# right click
+l.bind('<ButtonPress3>', lambda e: l.configure(text='Clicked right mouse button'))
+# left (main) double click
+l.bind('<Double-1>', lambda e: l.configure(text='Double clicked'))
+l.bind('<B3-Motion>', lambda e: l.configure(text='right button drag to %d,%d' % (e.x, e.y)))
+
+# WHY LAMBDA?
+# in this specific example the callbacks used are so trivial that creating a "real" function is unnecessary 
+```
+
+Some common bindings follow, to see all best to look at `bind` command reference:
+
+- `<Activate>`: window has become active
+- `<KeyPress>`
+- `<Motion>`: mouse has been moved
+- `<Enter>`: mouse pointer has entered widget
+
+Coupled variables provide a similar functionality to hooks: variable's change produces an update in the widget.\
+Such variables must be subclassed from `tkinter.Variable`.
 
 There are many subclasses already defined, like `StringVar`, `IntVar`, `DoubleVar` and `BooleanVar`. \
 To read current value use `get()`, to change it use `set()`. Following this protocol ensures widget always tracks variable's value.
 
+When using these variables Tk will *automatically* update view any time they are changed.
+
 ```python
 class App (tk.Frame):
-    def __init__():
+    def __init__(self):
         self.hook = tk.StringVar()
         self.hook.set("Default value")
 
@@ -1225,11 +1327,3 @@ class App (tk.Frame):
 # i guess that if an outsider calls hook.set() the UI will update accordingly
 ```
 
-### Data Types 
-
-Tk add some custom optional data types, like:
-
-- color eg `"#RGB"`
-- distance eg `35m` means 35mm
-- geometry eg `button["geometry"] = "200x100"` usually in pixels
-- images eg subclasses of `tkinter.Image` like `PhotoImage` for pngs or gifs. 
