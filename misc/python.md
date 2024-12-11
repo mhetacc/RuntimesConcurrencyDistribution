@@ -1338,3 +1338,24 @@ class App (tk.Frame):
 # i guess that if an outsider calls hook.set() the UI will update accordingly
 ```
 
+### Geometry
+
+#### grid()
+
+To access single (or multiple) grid children i can use `grid_slaves()`
+
+```python
+for cell in content.grid_slaves(row=3):
+    print(cell)
+
+singlecell = content.grid_slaves(3,3) 
+print(singlecell)
+```
+
+And i can configure options after gridding with `.grid_configure(**options)`. \
+If i want to delete elements (de-grid them) i can use :
+
+- `forget(*elem)`: takes off the screen a list of one or more widget, does not destroy the widgets
+- `remove(*elem)`: same but grid options will be remembered
+
+

@@ -30,7 +30,7 @@ ttk.Label(frame, text='Bottom Text').grid(column=0, row=5, columnspan=4)
 button = Button(frame, background="red", width=1, height=1, command=lambda: toptext.set('Button Pressed'))
 
 
-# loop to fix boxes sizes of grid by implanting exact frame
+# loop to fix cell sizes of grid by implanting frame of exact dimensions
 # not the best workaround but fine
 for i in range(1,5):
     for j in range(0,4):
@@ -44,11 +44,6 @@ for i in range(1,5):
                 row=i
             )
 
-# lets try to access grid[3][3] 
-# and plant in it something 
 
-singlecell = frame.grid_slaves(3,3)
-print(singlecell)
-
-
+# runs application
 root.mainloop()
