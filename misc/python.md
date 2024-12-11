@@ -1183,6 +1183,17 @@ Tk add some custom optional data types, like:
 - geometry eg `button["geometry"] = "200x100"` usually in pixels
 - images eg subclasses of `tkinter.Image` like `PhotoImage` for pngs or gifs. 
 
+The usual way to display in image is using `PhotoImage` and `Label`
+
+```python
+label = ttk.Label(parent)
+image = PhotoImage(file='img.gif')
+label['image'] = image
+
+# i guess we could compact it to
+lpic = ttk.Label(parent, image=PhotoImage(file='img.gif'))
+```
+
 
 ### Introspection
 
