@@ -1360,7 +1360,23 @@ If i want to delete elements (de-grid them) i can use :
 
 #### Canvas
 
-Opposite approach: extremely manual but because of this it is easier to do things in a specific way (ie don't need as many workarounds)
+- [official tutorials](https://tkdocs.com/tutorial/)
+- [official docs](https://tcl.tk/man)
+- [better docs](https://anzeljg.github.io/rin2/book2/2405/docs/tkinter/)
+
+Opposite approach: extremely manual but because of this it is easier to do things in a specific way (ie doesn't need as many workarounds).
+
+Canvas coordinates starts from top left corner and increase going down and right, like a matrix (row, col) would
+
+```python
+canvas = Canvas(parent, width=1, height=1)
+
+# [(0,0)]  [ ]  [(1,0)]
+# [ ]  [(.5, .5)] [ ]
+# [(0,1)]  [ ]  [(1,1)]
+```
+
+Canvas basics
 
 ```python
 # create canvas
@@ -1368,6 +1384,8 @@ canvas = Canvas(parent, width=500, height=400, background='gray75')
 
 # line
 canvas.create_line(10, 10, 200, 50, 90, 150, 50, 80)
+# it goes through a series of points
+id = canvas.create_line(x0, y0, x1, y1, ..., xn, yn, **options) 
 
 # rectangle
 canvas.create_rectangle(10, 10, 200, 50, fill='red', outline='blue')
@@ -1387,11 +1405,12 @@ canvas.create_image(
 canvas.create_text(100, 100, text='A wonderful story', anchor='nw', font='TkMenuFont', fill='red')
 
 # widget
+# must be put inside a window
 button = ttk.Button(canvas, text='Implode!')
 canvas.create_window(10, 10, anchor='nw', window=button)
 ```
 
-To act on item we have options:
+To act on items we have options:
 
 - `delete`: delete item
 - `coords`: change size and position
@@ -1402,7 +1421,23 @@ Items are drawn upon each other in what is called the **stacking order**: basica
 - `raise()` (or `lift`)
 - `lower()`
 
-We have a custom `bind` command specific for canvases 
+Any time i can use `id` to modify specific widget, i can use a `tag` to modify **multiple** widgets that share that specific `tag`.
+
+```python
+# use in construction
+c = canvas.create_line(10, 10, 20, 20, tags=('gridline','verticalline'))
+
+# add later 
+c.addtag('tag1','tag2', 'tag3')
+
+# delete
+c.dtag(1, 'tag1') # credo
+
+# find
+c.find_withtag('tag') # accepts also an item
+```
+
+We have a custom `bind` command specific for canvases that works with group of elements that shares the same `tag`
 
 ```python
 # specifies canvas number
@@ -1410,13 +1445,91 @@ We have a custom `bind` command specific for canvases
 canvas.tag_bing(id, '<1>', ...)
 ```
 
-Any time i can use `id` to modify specific widget, i can use a `tag` to modify **multiple** widgets that share that specific `tag`.
+##### Scrolling
+
+In many applications you want a canvas larger than the window (eg a game map). I can attach horizontal and vertical scrollbars to the canvas in the usual way via `xview()` and `yview()`.
+
+I therefore specify two sizes:
+
+- `width` and `height` specify window size
+- `scrollregion` config option coordinates (left, top, right, bottom) specify canvas size 
+
+Then since `bind` does not now that a scroll has occurred: if i scroll down 50 pixel, and i tap at (0,-50), it will be registered as (0,0). To offset axis-zero we use `canvasx()` and `canvasy()`.
 
 ```python
-# use in construction
-c = canvas.create_line(10, 10, 20, 20, tags=('gridline','verticalline'))
+# scroll bars
+h = ttk.Scrollbar(root, orient=HORIZONTAL)
+v = ttk.Scrollbar(root, orient=VERTICAL)
 
-# add later
-c.addtag('tag1','tag2', 'tag3')
-c.dtag(1, 'tag1') # credo
+# makes canvas scrollable 
+canvas = Canvas(root, scrollregion=(0, 0, 1000, 1000), yscrollcommand=v.set, xscrollcommand=h.set)
+h['command'] = canvas.xview
+v['command'] = canvas.yview
+
+def xy(event)
+    # may be incorrect
+    # update x,y positions
+    lastx = canvas.canvasx(event.x)
+    lasty = canvas.canvasy(event.y)
+
+# which is^ used by
+canvas.bind("<Button-1>", xy)
 ```
+
+##### Code Examples
+
+Create a canvas
+
+```python
+from tkinter import *
+from tkinter import ttk
+
+# implant in a grid to make it auto big??
+# min size 0, weight means rate of growth
+root = Tk()
+root.columnconfigure(0, weight=1)
+root.rowconfigure(0, weight=1)
+
+canvas = Canvas(root)
+canvas.grid(column=0, row=0, sticky=(N, W, E, S))
+
+root.mainloop()
+```
+
+Implant canvas in a grid
+
+```python
+canvas.grid(column=0, row=0, sticky=(N,W,E,S))
+h.grid(column=0, row=1, sticky=(W,E))
+v.grid(column=1, row=0, sticky=(N,S))
+root.grid_columnconfigure(0, weight=1)
+root.grid_rowconfigure(0, weight=1)
+```
+
+Use tags to set color 
+
+```python
+def setColor(newcolor):
+   global color
+   color = newcolor
+   canvas.dtag('all', 'paletteSelected')
+   canvas.itemconfigure('palette', outline='white')
+   canvas.addtag('paletteSelected', 'withtag', 'palette%s' % color)
+   canvas.itemconfigure('paletteSelected', outline='#999999')
+
+id = canvas.create_rectangle((10, 10, 30, 30), fill="red", tags=('palette', 'palettered'))
+id = canvas.create_rectangle((10, 35, 30, 55), fill="blue", tags=('palette', 'paletteblue'))
+id = canvas.create_rectangle((10, 60, 30, 80), fill="black", tags=('palette', 'paletteblack', 'paletteSelected'))
+
+setColor('black')
+canvas.itemconfigure('palette', width=5)
+ ```
+
+Bind event
+
+ ```python
+def doneStroke(event):
+    canvas.itemconfigure('currentline', width=1)        
+
+canvas.bind("<B1-ButtonRelease>", doneStroke)
+ ```
