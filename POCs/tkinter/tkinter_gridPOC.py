@@ -23,8 +23,8 @@ toptext = StringVar(master=frame, value='Top Text')
 
 # label text default anchor=CENTER
 # creates two labels that span all grid on x axis
-ttk.Label(frame, textvariable=toptext).grid(column=0, row=0, columnspan=4)
-ttk.Label(frame, text='Bottom Text').grid(column=0, row=5, columnspan=4)
+ttk.Label(frame, textvariable=toptext).grid(row=0, column=0, columnspan=4)
+ttk.Label(frame, text='Bottom Text').grid(row=5, column=0, columnspan=4)
 
 
 button = Button(frame, background="red", width=1, height=1, command=lambda: toptext.set('Button Pressed'))
@@ -36,12 +36,12 @@ for i in range(1,5):
     for j in range(0,4):
         # position of player
         if (i, j) == (3,2):
-            button.grid(column=j, row=i)
+            button.grid(row=i, column=j)
         else:
             ttk.Frame(frame, width=200, height=200, 
             borderwidth=2, relief=RIDGE).grid(
-                column=j,
-                row=i
+                row=i,
+                column=j
             )
 
 
