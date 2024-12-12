@@ -1523,13 +1523,81 @@ id = canvas.create_rectangle((10, 60, 30, 80), fill="black", tags=('palette', 'p
 
 setColor('black')
 canvas.itemconfigure('palette', width=5)
- ```
+```
 
 Bind event
 
- ```python
+```python
 def doneStroke(event):
     canvas.itemconfigure('currentline', width=1)        
 
 canvas.bind("<B1-ButtonRelease>", doneStroke)
- ```
+```
+
+## Pygame
+ 
+Typical game loop structure. The strict separation between game's logic and rendering routines is deliberate: prevents a whole pletora of bugs related to objects updating and rendering concurrently.
+
+```python
+import pygame
+
+# start engine
+pygame.init()
+
+# creates main screen
+screen = pygame.display.set_mode((1280,720))
+
+# starts clock
+clock = pygame.time.Clock()
+
+
+# everything runs inside infinite loop
+while True:
+    # Process player inputs.
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            raise SystemExit
+
+    # Do logical updates here.
+    # ...
+
+    screen.fill("purple")  # Fill the display with a solid color
+
+    # Render the graphics here.
+    # ...
+
+
+    # we want to limit display referesh speed
+    pygame.display.flip()  # Refresh on-screen display
+    clock.tick(60)         # wait until next frame (at 60 FPS)
+```
+
+Uses RGB color system
+
+```python
+pygame.Color(0, 0, 0)         # Black
+pygame.Color(255, 255, 255)   # White
+pygame.Color(128, 128, 128)   # Grey
+pygame.Color(255, 0, 0)       # Red
+```
+
+Rect can be used to do almost everything, like enemies, players, or cities in Raftian
+
+```python
+class Enemy(pygame.sprite.Sprite):
+      def __init__(self):
+        super().__init__() 
+        self.image = pygame.image.load("Enemy.png")
+        self.rect = self.image.get_rect()
+        self.rect.center=(random.randint(40,SCREEN_WIDTH-40),0) 
+ 
+      def move(self):
+        self.rect.move_ip(0,10)
+        if (self.rect.bottom > 600):
+            self.rect.top = 0
+            self.rect.center = (random.randint(30, 370), 0)
+ 
+      def draw(self, surface):
+        surface.blit(self.image, self.rect) 
+```
