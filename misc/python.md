@@ -1535,8 +1535,6 @@ canvas.bind("<B1-ButtonRelease>", doneStroke)
 ```
 
 ## Pygame
- 
-Typical game loop structure. The strict separation between game's logic and rendering routines is deliberate: prevents a whole plethora of bugs related to objects updating and rendering concurrently.
 
 Blit function is paramount to pygame, what is important to note is that blitted objects' *levels* follows program *scope*
 
@@ -1549,8 +1547,8 @@ DISPLAY.blit(source, (x,y))
 DISPLAY.blit(obj1, (10,10))
 DISPLAY.blit(obj2, (10,10)) # hides obj1
 ```
-
-Some basics
+ 
+Typical game loop structure. The strict separation between game's logic and rendering routines is deliberate: prevents a whole plethora of bugs related to objects updating and rendering concurrently.
 
 ```python
 import pygame
