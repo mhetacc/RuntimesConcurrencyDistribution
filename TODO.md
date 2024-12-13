@@ -3,8 +3,8 @@
 
 1. ~~POC logging in Python~~
 2. ~~POC xmlrpc in Python~~
-3. POC tkinter
-4. POC pygame
+3. ~~POC tkinter~~
+4. ~~POC pygame~~
 5. POC mounting chosen UI on some custom classes
 6. POC mounting RPCs in custom classes
 7. Design architecture 
