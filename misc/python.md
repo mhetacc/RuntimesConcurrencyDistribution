@@ -1126,6 +1126,8 @@ Measured in seconds, can be set to `None`
 
 ## Tkinter 
 
+Oss: old naming style: *window*, new naming style: *widget*.
+
 Version: 8.6.14
 
 - Uses a classic widget object model, in a parent-child structure (kinda like html or Dart)
@@ -1338,7 +1340,52 @@ class App (tk.Frame):
 # i guess that if an outsider calls hook.set() the UI will update accordingly
 ```
 
-### Geometry
+### Geometry Managers
+
+Tkinter uses geometry managers to place object in the applicaiton. If something is not managed by one it is not shown.
+
+There are three geometry managers:
+
+- pack()
+- grid()
+- place()
+
+### pack()
+
+Just place element one after the other vertically. If i want to make widgets as wide as the parent i can use `fill=X` option.
+Following code produces this result: ![](https://python-course.eu/images/tkinter/packing2.png)
+
+```python
+from tkinter import *
+
+root = Tk()
+window = tk.Label(root, text="Red Sun", bg="red", fg="white")
+window.pack(fill=tk.X)
+window = tk.Label(root, text="Green Grass", bg="green", fg="black")
+window.pack(fill=tk.X)
+window = tk.Label(root, text="Blue Sky", bg="blue", fg="white")
+window.pack(fill=tk.X)
+
+tk.mainloop()
+```
+
+### place()
+
+Allows to explicitly set the position and size of a widget, either in absolute terms or relative to another widget.
+
+```python
+# should create something like this
+# we can potentially put canvases in there
+#[ header ]  
+#[--------]
+#[--------]
+#[--------]
+#[ footer ]
+
+header.place(x=0, y=0, width=1000, height=100)
+mainwindow.place(x=0, y=100, width=1000, height=100)
+footer.place(x=0, y=1100, width=1000, height=100)
+```
 
 #### grid()
 
@@ -1358,7 +1405,9 @@ If i want to delete elements (de-grid them) i can use :
 - `forget(*elem)`: takes off the screen a list of one or more widget, does not destroy the widgets
 - `remove(*elem)`: same but grid options will be remembered
 
-#### Canvas
+### Canvas
+
+Must be placed inside a geometry manager but it allows great flexibility.
 
 - [official tutorials](https://tkdocs.com/tutorial/)
 - [official docs](https://tcl.tk/man)
@@ -1445,7 +1494,7 @@ We have a custom `bind` command specific for canvases that works with group of e
 canvas.tag_bing(id, '<1>', ...)
 ```
 
-##### Scrolling
+#### Scrolling
 
 In many applications you want a canvas larger than the window (eg a game map). I can attach horizontal and vertical scrollbars to the canvas in the usual way via `xview()` and `yview()`.
 
@@ -1476,7 +1525,7 @@ def xy(event)
 canvas.bind("<Button-1>", xy)
 ```
 
-##### Code Examples
+#### Code Examples
 
 Create a canvas
 
