@@ -113,3 +113,13 @@ Python is the only language that has both:
 Hence it is the language of choice to make this project. 
 Moreover: it is one of the most prominent languages today, without any sign of stopping in popularity, coveted by both companies and public institutions and it is also widely used in research, from data science to cyber security to machine learning and AI. Lastly, thanks to it being an interpreted language, considerable time during program development should be saved because no compilation and linking is necessary. \
 The interpreter can be used interactively, which makes it easy to experiment with features of the language, to write throw-away programs, or to test functions during bottom-up program development.
+
+# Development
+
+## User Interface
+
+### Technologies Showdown
+
+- **Tkinter.grid**: extremely automatized, so not only the programmer is left with little control (or knowledge) of what is happening, but it also necessary to use workarounds and a lot of work if we want to do things differently;
+- **Tkinter.canvas**: gives a lot more control to the programmer, but still tries to hide some complexity behind automatism;
+- **Pygame**: gives full control to the programmer, everything happens because there is a line of code that makes it so. This certainly means that a lot more coding is necessary, but at the end of the day it is actually easier to manage and way more fun.
