@@ -9,6 +9,6 @@
 6. POC mounting RPCs in custom classes
 7. Design architecture 
 8. Making Raft game system 
-9.  Mounting UI on it 
+9. Mounting UI on it 
 
 These steps are bound to change during the development process, especially last three steps.
