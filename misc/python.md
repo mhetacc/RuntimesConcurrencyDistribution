@@ -1536,7 +1536,21 @@ canvas.bind("<B1-ButtonRelease>", doneStroke)
 
 ## Pygame
  
-Typical game loop structure. The strict separation between game's logic and rendering routines is deliberate: prevents a whole pletora of bugs related to objects updating and rendering concurrently.
+Typical game loop structure. The strict separation between game's logic and rendering routines is deliberate: prevents a whole plethora of bugs related to objects updating and rendering concurrently.
+
+Blit function is paramount to pygame, what is important to note is that blitted objects' *levels* follows program *scope*
+
+```python
+# draw source surface (object) on the destination surface or coordinates
+DISPLAY.blit(source, dest)
+DISPLAY.blit(source, (x,y))
+
+# regarding scope: obj2 is drawn upon obj1
+DISPLAY.blit(obj1, (10,10))
+DISPLAY.blit(obj2, (10,10)) # hides obj1
+```
+
+Some basics
 
 ```python
 import pygame
@@ -1568,7 +1582,7 @@ while True:
     # ...
 
 
-    # we want to limit display referesh speed
+    # we want to limit display refresh speed
     pygame.display.flip()  # Refresh on-screen display
     clock.tick(60)         # wait until next frame (at 60 FPS)
 ```
@@ -1589,9 +1603,16 @@ class Enemy(pygame.sprite.Sprite):
       def __init__(self):
         super().__init__() 
         self.image = pygame.image.load("Enemy.png")
+
+        # define sprite borders 
+        # ie creates rect of the size of image and binds it
         self.rect = self.image.get_rect()
+
+        # define starting position on the screen
+        # with a bit of randomization
         self.rect.center=(random.randint(40,SCREEN_WIDTH-40),0) 
  
+
       def move(self):
         self.rect.move_ip(0,10)
         if (self.rect.bottom > 600):
@@ -1599,5 +1620,114 @@ class Enemy(pygame.sprite.Sprite):
             self.rect.center = (random.randint(30, 370), 0)
  
       def draw(self, surface):
+        # draw image on rect
         surface.blit(self.image, self.rect) 
+```
+
+I can group `Sprite` objects (or just do a `list` of `Rect`s)
+
+```python
+# we can probably do this with rect 
+
+# sprite group with all enemies
+enemies = pygame.sprite.Group()
+enemies.add(enemy)
+
+# sprit group with all sprites
+all_sprites = pygame.sprite.Group()
+all_sprites.add(player)
+all_sprites.add(enemy)
+
+
+# then i can iterate through all of them for collision detection
+if pygame.sprite.spritecollideany(player, enemies):
+    DISPLAY.fill(RED)
+    for entity in all_sprites:
+        entity.kill()
+    
+
+    time.sleep(2)
+    pygame.quit()
+    raise SystemExit
+```
+
+Fonts: for text that does not need to change we can render it outside of game loop. 
+
+```python
+# create font
+font = pygame.font.SysFont("Verdana", 60)
+
+# create actual graphics for a text
+text = font.render("Some Text", True, COLOR)
+
+# draw it on some coordinates
+DISPLAY.blit(text, (x,y))
+```
+
+Background image should be loaded outside game loop but `blit()` inside of it, since it must be redrawn as other entities move
+
+```python
+background = pygame.image.load("background.png")
+...
+...
+
+while True: 
+    ...
+    # draw first so it stays on bottom layer
+    DISPLAY.blit(background, (0,0))
+    
+    ...
+    ...
+``` 
+
+### Font and Text
+
+Two main classes:
+
+- `pygame.font.Font()`: takes font format file `.ttf`
+- `pygame.font.SysFont()`: need font name, uses standard fonts
+
+```python
+# custom
+font = pygame.font.Font("arial.ttf", 20)
+
+# system fonts
+font = pygame.font.SysFont("Helvetica", 20)
+
+# default
+font = pygame.font.Font(None, size)
+```
+
+Then i create the actual text by rendering it
+
+```python
+text = font.render(
+    "Displayed Text",  #
+    True,              # anti-aliasing
+    (0,0,0)            # text color
+)
+```
+
+And then i draw it on the screen
+
+```python
+screen.blit(text, (x,y))
+```
+
+### Events 
+
+Pygame comes with its own set of predefined events such as `K_LEFT` or `K_RIGHT`. These events are detected in the game loop.
+
+Pygame has a total of 32 event slots, of which the first 23 are predefined. We can use the remaining ones 
+
+```python
+# create user event whith id=24
+CUSTOM_EVENT = pygame.USEREVENT + 0
+```
+
+I can also broadcast my events using timers
+
+```python
+# uses milliseconds
+pygame.time.set_timer(CUSTOM_EVENT, 3000)
 ```
