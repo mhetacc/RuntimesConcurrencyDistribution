@@ -161,15 +161,15 @@ The key here is "in the project's scope": the "game" part of this project is lit
 - VFX sounds
 - Real game loop 
 
-Let's briefly explain each one. 
-Real sprite animations: in a real game we want stuff to move, eg when a city in Raftian gets damaged it should provide a pleasing visual feedback that something is going on.\
-Background music and VFX sounds: no one would watch a movie without sounds, and the same is true for games: to follow up on the previous example, when a city is attacked we would like to provide a sound feedback to the player.\
-Real game loop: this is were we actually get into the weeds of the project: if our objective is to evaluate the possibility of using Raft in a game, we *must* have a game loop to answer some very fundamental questions, like:
+Let's briefly explain each one. \
+**Real sprite animations:** in a real game we want stuff to move, eg when a city in Raftian gets damaged it should provide a pleasing visual feedback that something is going on.\
+**Background music and VFX sounds:** no one would watch a movie without sounds, and the same is true for games: to follow up on the previous example, when a city is attacked we would like to provide a sound feedback to the player.\
+**Real game loop:** this is were we actually get into the weeds of the project: if our objective is to evaluate the possibility of using Raft in a game, we *must* have a game loop to answer some very fundamental questions, like:
 
 - Do the Raft routines work when there is a game loop running at 60 cycles per seconds?
 - Does framerate (ie game loop frequency / frames per second) have an impact on the Raft's performance (30fps, 60fps, 120fps, 240fps etc)?
 
-These are essential questions since 60fps is the standard framerate in a game, 30fps the minimum acceptable, and other framerates while irrelevant for a static game like Raftian are very relevant in games like first person shooters, where we would like to have as many frames per second as we possibly can.\
+These are essential questions since 60fps is the standard framerate in a game, 30fps the minimum acceptable, and other framerates while irrelevant for a static game like Raftian are very relevant in games like first person shooters, where we would like to have as many frames per second as we can get.\
 Tkinter cannot provides us with answers, but **Pygame**  can: not only it natively implements all the above mentioned functionalities (animations, VFXs and music), but also has a real game loop that we can limit to a precise amount of frames per seconds with the command `pygame.time.Clock().tick(fps)`.
 
 These are the reasons that led me to ultimately choose Pygame as the project's UI library.
