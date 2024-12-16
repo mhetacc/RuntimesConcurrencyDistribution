@@ -172,4 +172,4 @@ Let's briefly explain each one. \
 These are essential questions since 60fps is the standard framerate in a game, 30fps the minimum acceptable, and other framerates while irrelevant for a static game like Raftian are very relevant in games like first person shooters, where we would like to have as many frames per second as we can get.\
 Tkinter cannot provides us with answers, but **Pygame**  can: not only it natively implements all the above mentioned functionalities (animations, VFXs and music), but also has a real game loop that we can limit to a precise amount of frames per seconds with the command `pygame.time.Clock().tick(fps)`.
 
-These are the reasons that led me to ultimately choose Pygame as the project's UI library.
+These reasons, along with the fact that using Pygame would be a valuable learning experience (getting "hands on" on a game engine), make the whole project more interesting from an outsider's perspective and, lastly, be more fun to make, led me to ultimately choose Pygame as the project's UI library.
