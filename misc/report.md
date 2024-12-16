@@ -120,7 +120,56 @@ The interpreter can be used interactively, which makes it easy to experiment wit
 
 ### Technologies Showdown
 
-- **Tkinter.grid**: extremely automatized, so not only the programmer is left with little control (or knowledge) of what is happening, but it also necessary to use workarounds and a lot of work if we want to do things differently;
-- **Tkinter.canvas**: gives a lot more control to the programmer, but still relies on the other geometry managers (since it is not one);
-- **Pygame**: gives full control to the programmer, everything happens because there is a line of code that makes it so. This certainly means that a lot more coding is necessary, but at the end of the day it is actually easier to manage and way more fun.
+To produce the wanted results with **Tkinter**, ie making an app in the guise of a game, two components are needed:
 
+- a geometry manger between:
+  - tkinter.pack
+  - tkinter.place
+  - tkinter.grid
+- tkinter.canvas
+
+The idea is to use canvases as the various windows of our game, since they allow us extreme flexibility and control on what to place inside them (with precise coordinates). \
+We can also create interactable objects with the `bind` command, like so:
+
+```python
+# to create a interactable game sprite we can 
+# bind left mouse button event to it
+
+sprite = PhotoImage(file='sprite.png')
+canvas.create_image(10, 10, image=sprite)
+
+sprite.bind("<Button-1>", lambda e: print("Sprite Clicked"))
+```
+
+On the other hand in **Pygame** we can do everything using `Rect` objects: rectangles that expose a lot of useful functions like `collidepoint((x,y))` that returns `True` if a point is inside the rectangle. Again, we can use this to check if a sprite has been clicked:
+
+```python
+# gets mouse position
+pos = pygame.mouse.get_pos()
+
+# test if a point (ie mouse) is inside the rectangle (ie button)
+if sprite.collidepoint(pos):
+  print("Sprite Clicked")
+```
+
+We can safely say that, at least in the project's scope, Tkinter and Pygame can produce the same UIs with the same level of interactability, which would led us to believe that the former should be chosen since its much easier to handle and requires a third of the lines of code.
+
+The key here is "in the project's scope": the "game" part of this project is little more than a proof of concept, so it can be done with a simple app's UI camouflaged in the guise of an actual game. As soon as we try to think about the project's expandability though, it all falls apart since Tkinter does not implements any of the following (without some nasty workarounds):
+
+- Real sprite animations
+- Background music
+- VFX sounds
+- Real game loop 
+
+Let's briefly explain each one. 
+Real sprite animations: in a real game we want stuff to move, eg when a city in Raftian gets damaged it should provide a pleasing visual feedback that something is going on.\
+Background music and VFX sounds: no one would watch a movie without sounds, and the same is true for games: to follow up on the previous example, when a city is attacked we would like to provide a sound feedback to the player.\
+Real game loop: this is were we actually get into the weeds of the project: if our objective is to evaluate the possibility of using Raft in a game, we *must* have a game loop to answer some very fundamental questions, like:
+
+- Do the Raft routines work when there is a game loop running at 60 cycles per seconds?
+- Does framerate (ie game loop frequency / frames per second) have an impact on the Raft's performance (30fps, 60fps, 120fps, 240fps etc)?
+
+These are essential questions since 60fps is the standard framerate in a game, 30fps the minimum acceptable, and other framerates while irrelevant for a static game like Raftian are very relevant in games like first person shooters, where we would like to have as many frames per second as we possibly can.\
+Tkinter cannot provides us with answers, but **Pygame**  can: not only it natively implements all the above mentioned functionalities (animations, VFXs and music), but also has a real game loop that we can limit to a precise amount of frames per seconds with the command `pygame.time.Clock().tick(fps)`.
+
+These are the reasons that led me to ultimately choose Pygame as the project's UI library.
