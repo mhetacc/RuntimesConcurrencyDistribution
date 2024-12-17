@@ -3,9 +3,11 @@
 ---
 
 # Design
+
 Design philosophy of the infrastructure, from why a technology has been chosen instead of another, to the actual architecture.
 
 ## Requirements
+
 Since the focus is showing a fun implementation of the Raft algorithm, a complex overhead is not needed i.e. there is no need to use advanced game engines with multiple languages involved (e.g. Godot, Unity, Cocos, etc.). \
 It would be instead preferable to make the whole project with a single language, to simplify the programming process and we want our game to be 2D for ease of development. Moreover, we don't really care about portability since we are not making a "real" game. \
 Hence, our **GUI-engine requirements** are:
@@ -26,6 +28,7 @@ These conditions (for engines and languages) are both complementary and exclusiv
 ## Technology  
 
 ### Programming Languages
+
 Since this is a Computer Science project, of course it will be done using some (ideally one) programming languages. Which one is not a trivial choice. \
 Having done a bit of research, it is clear that there are two extremely dominant languages in the world of computing right now, with no sign of slowing down ie:
 1. JavaScript
@@ -46,6 +49,7 @@ Finally we cannot forget that we want to implement Raft, and the official page c
 There are some implementation in Javascript and Python but not nearly as big or followed. 
 
 ### Game Engines 
+
 Since the idea is to make a game, which would need a GUI (graphical user interface), it is likely easier to use an actual game engine instead of trying some workaround (eg command line tricks like [htop](https://htop.dev/)). 
 ![htop](https://htop.dev/images/htop-2.0.png)
 Moreover, and perhaps more importantly, using an established game engine will yield valuable learning experience. \
@@ -75,6 +79,7 @@ Here follows the most interesting engines we found:
 Godot and Cocos are more "serious" engines, used to make a lot of famous and successful games but, at the same time, are of course more complex to use.
 
 ### gRPC
+
 https://grpc.io/
 gRPC is a modern open source high performance Remote Procedure Call (RPC) framework that can run in any environment. \
 Used by:
@@ -91,6 +96,7 @@ Browsers still not support HTTP/2 primitives [(source)](https://learn.microsoft.
 **So where it is used?**  Microservices communications in data centers and in native mobile clients. 
 
 ### Putting Things Together  
+
 - C++:
   - [xmlrpc](https://xmlrpc-c.sourceforge.io/) non-native RPCs support
   - [gRPC](https://github.com/grpc/grpc/tree/master) non-native high performance RPCs support
@@ -113,6 +119,46 @@ Python is the only language that has both:
 Hence it is the language of choice to make this project. 
 Moreover: it is one of the most prominent languages today, without any sign of stopping in popularity, coveted by both companies and public institutions and it is also widely used in research, from data science to cyber security to machine learning and AI. Lastly, thanks to it being an interpreted language, considerable time during program development should be saved because no compilation and linking is necessary. \
 The interpreter can be used interactively, which makes it easy to experiment with features of the language, to write throw-away programs, or to test functions during bottom-up program development.
+
+## Components
+
+The whole project sits on top of two core components:
+
+- Raft nodes, which behave both like clients and servers
+- A game loop that behaves like a client for the Raft cluster
+
+### Game Loop
+
+Each loop follows these steps:
+
+1. checks Raft's log
+2. compares its own local log to it
+3. applies all Raft's committed commands locally
+4. update local log 
+
+By separating the logs we can separate local and server logics, leaving Raft free to do its own thing while the game runs. It will probably be necessary to run game loop and Raft loop in separate threads.
+
+We need just three commands:
+
+1. `X attack Y`: player X attack player Y
+2. `add Z`: new player Z joined
+3. `del Z`: player Z left the lobby
+
+The engine then handles everything locally: it does not need to communicate all changes to the Raft cluster. What it needs to communicate is its intention to attack another player.
+
+Every action must pass through the Leader: lets imagine player Alice wants to attack player Bob:
+
+1. Alice sends RPC to Leader "Alice attacks Bob"
+2. Leader propagates "Alice attacks Bob" to the whole cluster
+3. Once RPC is committed, Alice checks its Raft log and compares it to its own local log
+4. Updates Bob's health points
+5. Adds "Alice attacks Bob" to local log
+
+If a server *Z* wants out, it can simply shut down on its own. Once Leader does not receive ack after heartbeat it will broadcast `del Z` to the whole cluster (Z included) before removing it from its list of alive servers. If Z then wakes up it can just ask Leader to be re-admitted. Admission is considered done once `add Z` is committed.   
+
+### Raft
+
+
 
 # Development
 
