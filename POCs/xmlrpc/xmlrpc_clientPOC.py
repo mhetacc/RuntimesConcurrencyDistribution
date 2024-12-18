@@ -15,6 +15,6 @@ logger.addHandler(filehandle)
 
 
 
-with xmlrpc.client.ServerProxy('http://localhost:8080', allow_none=True) as server:
+with xmlrpc.client.ServerProxy('http://localhost:8000', allow_none=True) as server:
     
     print(server.test_foo(42))  # working

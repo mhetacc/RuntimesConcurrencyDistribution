@@ -26,7 +26,7 @@ class Follower(SimpleXMLRPCServer):
     def service_actions(self):
         """Loops indefinitely while waiting for a change to become leader"""
  
-        time.sleep(1)
+        time.sleep(1) 
         if (heartbeat_received == False):
             print('requestelection')
 

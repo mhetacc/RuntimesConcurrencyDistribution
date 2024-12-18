@@ -1124,6 +1124,31 @@ If `serve_forever()` is running in the same thread it will deadlock.
 
 Measured in seconds, can be set to `None`
 
+## threading
+
+This project will need thread-based parallelism for two main reasons:
+
+- Game loop and Raft's node-loop must be alive at the same time (both `while True`)
+- Raft nodes needs a timer, and `time.sleep(t)` is a less than ideal solution since its a blocking one
+
+Due to CPython implementation, specifically [global interpreter lock](https://docs.python.org/3/glossary.html#term-global-interpreter-lock), we cannot use parallelism to computational speed-up (only one thread can run at the time) but we can still manage to have non-locking properties.
+
+```python
+# create a simple timer with callback
+import threading
+
+# after time t callback will be called
+timer = threading.Timer(t, callback)
+timer.start()
+```
+
+Some useful methods:
+
+- `get_native_id()`: returns kernel-assigned thread ID
+- `enumerate()`: returns list of all thread objects currently active
+- 
+
+
 ## Tkinter 
 
 Oss: old naming style: *window*, new naming style: *widget*.

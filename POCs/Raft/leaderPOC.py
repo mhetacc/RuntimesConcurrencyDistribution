@@ -40,18 +40,26 @@ class Leader(SimpleXMLRPCServer):
     def service_actions(self):
         """Loops indefinitely while sending heartbeats to Raft cluster"""
 
-        # prints beat every second 
-        time.sleep(1)
+        # timer locks resource
+        # process calls once unlock  
+        time.sleep(5)
         print('heartbeat')
         #self.propagate_entries(None)
 
         return super().service_actions()
 
 
-
+############################################################################
 
 # starts leader server
 with Leader(('localhost', 8000)) as server:
+
+
+    # create simple string return function 
+    def test_foo(number):
+        return f'The number is {number}'
+
+    server.register_function(test_foo)
 
 
     def send_command(cmd):
