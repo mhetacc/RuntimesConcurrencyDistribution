@@ -1133,6 +1133,47 @@ This project will need thread-based parallelism for two main reasons:
 
 Due to CPython implementation, specifically [global interpreter lock](https://docs.python.org/3/glossary.html#term-global-interpreter-lock), we cannot use parallelism to computational speed-up (only one thread can run at the time) but we can still manage to have non-locking properties.
 
+Some useful methods:
+
+- `get_native_id()`: returns kernel-assigned thread ID
+- `enumerate()`: returns list of all thread objects currently active
+- `is_alive()`: checks if thread is alive
+
+### Thread Objects
+
+A `Thread` represents an activity that is run and controlled in its own thread, and the activity can be specified in two ways:
+
+1. pass a callable object to the constructor
+2. subclass and override `run()` method
+
+No other method (except constructor) should ever be overridden.\
+Once created, a thread object's activity must be started with `start()`, which invokes `run()`. Each thread has a `name` attribute.
+
+```python
+threading.Thread(
+    group=None,
+    target=None,    # callable object
+    name=None,      # by default construct "Thread-N"
+    args=(),
+    kwargs={},
+     *,
+    daemon=None
+)
+```
+
+### Timer
+
+```python
+threading.Timer(
+    time,        # expire time in seconds
+    callback,    # name of function to call once expired
+    *args,       # callback's arguments
+    **kwargs     # callback's kwarguments
+)
+```
+
+Timer does **not** loop: it jus starts a timer in a separate thread.
+
 ```python
 # create a simple timer with callback
 import threading
@@ -1141,13 +1182,6 @@ import threading
 timer = threading.Timer(t, callback)
 timer.start()
 ```
-
-Some useful methods:
-
-- `get_native_id()`: returns kernel-assigned thread ID
-- `enumerate()`: returns list of all thread objects currently active
-- 
-
 
 ## Tkinter 
 
