@@ -633,16 +633,16 @@ class Container:
         self.elements.append(element)
 ```
 
-There are some ways other than scope to access parent stuff
+There are some other ways besides scope to access parent's stuff
 
 ```python
-class super(type, object_or_type=None):
-    # stuff
-
 # returns a proxy object to access parent class of type
-```
+super().parent_method()
 
-Or I could call explicitly `ParentClass.parent_function()` 
+# or call explicitly name of parent
+ParentClass.parent_method()
+
+```
 
 ### Methods
 
@@ -1181,6 +1181,35 @@ import threading
 # after time t callback will be called
 timer = threading.Timer(t, callback)
 timer.start()
+```
+
+Timer code is like this:
+
+```python
+# not complete code, just what is needed
+class Timer(Thread):
+
+    def __init__(self, countdown, callback):
+        Thread.__init__(self)
+        self.interval = countdown
+        self.function = callback
+        # uses event class to wait, set and check a flag
+        self.finished = Event()     
+
+
+    def run(self):
+        # wait the amount of specified time with
+        # Event() (basically flag with locks)
+
+        # returns internal flag on exit, which is 
+        # False if timeout is given and operation times out
+        self.finished.wait(self.interval)
+
+
+        # flag false if wait times out
+        if not self.finished.is_set():
+            self.function(*self.args, **self.kwargs)
+        self.finished.set()
 ```
 
 ## Tkinter 
