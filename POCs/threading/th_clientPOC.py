@@ -10,8 +10,7 @@ class Client(SimpleXMLRPCServer):
         super().__init__(('localhost',8080))
         self.proxy = xmlrpc.client.ServerProxy('http://localhost:8000', allow_none=True)
                 
-        # timer must be last otherwise object passed to callback does
-        # not have any of attributes that follows it
+        # timer must be last
         self.timer = looping_timer.LoopTimer(1.0, self.callback)
         self.timer.start()
         
@@ -22,7 +21,7 @@ class Client(SimpleXMLRPCServer):
         #self.timer.
 
 
-
+########################################################
 
 with Client() as client:
 
