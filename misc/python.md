@@ -778,6 +778,41 @@ if 1900 < year < 2100 and 1 <= month <= 12 \
 @=      &=      |=      ^=      >>=     <<=     **=
 ```
 
+## Parallelism
+
+Threading vs Multiprocessing
+
+https://medium.com/@me.mdhamim/a-comprehensive-guide-to-python-threading-advanced-concepts-and-best-practices-9f3aea6f0a63
+
+- Utilize threading to send concurrent HTTP requests and maximize the use of available network bandwidth.
+- A CPU-intensive task, such as image processing or numerical computation, needs to [...] leverage multiprocessing to run tasks concurrently in separate processes.
+
+While Python’s Global Interpreter Lock (GIL) limits true parallelism for CPU-bound tasks in CPython, threading remains effective for I/O-bound and asynchronous operations.
+
+
+https://stackoverflow.com/questions/3044580/multiprocessing-vs-threading-python
+
+Threads run in the same memory, allowing sharing of memory, while processes are isolated.
+
+- Multiprocessing:
+  - Pros
+    - multi-core speed up
+    - no memory sharing so no race condition
+    - good for CPU-bound applications
+  - Cons
+    - IPC communication model a bit more complicated
+    - larger memory footprint
+- Threading:
+  - Pros
+    - lightweight
+    - easy to access state due to memory sharing
+    - good for I/O bound applications
+  - Cons
+    - CPython ie GIL
+    - race conditions more likely
+    - code harder to understand 
+
+
 
 # Python Modules
 
@@ -1228,6 +1263,22 @@ class Timer(Thread):
             self.function(*self.args, **self.kwargs)
         self.finished.set()
 ```
+
+### Resource Sharing
+
+https://www.geeksforgeeks.org/python-communicating-between-threads-set-1/
+Perhaps the safest way to send data from one thread to another is to use a Queue from the queue library. To do this, create a Queue instance that is shared by the threads. Threads then use put() or get() operations to add or remove items from the queue.
+
+https://www.reddit.com/r/learnpython/comments/1at6fnv/easiest_method_to_communicate_between_threads/
+Queues are great for that. 
+
+https://medium.com/@me.mdhamim/a-comprehensive-guide-to-python-threading-advanced-concepts-and-best-practices-9f3aea6f0a63
+The use of a queue ensures that the communication is thread-safe.
+
+
+#### queue
+
+The [queue](https://docs.python.org/3/library/queue.html#module-queue) module implements multi-producer, multi-consumer queues. It is especially useful in threaded programming when information must be exchanged safely between multiple threads. The Queue class in this module implements all the required locking semantics.
 
 ## Tkinter 
 
