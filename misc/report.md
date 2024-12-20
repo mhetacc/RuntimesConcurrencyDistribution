@@ -214,7 +214,29 @@ with LoopingServer() as loopserver:
 
 Here we can see that se server (on the left) can accept requests while the looping timer is active: ![](./imgs/looping_server.png)
 
-#### Raft Node
+#### Threaded Server
+
+By enclosing server management in a callable function and passing it to a `Thread()` object, I was able to create a server that stays alive in its own thread while allowing a game loop (ie a while true) to co-exist:
+
+```python
+def handle_server():
+    with SimpleXMLRPCServer(('localhost', 8080), allow_none=True) as server:
+        def just_return(value):
+            return value
+        
+        server.register_function(just_return)
+        server.serve_forever()
+
+
+threading.Thread(target=handle_server).start()
+
+
+while True:
+    time.sleep(1)
+    print(str(datetime.datetime.now()))
+```
+
+As we can see from the following image the server and the while-true (on the left) are both alive at the same time, and the client (on the right) have its RPCs answered: ![](./imgs/threaded_server.png)
 
 ## User Interface
 
