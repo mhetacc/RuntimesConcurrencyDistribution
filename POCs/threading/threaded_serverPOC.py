@@ -3,19 +3,7 @@ import threading
 import datetime
 import time
 
-
-
-#with SimpleXMLRPCServer(('localhost', 8000), allow_none=True) as server:
-#
-# 
-#    def server_print(string):
-#        print(string)
-#
-#    server.register_function(server_print)
-#
-#    server.serve_forever()
-
-
+# enclose server in a callable function
 def handle_server():
     with SimpleXMLRPCServer(('localhost', 8080), allow_none=True) as server:
         def just_return(value):
@@ -25,10 +13,11 @@ def handle_server():
         server.serve_forever()
 
 
-
+# pass all server stuff to a separate thread
 threading.Thread(target=handle_server).start()
 
 
+# this is then allowed to run while server does so in a separate thread
 while True:
     time.sleep(1)
     print(str(datetime.datetime.now()))
