@@ -162,6 +162,20 @@ If a server *Z* wants out, it can simply shut down on its own. Once Leader does 
 
 Since a raft node is a server (ie a while true that accepts requests) and needs to have a timer (ie a while true with a sleep that calls a callback) and the game loop is, once again, a while true, we should put them in different threads to prevent them from blocking each other.
 
+## Raftian
+
+### Raftian Node
+
+All in all, a Raftian node should be something like the following:
+
+- a server
+  - threaded
+  - with a loop timer in its own thread
+- a list of client proxies 
+- a game loop
+
+Which means that each node has at least three separate threads.
+
 # Development
 
 ## Parallelism 
