@@ -162,6 +162,8 @@ If a server *Z* wants out, it can simply shut down on its own. Once Leader does 
 
 Since a raft node is a server (ie a while true that accepts requests) and needs to have a timer (ie a while true with a sleep that calls a callback) and the game loop is, once again, a while true, we should put them in different threads to prevent them from blocking each other.
 
+The `threading` [module](https://docs.python.org/3/library/threading.html#thread-objects) has been chosen, even though due to CPython implementation's [Global Interpreter Lock](https://docs.python.org/3/glossary.html#term-global-interpreter-lock) only ne thread can execute Python code at once, hence we don't achieve real multi-processor parallelism. If we need that type of speed we should use `multiprocessing` [module](https://docs.python.org/3/library/multiprocessing.html#module-multiprocessing), however at the moment since the single nodes are quite lightweight, and since `threading` is still appropriate to turn multiple I/O-bound tasks simultaneously, I deemed it "good enough". This may or may not change in the future.
+
 ## Raftian
 
 ### Raftian Node
