@@ -6,6 +6,6 @@ import time
 with xmlrpc.client.ServerProxy('http://localhost:8080', allow_none=True) as server:
     i = 0
     while True:
-        time.sleep(1)
+        time.sleep(3)
         print(server.just_return(i))
         i+=1
