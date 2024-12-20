@@ -11,6 +11,7 @@
    - [x] alive server with non blocking timer and callback
    - [x] put server in its own thread
 - [x] Complete Example POC 
+- [ ] Try it again with `multiprocessing`
 - [ ] Shared resources structures for threads communication
 - [ ] Design architecture 
 - [ ] Making Raft game system 
