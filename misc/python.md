@@ -1161,6 +1161,23 @@ threading.Thread(
 )
 ```
 
+#### Pass function to a Thread
+
+```python
+# enclose server in a callable function
+def handle_server():
+    with SimpleXMLRPCServer(('localhost', 8080), allow_none=True) as server:
+        def just_return(value):
+            return value
+        
+        server.register_function(just_return)
+        server.serve_forever()
+
+
+# pass all server stuff to a separate thread
+threading.Thread(target=handle_server).start()
+```
+
 ### Timer
 
 ```python
