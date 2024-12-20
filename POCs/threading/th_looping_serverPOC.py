@@ -4,7 +4,7 @@ import looping_timer
 import datetime
 
 
-class Client(SimpleXMLRPCServer):
+class LoopingServer(SimpleXMLRPCServer):
     def __init__(self):
         # creates itself (ie server start-up)
         SimpleXMLRPCServer.__init__(self, ('localhost',8080))
@@ -13,7 +13,7 @@ class Client(SimpleXMLRPCServer):
         self.proxy = xmlrpc.client.ServerProxy('http://localhost:8000', allow_none=True)
                 
         # timer must be last in the constructor
-        self.timer = looping_timer.LoopTimer(1.0, self.callback)
+        self.timer = looping_timer.LoopTimer(5.0, self.callback)
         self.timer.start()
         
 
@@ -25,6 +25,6 @@ class Client(SimpleXMLRPCServer):
 
 ########################################################
 
-with Client() as client:
+with LoopingServer() as loopserver:
 
-    client.serve_forever()
+    loopserver.serve_forever()
