@@ -11,9 +11,9 @@ import datetime
 import pygame
 
 
-# in the real code threads should communicate using queues 
-# with locks or other data structures for resource sharing
-command_flag = False
+# flag with appropriate thread safety
+command_flag = threading.Event()
+command_flag.clear()
 
 class LoopingServer(SimpleXMLRPCServer):
     def __init__(self, uri, allow_none=True):
@@ -38,10 +38,9 @@ class LoopingServer(SimpleXMLRPCServer):
 
     # called in loop by serve_forever()
     def service_actions(self):
-        global command_flag
-        if command_flag:
+        if command_flag.is_set():
             self.proxy.server_print('\n Alice\'s button pressed: ' + str(datetime.datetime.now()) + '\n')
-            command_flag = False
+            command_flag.clear()
 
         return super().service_actions()
 
@@ -180,7 +179,7 @@ while True:
             if rect_btn.collidepoint(pos):
                 
                 # tells server that buttun has been pressed
-                command_flag = True 
+                command_flag.set()
 
                 # change header text and renders it
                 toptext = font.render("Button Pressed", False, BLACK)
