@@ -10,9 +10,10 @@
    - [x] separate thread loop timer
    - [x] alive server with non blocking timer and callback
    - [x] put server in its own thread
-- [ ] Complete Example POC 
-- [ ] 7. Design architecture 
-- [ ] 8. Making Raft game system 
-- [ ] 9. Mounting UI on it 
+- [x] Complete Example POC 
+- [ ] Shared resources structures for threads communication
+- [ ] Design architecture 
+- [ ] Making Raft game system 
+- [ ] Mounting UI on it 
 
 These steps are bound to change during the development process, especially last three steps.
