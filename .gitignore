@@ -1,3 +1,4 @@
 .vscode/keybindings.txt
 logs
 .servers
+__pycache__
