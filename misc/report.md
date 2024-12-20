@@ -180,7 +180,7 @@ Which means that each node has at least three separate threads.
 
 ## Parallelism 
 
-### Raft 
+### Raft
 
 #### Timer
 
@@ -251,6 +251,79 @@ while True:
 ```
 
 As we can see from the following image the server and the while-true (on the left) are both alive at the same time, and the client (on the right) have its RPCs answered: ![](./imgs/threaded_server.png)
+
+## Raftian
+
+Game loop thread and server node thread communicate using shared resources, leaving both of them free to operate independently (ie without one calling into the other). Here follows a simplified structure taken from a working proof of concept.
+
+First of all we create a server that communicates via RCPs by subclassing `SimpleXMLRPCServer`, and we set the shared resource `command_flag` to `False`:
+
+```python
+# shared resource
+command_flag = False
+
+class LoopingServer(SimpleXMLRPCServer):
+    def __init__(self, URI):
+        self.heartbeat_timer = 3.0
+
+        # creates itself (ie server start-up)
+        SimpleXMLRPCServer.__init__(self, URI)
+
+        # gets a connection to another server via a client proxy
+        self.proxy = xmlrpc.client.ServerProxy('http://localhost:8001', allow_none=True)
+                
+        self.timer = looping_timer.LoopTimer(self.heartbeat_timer, self.callback)
+        self.timer.start()
+
+
+    def callback(self): 
+        self.proxy.server_print('Alice\'s heartbeat')
+ 
+
+    # checks flag
+    # if true -> sends POST to Bob and resets flag
+    def service_actions(self):
+        global command_flag
+        if command_flag:
+            self.proxy.server_print('Alice\'s button pressed')
+            command_flag = False
+
+        return super().service_actions()
+```
+
+Then we starts the server in its own separate thread:
+
+```python
+def handle_server():
+    with LoopingServer(('localhost', 8000)) as server:
+        def print_feedback(value):
+            return value
+        
+        server.register_function(print_feedback)
+        server.serve_forever()
+
+
+# pass all server stuff to a separate thread
+thread = threading.Thread(target=handle_server)
+thread.start()
+```
+
+Inside the game loop we then modify flag state whenever user interact with the button (a `Rect` really):
+
+```python
+while True:
+    # Process player inputs.
+    for event in pygame.event.get():
+        
+        # if button clicked
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            pos = pygame.mouse.get_pos()
+            if rect_btn.collidepoint(pos):
+                # change flag state
+                command_flag = True        
+```
+
+As we can see in the following image, the system works as intended (ie loops do not block each other): ![](./imgs/raftian_poc.png)
 
 ## User Interface
 
