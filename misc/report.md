@@ -158,9 +158,63 @@ If a server *Z* wants out, it can simply shut down on its own. Once Leader does 
 
 ### Raft
 
+## Parallelism
 
+Since a raft node is a server (ie a while true that accepts requests) and needs to have a timer (ie a while true with a sleep that calls a callback) and the game loop is, once again, a while true, we should put them in different threads to prevent them from blocking each other.
 
 # Development
+
+## Parallelism 
+
+### Raft 
+
+#### Timer
+
+By subclassing `threading.Timer(Thread)` I was able to obtain a looping timer that runs in its own thread.
+
+```python
+class LoopTimer(Timer):
+    """Subclass of threading.Timer: starts a timer that loops in a separate thread, can call a callback function each time it runs out"""
+
+    def run(self):
+        # returns False each time times out
+        while not self.finished.wait(self.interval):
+            self.function(*self.args, **self.kwargs)
+```
+
+Then this has been used to create instance-bounded timers embedded in subclasses of `SimpleXMLRPCServer`, allowing me to have an alive server that also has a non-blocking timer with a callback.
+
+```python
+# periodically calls the callback while also exposing at the same time its own RPCs
+
+class LoopingServer(SimpleXMLRPCServer):
+    def __init__(self):
+        SimpleXMLRPCServer.__init__(self, ('localhost',8080), allow_none=True)
+
+        # looping timer with its own thread
+        self.timer = looping_timer.LoopTimer(5.0, self.callback)
+        self.timer.start()
+      
+
+    def callback(self):
+        print('Sono le '+ str(datetime.datetime.now()))
+
+
+########################################################
+
+with LoopingServer() as loopserver:
+
+    def just_return(message):
+        return message
+    
+    loopserver.register_function(just_return)
+
+    loopserver.serve_forever()
+```
+
+Here we can see that se server (on the left) can accept requests while the looping timer is active: ![](./imgs/looping_server.png)
+
+#### Raft Node
 
 ## User Interface
 
