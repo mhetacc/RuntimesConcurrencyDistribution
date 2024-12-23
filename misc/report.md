@@ -162,7 +162,34 @@ If a server *Z* wants out, it can simply shut down on its own. Once Leader does 
 
 Since a raft node is a server (ie a while true that accepts requests) and needs to have a timer (ie a while true with a sleep that calls a callback) and the game loop is, once again, a while true, we should put them in different threads to prevent them from blocking each other.
 
-The `threading` [module](https://docs.python.org/3/library/threading.html#thread-objects) has been chosen, even though due to CPython implementation's [Global Interpreter Lock](https://docs.python.org/3/glossary.html#term-global-interpreter-lock) only ne thread can execute Python code at once, hence we don't achieve real multi-processor parallelism. If we need that type of speed we should use `multiprocessing` [module](https://docs.python.org/3/library/multiprocessing.html#module-multiprocessing), however at the moment since the single nodes are quite lightweight, and since `threading` is still appropriate to turn multiple I/O-bound tasks simultaneously, I deemed it "good enough". This may or may not change in the future.
+### Async, Threads and Processes
+
+First lest's see the difference between multi threading and asynchronous calls:
+
+- `async`: for blocking I/O calls, allows thread to continue executing while operation (eg read from file) completes eg
+  - db queries
+  - HTTP requests
+  - API calls
+  - timers
+  - file I/O
+- `multithreading`: for continuous tasks which are CPU-bounded and are better to be executed in parallel eg
+  - dataset processing
+  - image rendering
+  - background tasks
+
+Then lets talk about the differences between threads and processes. At its core we can summarize them as:
+
+- `threads`: share memory, lightweight
+- `processes`: isolated, more heavyweight
+
+Based on these information we can infer that:
+
+- game loop and server loop should be two distinct `processes`
+- heartbeat timer should be:
+  - a `thread` if it loops and stays always alive
+  - an `async` if it gets called every time it expires
+
+Unfortunately due to [GIL](https://wiki.python.org/moin/GlobalInterpreterLock) multi-threading cannot be achieved with `threading`, hence it could be necessary to implement the timer as a process. That being said, it is not really a blocking timer as a `time.sleep(t)` would.
 
 ## Raftian
 
@@ -229,6 +256,50 @@ with LoopingServer() as loopserver:
 ```
 
 Here we can see that se server (on the left) can accept requests while the looping timer is active: ![](./imgs/looping_server.png)
+
+##### How do Others Do It?
+
+Basically with async, futures or routines.
+
+https://github.com/bakwc/PySyncObj/blob/master/pysyncobj/config.py#L27
+Otherwise it will be called automatically from separate thread.
+
+https://github.com/scylladb/scylladb/blob/cd2a2bd02143598cc6e88ad2b99f6ed7301355ba/raft/fsm.hh#L147C39-L150C23
+The client is responsible for periodically invoking tick() method, which advances the state machine time and allows it to track such events as election or heartbeat timeouts.
+
+https://github.com/scylladb/scylladb/blob/cd2a2bd02143598cc6e88ad2b99f6ed7301355ba/direct_failure_detector/failure_detector.hh#L61
+
+```C++
+virtual future<> sleep_until(timepoint_t tp, abort_source& as) = 0;
+```
+
+https://github.com/zhebrak/raftos/blob/c51e14433e06046db0cf3cb83429b07aed01861f/raftos/timer.py#L9
+
+```python
+import asyncio
+
+
+class Timer:
+    """Scheduling periodic callbacks"""
+    def __init__(self, interval, callback):
+        self.interval = interval
+        self.callback = callback
+        self.loop = asyncio.get_event_loop()
+```
+
+https://github.com/hashicorp/raft/blob/a5bc06ccef1d7378c8fd441f849a05ccf2603975/replication.go#L386
+heartbeat is used to periodically invoke AppendEntries [...] This is done async of replicate(), since that routine could potentially be blocked on disk IO.
+
+https://onlinelibrary.wiley.com/doi/epdf/10.1002/spe.3048
+pozzan-> extensive use of goroutine which executes a function asynchronously ([eg](https://medium.com/@gauravsingharoy/asynchronous-programming-with-go-546b96cd50c1)) 
+
+https://medium.com/@gauravsingharoy/asynchronous-programming-with-go-546b96cd50c1
+
+```C++
+folly::Future<cpp2::HBResp> future_heartBeat(const cpp2::HBReq& req) override;
+```
+
+
 
 #### Threaded Server
 
