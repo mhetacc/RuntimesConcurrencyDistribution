@@ -1280,6 +1280,105 @@ The use of a queue ensures that the communication is thread-safe.
 
 The [queue](https://docs.python.org/3/library/queue.html#module-queue) module implements multi-producer, multi-consumer queues. It is especially useful in threaded programming when information must be exchanged safely between multiple threads. The Queue class in this module implements all the required locking semantics.
 
+## multiprocessing
+
+Oss: there is no analogue to `threading.Timer`.
+
+In `multiprocessing` processes are spawned using a `Process` object, which follows the API of `threading.Thread`:
+
+```python
+def handle(data):
+    print(f'Something and {data}')
+
+process = multiprocessing.Process(target=f, args=('something else',))
+thread = threading.Thread(target=f, args=('something else',))
+
+process.start() # print `Something and something else`
+thread.start()  # print `Something and something else`
+
+# close both process and thread 
+# can be bypassed with `with` keyword
+process.join()
+thread.join()
+```
+
+I can make a process daemonic. It will be destroyed once parent process dies and i cannot spawn child processes. 
+
+```python
+process.daemon = True
+process.start()
+```
+
+There are three starting methods:
+
+- `spawn`: slowest, starts fresh Python interpreter. Available on all systems, default on Windows and MacOS 
+- `fork`: clone parent process, problematic to safely forking a multithreaded process. Available and default on POSIX except macOS 
+- `forkserver`: safest and quite efficient. Available only POSIX with support of file descriptor passing over Unix pipes (like Linux).
+
+Better to let the system decides since forcing one could prevent compatibility or performance speed up.
+
+### Message Passing
+
+When using multiple processes it is generally advised to use message passing instead of synchronization primitives.
+
+- `Pipe()` for connection between two processes
+- `Queue()` if multiple producers and consumers are needed
+
+Two communication channels are supported: queues and pipes. The latter can be accessed both ways.\
+Moreover, `multiprocessing` contains all the synchronization primitives from `threading`.
+
+#### Pipes
+
+`Pipe()` returns two end of a pipe. Each end (each connection object) has `send()` and `recv()` methods to, respectively, read and write on the pipe. 
+
+No risk of data corruption if two processes (eg Pygame and Raft) use different ends of the pipe at the same time.
+
+- `send()` serializes the object
+- `recv()` re-creates the object
+
+```python
+multiprocessing.Pipe([duplex])
+```
+
+Returns a pair: (`connection1`, `connection2`).\ 
+If `duplex` is `False`, then `c1` can only receive while `c2` can only send.
+
+#### Queues
+
+Near clone of `queue.Queue`, it is both thread and process safe.
+
+### State Sharing
+
+#### Shared Memory
+
+While not advised, some way to provide actual shared memory are given: data can be stored in `Value` or `Array`.
+
+```python
+from multiprocessing import Process, Value, Array
+
+num = Value('d', 0.0) # double precision float 
+
+process = Process(target=handle, args=(num))
+process.start()  # num is then a shared data
+```
+
+#### Managers
+
+We can also use a more complex structure with `Manager()` objects, that supports the creation of shared `threading.Event` or `threading.Lock`. 
+
+### Synchronization Primitives
+
+We have a clone of `Event`
+
+```python
+m_event = multiprocessing.Event()
+t_event = threading.Event()
+
+m_event.is_set()
+t_event.is_set()
+# so on and so forth
+```
+
 ## Tkinter 
 
 Oss: old naming style: *window*, new naming style: *widget*.
