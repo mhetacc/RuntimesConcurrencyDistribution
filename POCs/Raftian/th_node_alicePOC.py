@@ -1,6 +1,8 @@
 """Node Alice do two things:
 1. sends heartbeat to Bob every t-seconds
 2. sends a different POST request when button inside game loop is pressed
+
+Handles parallelism with threading.Thread
 """
 
 from xmlrpc.server import SimpleXMLRPCServer
