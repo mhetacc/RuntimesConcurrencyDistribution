@@ -12,6 +12,7 @@
    - [x] put server in its own thread
 - [x] Complete Example POC 
 - [x] Try it again with `multiprocessing`
+- [ ] create timer using `asyncio`
 - [ ] POC `multiprocessing.Pipe()`
 - [ ] Design architecture 
 - [ ] Making Raft game system 
