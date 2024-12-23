@@ -1,18 +1,18 @@
 # TODO
 ## Project's Roadmap
 
-- [x] 1. POC logging in Python
-- [x] 2. POC xmlrpc in Python
-- [x] 3. POC tkinter
-- [x] 4. POC pygame
-- [x] 5. POC mounting RPCs in custom classes
-- [x] 6. POC thread based parallelism:
+- [x] POC logging in Python
+- [x] POC xmlrpc in Python
+- [x] POC tkinter
+- [x] POC pygame
+- [x] POC mounting RPCs in custom classes
+- [x] POC thread based parallelism:
    - [x] separate thread loop timer
    - [x] alive server with non blocking timer and callback
    - [x] put server in its own thread
 - [x] Complete Example POC 
-- [ ] Try it again with `multiprocessing`
-- [ ] Shared resources structures for threads communication
+- [x] Try it again with `multiprocessing`
+- [ ] POC `multiprocessing.Pipe()`
 - [ ] Design architecture 
 - [ ] Making Raft game system 
 - [ ] Mounting UI on it 
