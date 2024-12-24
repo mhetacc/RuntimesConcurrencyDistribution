@@ -177,6 +177,26 @@ First lest's see the difference between multi threading and asynchronous calls:
   - image rendering
   - background tasks
 
+Oss: multi threading is a type of asynchronicity.
+Oss: each thread has its own stack
+
+- **Threading is about workers**
+- **Asynchrony is about tasks**
+
+**Job: cook eggs and toast:**
+
+- **Synchronous**: first cook the eggs, then cook the toast
+- **Asynchronous** (single threaded): 
+  - start eggs cooking and set a timer. 
+  - start toast cooking and set a timer. 
+  - do something else in the meantime
+  - when timers go off take both eggs and toast and eat them
+- Asynchronous (**multithreaded**):
+  - hire two cooks, one cook eggs the other cook toast
+  - now you have to coordinate the cooks and pay them
+
+Why does this works? Because may tasks are not processor-bounded. Like waiting.
+
 Then lets talk about the differences between threads and processes. At its core we can summarize them as:
 
 - `threads`: share memory, lightweight
