@@ -189,7 +189,9 @@ Based on these information we can infer that:
   - a `thread` if it loops and stays always alive
   - an `async` if it gets called every time it expires
 
-Unfortunately due to [GIL](https://wiki.python.org/moin/GlobalInterpreterLock) multi-threading cannot be achieved with `threading`, hence it could be necessary to implement the timer as a process. That being said, it is not really a blocking timer as a `time.sleep(t)` would.
+Unfortunately due to [GIL](https://wiki.python.org/moin/GlobalInterpreterLock) real multi-threading cannot be achieved with `threading`, even though it is not a blocking timer in the same way a `time.sleep(t)` would.\
+Since it feels silly to use an entire separate process to handle a timer, using `async`  seems to be the better choice. Moreover most Raft implementations use this approach (eg ScyllaDB uses C++ `future`).
+
 
 ## Raftian
 

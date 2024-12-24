@@ -1159,6 +1159,24 @@ If `serve_forever()` is running in the same thread it will deadlock.
 
 Measured in seconds, can be set to `None`
 
+## asyncio
+
+Library to write concurrent code, it provides high level APIs to:
+
+- run Python coroutines concurrently and have full control over them
+- perform network I/O and IPC
+- control subprocesses
+- distribute tasks via queues
+- synchronize concurrent code
+
+Additionally provides low level APIs to:
+
+- create and manage event loops
+- implement efficient protocols using transports
+- bridge callback-based libraries
+
+
+
 ## threading
 
 This project will need thread-based parallelism for two main reasons:
