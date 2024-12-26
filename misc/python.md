@@ -1175,6 +1175,87 @@ Additionally provides low level APIs to:
 - implement efficient protocols using transports
 - bridge callback-based libraries
 
+### Concurrent Tasks
+
+`TaskGroup()` may be useful to register ACKs of heartbeat
+
+```python
+async def main():
+    async with asyncio.TaskGroup() as tg:
+        task1 = tg.create_task(some_coroutine(...))
+        task2 = tg.create_task(another_coroutine(...))
+    print(f"Both tasks have completed now: {task1.result()}, {task2.result()}")
+```
+
+~~We also have `gather(*awaitables)` that runs all passed awaitables concurrently, then returns an aggregate list of returned values.~~ 
+<span style="color:red">*deprecated since 3.10*</span>.
+
+### Looping Task
+
+<span style="color:red">*Deprecated since 3.10:*</span> warning is emitted if *loop* is not specified and there is no running event loop.
+
+Task Objects can be used to run coroutines in event loops (not thread-safe).
+
+```python
+class asyncio.Task(coroutine, *, loop=None, name=None, context=None, eager_start=False)
+```
+
+Exposes some nice function: 
+
+- `add_done_callback(callback, *, context=None)`
+- `result()`: if Task is done, result wrapped in coroutine and returned
+- `done()`: `True` if Task is done
+- `cancel(msg=None)`
+
+
+### Timers
+
+`asyncio.sleep(t)` allow to have a non-blocking delay function.
+
+`asyncio.timeout(t)` limits the amount of awaitable time of another async task. Its probably better to use the form
+
+```python
+asyncio.wait_for(awaitable, timeout)
+```
+
+### Streams
+
+High level async/await primitives for networking. Can be used with bot TCP and HTTP.\
+Since we use `xmlrpc` all of this should be lower level. 
+
+```python
+async def tcp_echo_client(message):
+    # creates TCP connection
+    reader, writer = await asyncio.open_connection(
+        '127.0.0.1', 8888)
+
+    # sends message to server
+    print(f'Send: {message!r}')
+    writer.write(message.encode())
+    await writer.drain()
+
+    # wait on server response
+    data = await reader.read(100)
+    print(f'Received: {data.decode()!r}')
+
+    # close connection
+    print('Close the connection')
+    writer.close()
+    await writer.wait_closed()
+
+
+asyncio.run(tcp_echo_client('Hello World'))
+```
+
+### Synchronization Primitives
+
+Non-thread-safe sync stuff for asyncio.
+
+- `Lock`: mutex lock
+- `Event`: awaitable flag
+- `Condition`: event with extra steps
+- Semaphores and barrirers
+
 
 
 ## threading
