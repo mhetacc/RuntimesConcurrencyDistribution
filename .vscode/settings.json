@@ -34,6 +34,7 @@
 "editor.wordWrap": "on",
 "cSpell.enabled": true,
 "cSpell.words": [
+    "asyncio",
     "automagically",
     "gameplay",
     "interactability",
