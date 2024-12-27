@@ -1192,7 +1192,7 @@ async def main():
 
 ### Looping Task
 
-<span style="color:red">*Deprecated since 3.10:*</span> warning is emitted if *loop* is not specified and there is no running event loop.
+<span style="color:red">*Deprecated since 3.10:* warning is emitted if *loop* is not specified and there is no running event loop.</span>
 
 Task Objects can be used to run coroutines in event loops (not thread-safe).
 
@@ -1207,8 +1207,7 @@ Exposes some nice function:
 - `done()`: `True` if Task is done
 - `cancel(msg=None)`
 
-
-### Timers
+### Wait
 
 `asyncio.sleep(t)` allow to have a non-blocking delay function.
 
@@ -1254,9 +1253,189 @@ Non-thread-safe sync stuff for asyncio.
 - `Lock`: mutex lock
 - `Event`: awaitable flag
 - `Condition`: event with extra steps
-- Semaphores and barrirers
+- Semaphores and barriers
+
+### Event Loop
+
+```python
+loop = asyncio.get_running_loop()
+
+# run until stop()
+loop.run_forever()
+
+# stop event loop
+loop.stop()
+
+# True if running
+loop.is_running()
+
+# callback to be called at next loop iteration
+# returns asyncio.Handle object
+handle = loop.call_soon(callback, *args)
+
+# cancel callback
+handle.cancel()
+
+# True if cancelled callback
+handle.cancelled()
+
+# absolute timestamp of scheduled callback
+handle.when()
+```
+
+### Future 
+
+<span style="color:red">*Deprecated since 3.10*: warning is emitted if loop is not specified and there is no running event loop</span>.
+
+```python
+# awaitable object
+future = asyncio.Future(*, loop=None)
+
+# mark as done and set result=result
+future.set_result(result)
+
+# add callback to be run once future is done
+future.add_done_callback(callback, *)
+
+# return True if is done
+future.done()
+```
+
+### Timers
+
+Contributors:
+- https://github.com/zhebrak/raftos/blob/c51e14433e06046db0cf3cb83429b07aed01861f/raftos/timer.py#L4
+- https://stackoverflow.com/questions/45419723/python-timer-with-asyncio-coroutine
+- 
+
+*Question: "What is the correct way to set a non-blocking timer, that will call a callback function after some number of seconds? Being able to cancel the timer would be a bonus but is not a requirement."*
+
+Creating `Tasks` using `ensure_future` is a common way to start non-blocking jobs. There is also the option to `cancel` a task.
+
+```python
+class Timer:
+    def __init__(self, timeout, callback, args=None, kwargs=None):
+        self._timeout = timeout
+        self._callback = callback
+        self._task = asyncio.ensure_future(self._wait_and_call())
+        self._args = args if args is not None else []
+        self._kwargs = kwargs if kwargs is not None else {}
+
+    async def _wait_and_call(self):
+        """Wait timeout seconds, then call callback(*args)"""
+        await asyncio.sleep(self._timeout)
+        await self._callback(*self._args, **self._kwargs)
+
+    def cancel(self):
+        self._task.cancel()
+```
+
+Then the callback function should be a coroutine:
+
+```python
+async def callback():
+    print('echo!')
+```
+
+How to make it work then:
+
+```python
+async def main():
+    timer = Timer(2, callback)
+
+loop = asyncio.new_event_loop()
+asyncio.set_event_loop(loop)
+try:
+    loop.run_until_complete(main())
+finally:
+    loop.run_until_complete(loop.shutdown_asyncgens())
+    loop.close()
+```
+
+The above implementation has one caveat: calling `cancel()` cancels both:
+
+- the timer
+- the callback: if `cancel()` called **after** `timeout` but actual job still in progress
+
+Alternative approach uses `loop.call_later`:
+
+```python
+loop = asyncio.get_event_loop()
+timer = loop.call_later(5, lambda: asyncio.ensure_future(job()))
+
+# cancel timer but not job() if already started
+timer.cancel()
+```
+
+What could `job()` be:
+
+- `heartbeat()`
+- `start_election()`
+
+Here follows a different `Timer` implementation that uses `call_later()` instead:
+
+```python
+class Timer:
+    """Scheduling periodic callbacks using handler"""
+    def __init__(self, timeout, callback, args=None, kwargs=None):
+        self._timeout = timeout
+        self._callback = callback
+        self._args = args if args is not None else []
+        self._kwargs = kwargs if kwargs is not None else {}
+        self._loop = asyncio.get_event_loop()
+        # self._handler gets created on start() only
 
 
+    def _get_timeout(self):
+        return self._timeout() if callable(self._timeout) else self._timeout
+
+    def _run(self):
+        """Fire callback then restarts timer"""
+        self._callback(*self._args, **self._kwargs)
+        self._handler = self._loop.call_later(self._get_timeout(), self._run)
+
+
+
+    def start(self):
+        self._handler = self._loop.call_later(self._get_timeout(), self._run)
+
+    def stop(self):
+        self._handler.cancel()
+
+    def reset(self):
+        self.stop()
+        self.start()
+```
+
+Then on the callback it is used as:
+
+```python
+class State:
+    def to_follower(self):
+        self._change_state(Follower)
+        self.set_leader(None)
+        if asyncio.iscoroutinefunction(config.on_follower):
+            asyncio.ensure_future(config.on_follower())
+        else:
+            config.on_follower()
+
+###################
+
+class Leader:
+    def heartbeat(self):
+        self.request_id += 1
+        self.response_map[self.request_id] = set()
+        asyncio.ensure_future(self.append_entries(), loop=self.loop)
+
+####################
+
+class Configuration:
+    def default_settings():
+        return{
+            'on_follower`: lambda:None
+        }
+
+```
 
 ## threading
 
