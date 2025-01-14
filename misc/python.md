@@ -236,6 +236,16 @@ Often used in positional and by-keyword arguments in functions:
 def fun(*posvar, **kwargs)
 ```
 
+### Performance Evaluation
+
+```python
+import time
+s = time.perf_counter()
+asyncio.run(main())
+elapsed = time.perf_counter() - s
+print(f"{__file__} executed in {elapsed:0.2f} seconds.")
+```
+
 ## Flow Control
 
 ### if
@@ -1174,6 +1184,19 @@ Additionally provides low level APIs to:
 - create and manage event loops
 - implement efficient protocols using transports
 - bridge callback-based libraries
+
+**Oss:** synchronous code **should not call** asynchronous code: it would become synchronous instead (but its fine vice-versa).
+
+**Oss:** `await` pauses enclosing coroutine(s) and yields control back to the event loop so that it can let other "ready" coroutines run. Every coroutine should be awaited, i.e. an asynchronous function should always be called with `await` keyword.
+
+https://stackoverflow.com/questions/55647753/call-async-function-from-sync-function-while-the-synchronous-function-continues\
+Credit: [user4815162342](https://stackoverflow.com/users/1600898/user4815162342) (top 350 user)\
+*Concurrency doesn't always mean a new thread **if** you use coroutines (async def) for all your code. But your requirement is to have a sync function executed concurrently with async code, and that will certainly require multiple threads or fibers* [...]
+*new_event_loop only allocates an event loop. To actually run async code in it, you must use run_until_complete or run_forever, which blocks the current thread - so you need an additional thread to run sync code concurrently with async code. It will never work without threads.*
+
+Credit: [Mikhail Gerasimov](https://stackoverflow.com/users/1113207/mikhail-gerasimov)\
+*asyncio can't run arbitrary code "in background" without using threads. As user4815162342 noted, in asyncio you run event loop that blocks main thread and manages execution of coroutines.*\
+*If you want to use asyncio and take advantage of using it, you should rewrite all your functions that uses coroutines to be coroutines either up to main function - entry point of your program. This main coroutine is usually passed to run_until_complete.*
 
 ### Concurrent Tasks
 
