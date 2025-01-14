@@ -12,6 +12,7 @@ async def coprint():
 
 
 async def main():
+    # runs both asynchronous functions concurrently
     await asyncio.gather(coloop(), coprint())
 
 
