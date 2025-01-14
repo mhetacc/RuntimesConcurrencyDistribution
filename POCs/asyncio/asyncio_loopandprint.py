@@ -7,6 +7,8 @@ async def coloop():
 
 
 async def coprint():
+    # can be a while it works 
+    # the same way
     await asyncio.sleep(3)
     print('coprint')
 

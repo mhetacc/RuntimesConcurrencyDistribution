@@ -1198,6 +1198,20 @@ Credit: [Mikhail Gerasimov](https://stackoverflow.com/users/1113207/mikhail-gera
 *asyncio can't run arbitrary code "in background" without using threads. As user4815162342 noted, in asyncio you run event loop that blocks main thread and manages execution of coroutines.*\
 *If you want to use asyncio and take advantage of using it, you should rewrite all your functions that uses coroutines to be coroutines either up to main function - entry point of your program. This main coroutine is usually passed to run_until_complete.*
 
+https://realpython.com/async-io-python/
+Simply putting async before every function is a bad idea if all of the functions use blocking calls. [...]\
+Threading also (tends) to scale less elegantly than async IO, because threads are a system resource with a finite availability. Creating thousands of threads will fail on many machines, and I don’t recommend trying it in the first place. Creating thousands of async IO tasks is completely feasible.
+
+Async IO shines when you have multiple IO-bound tasks where the tasks would otherwise be dominated by blocking IO-bound wait time, such as:
+
+- **Network IO, whether your program is the server or the client side**
+- Serverless designs, such as a peer-to-peer, multi-user network like a group chatroom
+- Read/write operations where you want to mimic a “fire-and-forget” style but worry less about holding a lock on whatever you’re reading and writing to
+
+**Oss:** not sure it can be used with `xmlrpc`. It should not work with `sockets`.
+
+
+
 ### Concurrent Tasks
 
 `TaskGroup()` may be useful to register ACKs of heartbeat

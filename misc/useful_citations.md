@@ -13,3 +13,8 @@ In practice, however, Python provides many ways to achieve the same task. There 
 https://docs.python.org/3.12/tutorial/stdlib.html#batteries-included
 
 The `xmlrpc.client` and `xmlrpc.server` modules make implementing remote procedure calls into an almost trivial task. Despite the modules’ names, no direct knowledge or handling of XML is needed.
+
+## Realpython on asyncio
+https://realpython.com/async-io-python/
+
+Coroutines are repurposed generators that take advantage of the peculiarities of generator methods.
