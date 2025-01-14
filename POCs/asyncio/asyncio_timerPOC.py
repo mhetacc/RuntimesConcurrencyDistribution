@@ -34,7 +34,7 @@ class Timer:
 
 
 def callback():
-    print('goodbye and thanks for all the fish')
+    print('so long and thanks for all the fish')
 
 async def main():
     timer = Timer(3,callback)
