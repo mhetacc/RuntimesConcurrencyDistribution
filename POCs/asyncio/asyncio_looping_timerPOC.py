@@ -11,15 +11,18 @@ class Timer:
         self._args = args if args is not None else []
         self._kwargs = kwargs if kwargs is not None else {}
         self._loop = asyncio.get_event_loop()
-        # self._handler gets created on start() only
-
+        self._handler = None
 
     def _get_timeout(self):
+        # prevent error "int is not callable"
         return self._timeout() if callable(self._timeout) else self._timeout
 
     def _run(self):
         """Fire callback then restarts timer"""
         self._callback(*self._args, **self._kwargs)
+
+        # call_later(timeout, callback)
+        # calls callback after timeout runs out
         self._handler = self._loop.call_later(self._get_timeout(), self._run)
 
 
