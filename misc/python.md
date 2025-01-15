@@ -50,6 +50,13 @@ Comparison to singletons (like `None`) should always be done with
 - `is`
 - `is not`
 
+```python
+if __name__ == "__main__":
+    print("Hello, World!")
+```
+
+Why the above? It's boilerplate code that protects users from accidentally invokin the script ([source](https://stackoverflow.com/questions/419163/what-does-if-name-main-do)).
+
 ## Basics
 
 Everything is an object, and therefore has a *class* (also called its *type*). \
@@ -822,7 +829,44 @@ Threads run in the same memory, allowing sharing of memory, while processes are 
     - race conditions more likely
     - code harder to understand 
 
+### Concurrency and Parallelism
+https://www.youtube.com/watch?v=0kXaLh8Fz3k&t=630s
 
+We can utilize `multiprocessing` and `asyncio` at the same time since they are quite complemental with each other. We need to create a new async loop for each process.
+
+```python
+async def run_loop(work_queue, result_queue):
+    while True:
+        # actual work here
+
+# we need to bootstrap-it otherwise it wont work
+def bootstrap (work_queue, result_queue):
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(run_loop(work_queue, result_queue))
+
+def main():
+    process = multiprocessing.Process(
+        target=bootstrap,
+        args=(work_queue, result_queue)
+    )
+
+process.start()  # actually starts the process
+```
+
+With https://github.com/omnilib/aiomultiprocess we can use the multiprocessXasync stuff without having to do it ourself:
+
+```python
+from aiomultiprocess import Pool
+
+async def fetch_url(url):
+    return await aiohttp.request('GET', url)
+
+async def fetch_all(urls):
+    # same syntax of multiprocess.Pool
+    async with Pool() as pool:
+        results = await pool.map(fetch_url, urls)
+```
 
 # Python Modules
 
@@ -1473,6 +1517,19 @@ class Configuration:
         }
 
 ```
+
+### Custom Awaitable
+
+To create an awaitable class i just need to implement `__await__` method:
+
+```python
+class MyAwaitable:
+    def __await__(self):
+        yield       # pause until
+        return 42
+```
+
+Using `yield` should makes us remember that coroutines are basically glorified generators.
 
 ## threading
 
