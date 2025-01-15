@@ -13,9 +13,6 @@ class Timer:
         self._loop = asyncio.get_event_loop()
         self._handler = None
 
-    def _get_timeout(self):
-        # prevent error "int is not callable"
-        return self._timeout() if callable(self._timeout) else self._timeout
 
     def _run(self):
         """Fire callback then restarts timer"""
@@ -23,12 +20,12 @@ class Timer:
 
         # call_later(timeout, callback)
         # calls callback after timeout runs out
-        self._handler = self._loop.call_later(self._get_timeout(), self._run)
+        self._handler = self._loop.call_later(self._timeout, self._run)
 
 
 
     def start(self):
-        self._handler = self._loop.call_later(self._get_timeout(), self._run)
+        self._handler = self._loop.call_later(self._timeout, self._run)
 
     def stop(self):
         self._handler.cancel()
