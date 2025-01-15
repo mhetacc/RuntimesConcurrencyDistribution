@@ -1,6 +1,6 @@
 import asyncio
 
-class Timer:
+class ATimer:
     """
     Scheduling periodic callbacks using handler
     Using call_later ensure that jobs dont get cancelled after timer stop()
@@ -57,7 +57,7 @@ def callback():
 
 
 async def main():
-    timer = Timer(3,callback)
+    timer = ATimer(3,callback)
     timer.start()
     await coloop()
 
