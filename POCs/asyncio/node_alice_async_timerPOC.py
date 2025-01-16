@@ -67,16 +67,19 @@ class LoopingServer(SimpleXMLRPCServer):
     # serve_forever() calls service actions which is synchronous and cannot be
     # made async since that would require overriding serve_forever() i.e. going
     # down to socket module
-    def service_actions(self):
+    async def service_actions(self):
         print('server')
-        return super().service_actions()
+        await super().service_actions()
+    
+    async def serve_forever(self, poll_interval = 0.5):
+        await super().serve_forever(poll_interval)
 
     
 
 async def handle_server():
     with LoopingServer(('localhost', 8000)) as server:
         print('server start')
-        server.serve_forever()
+        await server.serve_forever()
 
 
 print('asyncio start')
