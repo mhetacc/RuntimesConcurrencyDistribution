@@ -3,7 +3,7 @@ import asyncio
 class ATimer:
     """
     Scheduling periodic callbacks using handler
-    Using call_later ensure that jobs dont get cancelled after timer stop()
+    call_later(timeout, callback) ensure that jobs don't get cancelled after timer stop()
     """
     def __init__(self, timeout, callback, args=None, kwargs=None):
         self._timeout = timeout
@@ -17,9 +17,6 @@ class ATimer:
     def _run(self):
         """Fire callback then restarts timer"""
         self._callback(*self._args, **self._kwargs)
-
-        # call_later(timeout, callback)
-        # calls callback after timeout runs out
         self._handler = self._loop.call_later(self._timeout, self._run)
 
 
@@ -34,6 +31,7 @@ class ATimer:
         self.stop()
         self.start()
 
+#################################### run ############################
 
 
 async def coloop():
@@ -46,14 +44,7 @@ async def coloop():
 
 
 def callback():
-    #callback is not async since xmlrpc rpcs are synchronous
     print('so long and thanks for all the fish')
-
-
-# async def timerstart():
-#     # can be skipped
-#     timer = Timer(3,callback)
-#     timer.start()
 
 
 async def main():
@@ -61,8 +52,6 @@ async def main():
     timer.start()
     await coloop()
 
-    #tasks = asyncio.gather(timerstart(), coloop())
-    #await tasks
 
 asyncio.run(main())
 
