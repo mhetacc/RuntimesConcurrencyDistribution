@@ -48,7 +48,7 @@ class LoopingServer(SimpleXMLRPCServer):
         SimpleXMLRPCServer.__init__(self, uri, allow_none)
 
         # gets a connection to another server via a client proxy
-        self.proxy = xmlrpc.client.ServerProxy('http://localhost:8001', allow_none=True)
+        #self.proxy = xmlrpc.client.ServerProxy('http://localhost:8001', allow_none=True)
 
 
         self.timer = ATimer(self.heartbeat_timer, self.callback)
@@ -58,16 +58,26 @@ class LoopingServer(SimpleXMLRPCServer):
 
     def callback(self):
         # sends periodic POST requests to node Bob 
-        self.proxy.server_print('\n Alice\'s heartbeat: ' + str(datetime.datetime.now()) + '\n')
+        #self.proxy.server_print('\n Alice\'s heartbeat: ' + str(datetime.datetime.now()) + '\n')
+        print('callback')
+        #self.timer.start()
 
-    #async def service_actions(self):
-    #    return super().service_actions()
+
+
+    # serve_forever() calls service actions which is synchronous and cannot be
+    # made async since that would require overriding serve_forever() i.e. going
+    # down to socket module
+    def service_actions(self):
+        print('server')
+        return super().service_actions()
 
     
 
 async def handle_server():
     with LoopingServer(('localhost', 8000)) as server:
+        print('server start')
         server.serve_forever()
 
 
+print('asyncio start')
 asyncio.run(handle_server())

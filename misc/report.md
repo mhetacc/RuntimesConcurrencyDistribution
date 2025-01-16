@@ -158,7 +158,7 @@ If a server *Z* wants out, it can simply shut down on its own. Once Leader does 
 
 ### Raft
 
-## Parallelism
+## Parallelism and Concurrency
 
 Since a raft node is a server (ie a while true that accepts requests) and needs to have a timer (ie a while true with a sleep that calls a callback) and the game loop is, once again, a while true, we should put them in different threads to prevent them from blocking each other.
 
@@ -228,6 +228,49 @@ All in all, a Raftian node should be something like the following:
 Which means that each node has at least three separate threads.
 
 # Development
+
+## Concurrency
+
+### Asynchronous Programming
+
+Since what a timer do is fundamentally waiting it would be a good idea to implement it using asynchronous programming instead of giving it a thread or a process. This can be done using the `asyncio` [library](https://docs.python.org/3/library/asyncio.html):
+
+```python
+class ATimer:
+    """
+    Scheduling periodic callbacks using handler.
+    call_later(timeout, callback) ensures that jobs don't get cancelled after timer stop()
+    """
+    def __init__(self, timeout, callback, args=None, kwargs=None):
+        self._timeout = timeout
+        self._callback = callback
+        self._args = args if args is not None else []
+        self._kwargs = kwargs if kwargs is not None else {}
+        self._loop = asyncio.get_event_loop()
+        self._handler = None
+
+
+    def _run(self):
+        """Fire callback then restarts timer"""
+        self._callback(*self._args, **self._kwargs)
+        self._handler = self._loop.call_later(self._timeout, self._run)
+
+
+
+    def start(self):
+        self._handler = self._loop.call_later(self._timeout, self._run)
+
+    def stop(self):
+        self._handler.cancel()
+
+    def reset(self):
+        self.stop()
+        self.start()
+```
+
+Unfortunately a problem arises when we try to pair this with `xmlrpc` [library](https://docs.python.org/3/library/xmlrpc.html) which is inherently synchronous since it revolves around `socket` library's `serve_forever()` method, which calls periodically the function `service_actions()`.
+
+
 
 ## Parallelism 
 
@@ -320,7 +363,6 @@ https://medium.com/@gauravsingharoy/asynchronous-programming-with-go-546b96cd50c
 ```C++
 folly::Future<cpp2::HBResp> future_heartBeat(const cpp2::HBReq& req) override;
 ```
-
 
 
 #### Threaded Server
