@@ -268,8 +268,49 @@ class ATimer:
         self.start()
 ```
 
-Unfortunately a problem arises when we try to pair this with `xmlrpc` [library](https://docs.python.org/3/library/xmlrpc.html) which is inherently synchronous since it revolves around `socket` library's `serve_forever()` method, which calls periodically the function `service_actions()`.
+Unfortunately a problem arises when we try to pair this with `xmlrpc` [library](https://docs.python.org/3/library/xmlrpc.html) which is inherently synchronous since it revolves around `socketserver` library's `serve_forever()` [method](https://github.com/python/cpython/blob/313b96eb8b8d0ad3bac58d633822a0a3705ce60b/Lib/socketserver.py#L218), which calls periodically the [method](https://github.com/python/cpython/blob/313b96eb8b8d0ad3bac58d633822a0a3705ce60b/Lib/socketserver.py#L603) `service_actions()`.\
+Now, we can actually override `service_action()` but since its called from synchronous code we cannot make it asynchronous without overriding `socketserver.serve_forever()`, which is not intended to be modified.
 
+```python
+class LoopingServer(SimpleXMLRPCServer):
+  """Our server that should call its callback periodically"""
+    def __init__(self, uri, allow_none=True):
+        self.heartbeat_timer = 1
+
+        # creates itself (ie server start-up)
+        SimpleXMLRPCServer.__init__(self, uri, allow_none)
+
+        # create an asynchronous timer
+        self.timer = ATimer(self.heartbeat_timer, self.callback)
+        self.timer.start()
+        
+
+
+    def callback(self):
+        # sends periodic POST requests to node Bob 
+        #self.proxy.server_print('\n Alice\'s heartbeat: ' + str(datetime.datetime.now()) + '\n')
+        print('callback')
+        #self.timer.start()
+
+
+
+    # serve_forever() calls service actions which is synchronous and cannot be
+    # made async since that would require overriding serve_forever() i.e. going
+    # down to socketserver module
+    def service_actions(self):
+        return super().service_actions()
+```
+
+Even trying to override `socketserve.serve_forever()` is problematic, since the correct way to do it is:
+
+```python
+    def serve_forever(self, poll_interval = 0.5):
+        return super().serve_forever(poll_interval)
+```
+
+Which calls on the parent's class (ie `SimpleXMLRPCServer`) `serve_forever`. 
+
+Basically making this asynchronous would require to re-write both `xmlrpc` and `socketserver` modules, which is doable but also quite silly. If we really want to do it asynchronously we should use libraries made for this purpose, like asyncio's [own implementation](https://github.com/python/cpython/blob/e81fe940c9bd092f6de558fa965100502b78da0f/Lib/asyncio/events.py#L239) of `serve_forever` or, even better, [aiohttp](https://docs.aiohttp.org/en/stable/) which is an asynchronous HTTP Client/Server module for asyncio in Python.
 
 
 ## Parallelism 
@@ -278,7 +319,7 @@ Unfortunately a problem arises when we try to pair this with `xmlrpc` [library](
 
 #### Timer
 
-By subclassing `threading.Timer(Thread)` I was able to obtain a looping timer that runs in its own thread.
+By subclassing `threading.Timer(Thread)` I was able to obtain a looping timer that runs in its own thread (sort of, remember [GIL](https://wiki.python.org/moin/GlobalInterpreterLock)).
 
 ```python
 class LoopTimer(Timer):
@@ -324,7 +365,7 @@ Here we can see that se server (on the left) can accept requests while the loopi
 
 ##### How do Others Do It?
 
-Basically with async, futures or routines.
+Basically with asynchronous programming (ie async, futures and coroutines).
 
 https://github.com/bakwc/PySyncObj/blob/master/pysyncobj/config.py#L27
 Otherwise it will be called automatically from separate thread.
@@ -367,7 +408,7 @@ folly::Future<cpp2::HBResp> future_heartBeat(const cpp2::HBReq& req) override;
 
 #### Threaded Server
 
-By enclosing server management in a callable function and passing it to a `Thread()` object, I was able to create a server that stays alive in its own thread while allowing a game loop (ie a while true) to co-exist:
+By enclosing server management in a callable function and passing it to a `Thread()` object, I was able to create a server that stays alive while allowing a game loop (ie a while true) to co-exist:
 
 ```python
 def handle_server():
