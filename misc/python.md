@@ -64,7 +64,7 @@ It is stored as `object.__class__`
 
 ### Assignment
 
-Simple assignment is **always by-reference**
+Simple assignment is **always by-reference** and **creates always a new copy** of the referenced object (unless used to "share" references between pointing variables).
 
 ```shell
 >>> rgb = ["Red", "Green", "Blue"]
@@ -793,6 +793,26 @@ if 1900 < year < 2100 and 1 <= month <= 12 \
 ,       :       !       .       ;       @       =
 ->      +=      -=      *=      /=      //=     %=
 @=      &=      |=      ^=      >>=     <<=     **=
+```
+
+## Vulnerabilities Avoidance 
+
+### Type Hints
+
+Allow a sort-of static typing and allow static type check with third party tools
+
+```python
+def function(var1, var2):
+    return 0
+
+# prefer to do this instead
+def function(var1: int, var2: float) -> int:
+    return 0
+
+
+#ie
+def function(variable: VarType) -> ReturnType:
+    pass
 ```
 
 ## Parallelism
