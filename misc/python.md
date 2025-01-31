@@ -797,6 +797,65 @@ if 1900 < year < 2100 and 1 <= month <= 12 \
 
 ## Vulnerabilities Avoidance 
 
+### Top avoidance mechanisms in Python
+
+1. Use type annotations
+2. if a function has to update `global` object clearly states `global` variables 
+3. Always use named exceptions
+4. Most operations on non-integers can go bad
+5. Protect all data shared between threads with locks
+6. Avoid mixing concurrency models
+7. Avoid external termination of concurrent entities
+
+### Scope
+
+`global` should be avoided, it is generally a bad programming practice.
+
+`global` keyword is only needed when modifying (i.e., assign) a variable:
+
+```python
+var = 1
+
+def fun():
+    global var
+    var = 2
+
+fun()
+print(var) # 2
+```
+
+If `global` not specified assignment is local:
+
+```python
+var = 1
+
+def fun():
+    var = 2
+
+fun()
+print(var) # 1
+```
+
+Using **wildcards** in `import` statement make only the last one stick:
+
+```python
+from moduleA import * # ignored
+from moduleB import *
+```
+
+Local names are defined statically by looking for assignment, if only reference is found then the variable its assumed to be global:
+
+```python
+a = 1
+
+def fun():
+    print(a) # local
+    a = 2
+
+def fun():
+    print(a) # global
+```
+
 ### Type Hints
 
 Allow a sort-of static typing and allow static type check with third party tools
@@ -814,6 +873,35 @@ def function(var1: int, var2: float) -> int:
 def function(variable: VarType) -> ReturnType:
     pass
 ```
+
+### Inheritance
+
+If a class have operation-handling methods ensure that `Py_NotImplemented` and `TypeError` exceptions are handled.
+
+Forbid altering `__class__` attribute of instances.
+
+
+### Mutable and Immutable Objects
+
+`a = a + 1` creates a new object
+
+Do not assign mutable objects as default values: they are created only at function definition:
+
+```python
+def fun (y=[]):
+    y.append(1)
+
+fun()
+fun()
+fun()
+print(y) # [1, 1, 1]
+```
+
+### Concurrency
+
+§5.1.7: "[...] **multithreading** can still be useful in situations where the CPU becomes idle such as in I/O-bound applications" but its important to handle thread exceptions, and make sure each thread is only started once.
+
+A `daemon` thread never terminates until the program ends
 
 ## Parallelism
 
