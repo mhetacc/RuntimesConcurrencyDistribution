@@ -874,6 +874,14 @@ def function(variable: VarType) -> ReturnType:
     pass
 ```
 
+### Strings
+
+Simple strings are memory-optimized, if this is needed for non simple ones use `intern()` i.e., for the same string use same memory space:
+
+```python
+str = intern('non simple string')
+```
+
 ### Inheritance
 
 If a class have operation-handling methods ensure that `Py_NotImplemented` and `TypeError` exceptions are handled.
@@ -883,7 +891,7 @@ Forbid altering `__class__` attribute of instances.
 
 ### Mutable and Immutable Objects
 
-`a = a + 1` creates a new object
+`a = a + 1` always creates a new object (with both mutables and immutables)
 
 Do not assign mutable objects as default values: they are created only at function definition:
 
@@ -897,11 +905,72 @@ fun()
 print(y) # [1, 1, 1]
 ```
 
+Immutables can be modified if declared as global:
+
+```python
+def mutate(var):
+    global var
+    var = var * 2
+
+var = 1 
+mutate(var)
+print var() # 2
+```
+
+Copies should be created when passing mutables to a function if we don't want them to be modified.
+
+### Iteration
+
+Modify a list inside a loop updates its own iterator:
+
+```python
+vec = [1]
+
+for num in vec:
+    if num == 1:
+        vec += 2
+    if num == 2: # iterator has updated already
+        vec += 3
+
+print(vec) # [1,2,3]
+```
+
+To prevent this is better to iterate on a copy of the list:
+
+```python
+vec = [1]
+for num in vec[:]:
+    #do stuff
+```
+
+In general don't use `for` a la C, as in do not update iterator inside:
+
+```python
+for i in range(1,5):
+    print(i)
+    i = 10
+# out: 1, 2, 3, 4
+```
+
+Loop will always end in the "normal" way: `i<n`
+
 ### Concurrency
 
 §5.1.7: "[...] **multithreading** can still be useful in situations where the CPU becomes idle such as in I/O-bound applications" but its important to handle thread exceptions, and make sure each thread is only started once.
 
 A `daemon` thread never terminates until the program ends
+
+If a child thread has already started, attempting to start it again will result in an exception. Can lead to deadlock.
+
+`ThreadPoolExecutor` can be used to allocate a predetermined number of available threads. Can be helped with `concurrent.futures` module. 
+It should be destroyed not relying only on Python's own garbage collector (pool's finalizers may not be called).\
+Same story for `multiprocess.pool`: call explicitly `close()` or `terminate()` or use a context manager.
+
+Create and destroy threads has a significant overhead.
+
+Threads should be waited to terminate (they terminate themselves) using `join()`.
+
+If a `process` contains a `pipe` and multiple `threads` try to access it, there is a risk of data corruption.
 
 ## Parallelism
 
