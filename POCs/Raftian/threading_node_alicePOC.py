@@ -101,7 +101,7 @@ rect_main = pygame.Rect(0, 100, 1000, 1000)
 rect_header = pygame.Rect(0, 0, 1000, 100)
 rect_footer = pygame.Rect(0, 1100, 1000, 100)
 
-# creates surfaces to be drawn upon ui elements
+# creates surfaces where UI elements are drawn upon
 # Surface((width, height))
 mainwindow = pygame.Surface((1000, 1000))
 header = pygame.Surface((1000, 100))
@@ -135,7 +135,7 @@ DISPLAY.blit(footer, rect_footer)
 ########################### header and footer texts ###############################
 
 # since all boxes' positions starts from top left corner, to center them we
-# must calculate the offsets which are of curse width/2 and height/2
+# must calculate the offsets which are width/2 and height/2
 
 # header
 toptext_rect = toptext.get_rect()
