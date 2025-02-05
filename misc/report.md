@@ -212,6 +212,78 @@ Based on these information we can infer that:
 Unfortunately due to [GIL](https://wiki.python.org/moin/GlobalInterpreterLock) real multi-threading cannot be achieved with `threading`, even though it is not a blocking timer in the same way a `time.sleep(t)` would.\
 Since it feels silly to use an entire separate process to handle a timer, using `async`  seems to be the better choice. Moreover most Raft implementations use this approach (eg ScyllaDB uses C++ `future`).
 
+### Performance Assessment
+
+#### Metrics
+
+Since, as stated in *ISO/IEC DIS 24772-1:2022(E)* it is better to avoid mixing concurrency models, let's evaluate the possibility of using only `threading` by assessing the impact it has on performances compared to `multiprocessing`.
+
+The metric used is the game's frames per second, and there are two main ways to assess it: first of all we can use the built-in `Clock.get_fps() -> float` method, which returns the average fps based on the last ten `tick()` calls. \
+This produces the following result if called on a loop locked at 10fps with the code `print(clock.get_fps(), time.time())`:
+
+```shell
+0.0 1738768683.364304
+0.0 1738768683.4642906
+0.0 1738768683.5636752
+0.0 1738768683.6644945
+0.0 1738768683.7639482
+0.0 1738768683.8645377
+0.0 1738768683.9643612
+0.0 1738768684.064372
+0.0 1738768684.1640444
+0.0 1738768684.2644014
+10.0 1738768684.3642116
+10.0 1738768684.464169
+10.0 1738768684.5641387
+10.0 1738768684.663931
+10.0 1738768684.7646077
+10.0 1738768684.86475
+10.0 1738768684.9655795
+10.0 1738768685.064886
+10.0 1738768685.1653955
+10.0 1738768685.2653587
+```
+
+As we can see, each frame the function is called, which produces ten equal results since the framerate is locked at 10fps. Unix time has been included in the `print` for clarity.\
+This behaviour can be useful if we want to display the framerate on the game UI, but can be bothersome to work with if the objective is assessing performance (e.g., show average fps).
+
+A different way to measure fps, which displays elapsed frames each second follows:
+
+```python
+elapsed_frames += 1
+current_frame_time = time.time()
+if(current_frame_time - last_frame_time >= 1):
+    print(f'fps = {elapsed_frames}', current_frame_time)
+    last_frame_time = current_frame_time
+    elapsed_frames=0
+```
+
+The code above will print something like this:
+
+```shell
+fps = 11 1738769492.3660057
+fps = 10 1738769493.3667367
+fps = 10 1738769494.3677485
+fps = 10 1738769495.3697956
+fps = 11 1738769496.4692934
+fps = 10 1738769497.4698992
+fps = 10 1738769498.4722228
+fps = 10 1738769499.474063
+fps = 10 1738769500.4756427
+fps = 10 1738769501.4770439
+fps = 10 1738769502.4787178
+fps = 10 1738769503.4802487
+```
+
+The latter measuring method is easier to work with, but combining both of them could yield better result, since the former is more precise. 
+
+#### Strategy
+
+The idea is to have some dots on the screen moving at random, while the server operates by sending heartbeats. Fps will be unlocked, meaning the game will be free to push as many frames as it possibly can, which will be logged.\
+Then maximum, average and 1% lows frames per second will be compared between the pure `threading` model and the mixed `multiprocessing` model. \
+It is worth keeping in mind that, considering the type of game we are making, 60fps are plenty. 
+
+#### Results
 
 ## Raftian
 
