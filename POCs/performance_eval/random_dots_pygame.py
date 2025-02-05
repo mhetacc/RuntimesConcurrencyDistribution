@@ -1,11 +1,14 @@
 # Oss: "to blit" means to draw a source surface on top of a destination surface
-# blit(source, dest)
+# Surface.blit(what_to_draw, where_to_draw)
+# where the second argument can either be (x,y) or Rect
 
+from dataclasses import dataclass
 import random
 import pygame
 import time
 
 pygame.init()
+
 
 GREY = (125, 125, 125)
 BLACK = (0, 0, 0)
@@ -86,106 +89,125 @@ DISPLAY.blit(bottomtext, (rect_footer.centerx - xoffset, rect_footer.centery - y
 
 #################################################################################
 
-
-# Rect((x0, y0), (width, height))
-# pos starts from top left vertex
-# display = 1200x1000
-
-point_l = 50
-
-rect_btn = pygame.Rect(0, 100, point_l, point_l)
-button = pygame.Surface((point_l,point_l))
-button.fill(RED)
-DISPLAY.blit(button, rect_btn)
-
-
-
-################################ random point generation ####################################
+############################ random points generation ############################
 # can be enclosed in a function
 
-# point is a square lxl
+# C-like struct that encapsulate both Rect and Surface of a point
+@dataclass
+class Point:
+    prect: pygame.Rect
+    psurface: pygame.Surface
+    
+
+# point is a square sized lxl
 point_side_length = 30
 
-# create random point source
-xval_point_source = random.randint(0,1000)
-yval_point_source = random.randint(100,1100)
+# create a lot of Points and blit them
+# to change number of point modify range() values
+points = []
+for i in range(1, 100):
+    # create random point source (x0, y0)
+    # offsets them to prevent going out of bounds
+    point_x0 = random.randint(0, 1000 - point_side_length)
+    point_y0 = random.randint(100, 1100 - point_side_length)
 
-# offset source as needed
-if xval_point_source + point_side_length > 1100:
-    xval_point_source -= point_side_length
-if yval_point_source + point_side_length > 1000:
-    yval_point_source -= point_side_length
+    # create point rect and surface
+    point_rect = pygame.Rect(point_x0, point_y0, point_side_length, point_side_length)
+    point_surface = pygame.Surface((point_side_length, point_side_length))
 
-point_rect = pygame.Rect(xval_point_source, yval_point_source, point_side_length, point_side_length)
-point = pygame.Surface((point_side_length, point_side_length))
-point.fill((random.randint(0,255), random.randint(0,255), random.randint(0,255)))
-DISPLAY.blit(point, point_rect)
+    # apply random color
+    point_surface.fill((random.randint(0,255), random.randint(0,255), random.randint(0,255)))
 
+    # create Point
+    point : Point = Point(point_rect, point_surface)
+    
+    # add to points list
+    points.append(point)
+
+
+# blit all points in the list
+# for dev purposes: just to see that it works
+for point in points:
+    DISPLAY.blit(point.psurface, point.prect)
+
+#################################################################################
 
 # counters to measure fps
 elapsed_frames = 0
 last_frame_time = time.time()
 
+fps_list = []
+timestamp_list = []
+
+
 # MAIN LOOP
 while True:
-
-    mouse_pos=None
 
     # Process player inputs.
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             raise SystemExit
-        
-        # if mouse left button is clicked 
-        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-
-            # gets mouse position
-            mouse_pos = pygame.mouse.get_pos()
-
-            # test if a point (ie mouse) is inside the rectangle (ie button)
 
 
-
-    # Do logical updates here.
+    ####################################### Do logical updates here.
     # ...
 
+    # change each point coordinates 
+    for point in points:
+        # create random movement (+-5, +-5)
+        movement = 5
+        xmov = random.randint(-movement,movement)
+        ymov = random.randint(-movement,movement)
 
-    # Render the graphics here.
+        # must be that:
+        #   0 + l/2 <= centerX <= 1000 - l/2
+        # 100 + l/2 <= centerY <= 1100 - l/2
+
+        if point.prect.centerx + xmov < point_side_length/2:
+            xmov = movement
+        if point.prect.centerx + xmov > 1000 - point_side_length/2:
+            xmov = -movement
+        
+        if point.prect.centery + ymov < 100 + point_side_length/2:
+            ymov = movement
+        if point.prect.centery + ymov > 1100 - point_side_length/2:
+            ymov = -movement
+        
+        # move in place Rect by the given offset
+        point.prect.move_ip(xmov, ymov)
+
+
+    ####################################### Render the graphics here.
     # ...
 
-    if mouse_pos is not None and rect_btn.collidepoint(mouse_pos):
-                
-        # change header text and renders it
-        toptext = font.render("Button Pressed", False, BLACK)
-
-        # calculate offset
-        toptext_rect = toptext.get_rect()
-        xoffset = toptext_rect.width/2
-        yoffset = toptext_rect.height/2
-        
-        # must first re-draw header surface otherwise previous text remains 
-        # then draws changed header text
-        DISPLAY.blit(header, rect_header)
-        DISPLAY.blit(toptext, (rect_header.centerx - xoffset, rect_header.centery - yoffset))
+    # blit all points to their new positions
+    # first draw over them the main display otherwise trace is left
+    DISPLAY.blit(mainwindow, rect_main)
+    for point in points:
+        DISPLAY.blit(point.psurface, point.prect)
 
 
 
+    pygame.display.flip()  # refresh on-screen display
+    clock.tick(1000)       # sets framerate limit
 
+    # print(clock.get_fps(), time.time())
 
-    # we want to limit display refresh speed
-    pygame.display.flip()  # Refresh on-screen display
-    clock.tick(10)         # sets framerate
-
-    #print(clock.get_fps(), time.time())
-
+    # print(fps + unix time)
     elapsed_frames += 1
     current_frame_time = time.time()
     if(current_frame_time - last_frame_time >= 1):
         print(f'fps = {elapsed_frames}', current_frame_time)
+
+        fps_list.append(elapsed_frames)
+        timestamp_list.append(current_frame_time)
+
         elapsed_frames=0
         last_frame_time = current_frame_time
 
 
+with open('./logs/baseline_fps.txt', 'w') as file:
+    
 
 
