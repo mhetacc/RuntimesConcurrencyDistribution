@@ -1,6 +1,9 @@
 # Oss: "to blit" means to draw a source surface on top of a destination surface
+# blit(source, dest)
 
+import random
 import pygame
+import time
 
 pygame.init()
 
@@ -10,6 +13,7 @@ WHITE = (255, 255, 255)
 RED = (255, 0, 0)
 
 # create game window and set res 1000x1200
+# COLxROW but its much easier to think in terms of x and y
 DISPLAY = pygame.display.set_mode((1000, 1200))
 
 clock = pygame.time.Clock()
@@ -83,17 +87,50 @@ DISPLAY.blit(bottomtext, (rect_footer.centerx - xoffset, rect_footer.centery - y
 #################################################################################
 
 
-# create "button" rect and its surface
-# and blit it to display
-rect_btn = pygame.Rect(585, 685, 80, 80)
-button = pygame.Surface((80,80))
+# Rect((x0, y0), (width, height))
+# pos starts from top left vertex
+# display = 1200x1000
+
+point_l = 50
+
+rect_btn = pygame.Rect(0, 100, point_l, point_l)
+button = pygame.Surface((point_l,point_l))
 button.fill(RED)
 DISPLAY.blit(button, rect_btn)
 
 
 
+################################ random point generation ####################################
+# can be enclosed in a function
+
+# point is a square lxl
+point_side_length = 30
+
+# create random point source
+xval_point_source = random.randint(0,1000)
+yval_point_source = random.randint(100,1100)
+
+# offset source as needed
+if xval_point_source + point_side_length > 1100:
+    xval_point_source -= point_side_length
+if yval_point_source + point_side_length > 1000:
+    yval_point_source -= point_side_length
+
+point_rect = pygame.Rect(xval_point_source, yval_point_source, point_side_length, point_side_length)
+point = pygame.Surface((point_side_length, point_side_length))
+point.fill((random.randint(0,255), random.randint(0,255), random.randint(0,255)))
+DISPLAY.blit(point, point_rect)
+
+
+# counters to measure fps
+elapsed_frames = 0
+last_frame_time = time.time()
+
 # MAIN LOOP
 while True:
+
+    mouse_pos=None
+
     # Process player inputs.
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -104,23 +141,10 @@ while True:
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
 
             # gets mouse position
-            pos = pygame.mouse.get_pos()
+            mouse_pos = pygame.mouse.get_pos()
 
             # test if a point (ie mouse) is inside the rectangle (ie button)
-            if rect_btn.collidepoint(pos):
-                
-                # change header text and renders it
-                toptext = font.render("Button Pressed", False, BLACK)
 
-                # calculate offset
-                toptext_rect = toptext.get_rect()
-                xoffset = toptext_rect.width/2
-                yoffset = toptext_rect.height/2
-                
-                # must first re-draw header surface otherwise previous text remains 
-                # then draws changed header text
-                DISPLAY.blit(header, rect_header)
-                DISPLAY.blit(toptext, (rect_header.centerx - xoffset, rect_header.centery - yoffset))
 
 
     # Do logical updates here.
@@ -130,9 +154,38 @@ while True:
     # Render the graphics here.
     # ...
 
+    if mouse_pos is not None and rect_btn.collidepoint(mouse_pos):
+                
+        # change header text and renders it
+        toptext = font.render("Button Pressed", False, BLACK)
+
+        # calculate offset
+        toptext_rect = toptext.get_rect()
+        xoffset = toptext_rect.width/2
+        yoffset = toptext_rect.height/2
+        
+        # must first re-draw header surface otherwise previous text remains 
+        # then draws changed header text
+        DISPLAY.blit(header, rect_header)
+        DISPLAY.blit(toptext, (rect_header.centerx - xoffset, rect_header.centery - yoffset))
+
+
+
+
 
     # we want to limit display refresh speed
     pygame.display.flip()  # Refresh on-screen display
-    clock.tick(60)         # sets framerate
+    clock.tick(10)         # sets framerate
+
+    #print(clock.get_fps(), time.time())
+
+    elapsed_frames += 1
+    current_frame_time = time.time()
+    if(current_frame_time - last_frame_time >= 1):
+        print(f'fps = {elapsed_frames}', current_frame_time)
+        elapsed_frames=0
+        last_frame_time = current_frame_time
+
+
 
 
