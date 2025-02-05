@@ -972,6 +972,8 @@ Threads should be waited to terminate (they terminate themselves) using `join()`
 
 If a `process` contains a `pipe` and multiple `threads` try to access it, there is a risk of data corruption.
 
+Terminated `processes` cannot be restarted.
+
 ## Parallelism
 
 Threading vs Multiprocessing
