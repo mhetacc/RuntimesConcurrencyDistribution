@@ -1,3 +1,9 @@
+"""
+Creates number_of_dots dots and move them by an offset (x,y) each frame. 
+Both offset values (x and y) are generated randomly in the interval [-movement, + movement].
+Each second the elapsed frames are logged in the form: unix time;fps
+"""
+
 # Oss: "to blit" means to draw a source surface on top of a destination surface
 # Surface.blit(what_to_draw, where_to_draw)
 # where the second argument can either be (x,y) or Rect
@@ -12,16 +18,16 @@ import time
 
 ############################# logging ####################################
 
-# logs are in the form "./logs/performance_evaluation/filename/datetime.filename_{number_of_points}.log"
+# logs are in the form "./logs/performance_evaluation/filename/datetime.filename_{number_of_dots}.log"
 filename = 'random_dots_pygame'
-number_of_points = 100 # used later, assigned now for path name
+number_of_dots = 100 # used later, assigned now for path name
 
 # create logger and makes it so that it record any message level
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO, encoding='utf-8')
 
 
-logpath = Path(f'logs/performance_evaluation/{filename}/{datetime.datetime.now()}.{filename}_{number_of_points}.log')
+logpath = Path(f'logs/performance_evaluation/{filename}/{datetime.datetime.now()}.{filename}_{number_of_dots}.log')
 
 # logger handler to sent all to correct path
 filehandle = logging.FileHandler(logpath)
@@ -113,46 +119,46 @@ DISPLAY.blit(bottomtext, (rect_footer.centerx - xoffset, rect_footer.centery - y
 
 #################################################################################
 
-############################ random points generation ############################
+############################ random dots generation ############################
 # can be enclosed in a function
 
-# C-like struct that encapsulate both Rect and Surface of a point
+# C-like struct that encapsulate both Rect and Surface of a dot
 @dataclass
-class Point:
-    prect: pygame.Rect
-    psurface: pygame.Surface
+class Dot:
+    drect: pygame.Rect
+    dsurface: pygame.Surface
     
 
-# point is a square sized lxl
-point_side_length = 30
+# dot is a square sized lxl
+dot_side_length = 30
 
-# create a lot of Points and blit them
-# to change number of point modify range() values
-points = []
-for i in range(1, number_of_points):
-    # create random point source (x0, y0)
+# create a lot of dots and blit them
+# to change number of dot modify range() values
+dots = []
+for i in range(1, number_of_dots):
+    # create random dot source (x0, y0)
     # offsets them to prevent going out of bounds
-    point_x0 = random.randint(0, 1000 - point_side_length)
-    point_y0 = random.randint(100, 1100 - point_side_length)
+    dot_x0 = random.randint(0, 1000 - dot_side_length)
+    dot_y0 = random.randint(100, 1100 - dot_side_length)
 
-    # create point rect and surface
-    point_rect = pygame.Rect(point_x0, point_y0, point_side_length, point_side_length)
-    point_surface = pygame.Surface((point_side_length, point_side_length))
+    # create dot rect and surface
+    dot_rect = pygame.Rect(dot_x0, dot_y0, dot_side_length, dot_side_length)
+    dot_surface = pygame.Surface((dot_side_length, dot_side_length))
 
     # apply random color
-    point_surface.fill((random.randint(0,255), random.randint(0,255), random.randint(0,255)))
+    dot_surface.fill((random.randint(0,255), random.randint(0,255), random.randint(0,255)))
 
-    # create Point
-    point : Point = Point(point_rect, point_surface)
+    # create dot
+    dot : Dot = Dot(dot_rect, dot_surface)
     
-    # add to points list
-    points.append(point)
+    # add to dots list
+    dots.append(dot)
 
 
-# blit all points in the list
+# blit all dots in the list
 # for dev purposes: just to see that it works
-for point in points:
-    DISPLAY.blit(point.psurface, point.prect)
+for dot in dots:
+    DISPLAY.blit(dot.dsurface, dot.drect)
 
 #################################################################################
 
@@ -162,7 +168,7 @@ last_frame_time = time.time()
 
 # program timer: exits on timeout 
 # 60*minutes = minutes of wait
-timeout = time.time() + 60*5
+timeout = time.time() + 60*5 + 1
 
 
 # MAIN LOOP
@@ -182,8 +188,8 @@ while True:
     ####################################### Do logical updates here.
     # ...
 
-    # change each point coordinates 
-    for point in points:
+    # change each dot coordinates 
+    for dot in dots:
         # create random movement (+-5, +-5)
         movement = 5
         xmov = random.randint(-movement,movement)
@@ -193,28 +199,28 @@ while True:
         #   0 + l/2 <= centerX <= 1000 - l/2
         # 100 + l/2 <= centerY <= 1100 - l/2
 
-        if point.prect.centerx + xmov < point_side_length/2:
+        if dot.drect.centerx + xmov < dot_side_length/2:
             xmov = movement
-        if point.prect.centerx + xmov > 1000 - point_side_length/2:
+        if dot.drect.centerx + xmov > 1000 - dot_side_length/2:
             xmov = -movement
         
-        if point.prect.centery + ymov < 100 + point_side_length/2:
+        if dot.drect.centery + ymov < 100 + dot_side_length/2:
             ymov = movement
-        if point.prect.centery + ymov > 1100 - point_side_length/2:
+        if dot.drect.centery + ymov > 1100 - dot_side_length/2:
             ymov = -movement
         
         # move in place Rect by the given offset
-        point.prect.move_ip(xmov, ymov)
+        dot.drect.move_ip(xmov, ymov)
 
 
     ####################################### Render the graphics here.
     # ...
 
-    # blit all points to their new positions
+    # blit all dots to their new positions
     # first draw over them the main display otherwise trace is left
     DISPLAY.blit(mainwindow, rect_main)
-    for point in points:
-        DISPLAY.blit(point.psurface, point.prect)
+    for dot in dots:
+        DISPLAY.blit(dot.dsurface, dot.drect)
 
 
 
