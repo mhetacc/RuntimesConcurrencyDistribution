@@ -160,12 +160,16 @@ for point in points:
 elapsed_frames = 0
 last_frame_time = time.time()
 
-fps_list = []
-timestamp_list = []
+# program timer: exits on timeout 
+# 60*minutes = minutes of wait
+timeout = time.time() + 60*5
 
 
 # MAIN LOOP
 while True:
+
+    if time.time() > timeout:
+        raise SystemExit
 
     # Process player inputs.
     # removed for log purposes
@@ -223,9 +227,6 @@ while True:
     current_frame_time = time.time()
     if(current_frame_time - last_frame_time >= 1):
         print(f'fps = {elapsed_frames}', current_frame_time)
-
-        fps_list.append(elapsed_frames)
-        timestamp_list.append(current_frame_time)
 
         logger.info(f'time:{current_frame_time};fps:{elapsed_frames}')
 
