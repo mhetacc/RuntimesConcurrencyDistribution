@@ -4,3 +4,4 @@ logs
 __pycache__
 dump
 virtual_one
+!POCs/performance_eval/logs
