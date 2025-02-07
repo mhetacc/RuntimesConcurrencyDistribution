@@ -3,9 +3,32 @@
 # where the second argument can either be (x,y) or Rect
 
 from dataclasses import dataclass
+from pathlib import Path
+import datetime
+import logging
 import random
 import pygame
 import time
+
+############################# logging ####################################
+
+# logs are in the form "./logs/performance_evaluation/filename/datetime.filename_{number_of_points}.log"
+filename = 'random_dots_pygame'
+number_of_points = 100 # used later, assigned now for path name
+
+# create logger and makes it so that it record any message level
+logger = logging.getLogger()
+logging.basicConfig(level=logging.INFO, encoding='utf-8')
+
+
+logpath = Path(f'logs/performance_evaluation/{filename}/{datetime.datetime.now()}.{filename}_{number_of_points}.log')
+
+# logger handler to sent all to correct path
+filehandle = logging.FileHandler(logpath)
+logger.addHandler(filehandle)
+
+#########################################################################
+
 
 pygame.init()
 
@@ -19,6 +42,7 @@ RED = (255, 0, 0)
 # COLxROW but its much easier to think in terms of x and y
 DISPLAY = pygame.display.set_mode((1000, 1200))
 
+# necessary for fps limiting 
 clock = pygame.time.Clock()
 
 # creates default font 
@@ -105,7 +129,7 @@ point_side_length = 30
 # create a lot of Points and blit them
 # to change number of point modify range() values
 points = []
-for i in range(1, 100):
+for i in range(1, number_of_points):
     # create random point source (x0, y0)
     # offsets them to prevent going out of bounds
     point_x0 = random.randint(0, 1000 - point_side_length)
@@ -144,6 +168,7 @@ timestamp_list = []
 while True:
 
     # Process player inputs.
+    # removed for log purposes
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
@@ -192,9 +217,8 @@ while True:
     pygame.display.flip()  # refresh on-screen display
     clock.tick(1000)       # sets framerate limit
 
-    # print(clock.get_fps(), time.time())
 
-    # print(fps + unix time)
+    # print(fps + unix time) and logs it
     elapsed_frames += 1
     current_frame_time = time.time()
     if(current_frame_time - last_frame_time >= 1):
@@ -203,11 +227,12 @@ while True:
         fps_list.append(elapsed_frames)
         timestamp_list.append(current_frame_time)
 
+        logger.info(f'time:{current_frame_time};fps:{elapsed_frames}')
+
         elapsed_frames=0
         last_frame_time = current_frame_time
 
 
-with open('./logs/baseline_fps.txt', 'w') as file:
-    
+   
 
 
