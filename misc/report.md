@@ -279,11 +279,81 @@ The latter measuring method is easier to work with, but combining both of them c
 
 #### Strategy
 
-The idea is to have some dots on the screen moving at random, while the server operates by sending heartbeats. Fps will be unlocked, meaning the game will be free to push as many frames as it possibly can, which will be logged.\
-Then maximum, average and 1% lows frames per second will be compared between the pure `threading` model and the mixed `multiprocessing` model. \
-It is worth keeping in mind that, considering the type of game we are making, 60fps are plenty. 
+The idea is to have some dots on the screen moving at random, while the server operates by sending heartbeats. Fps will be unlocked, meaning the game will be free to push as many frames as it possibly can, which will be logged. With enough dots this should prove to be a scenario close to a real-world one.\ 
+Results will then be shown in a graph to visually compare them: on the X axis there will be time, in seconds, normalized so that it starts from zero, and on the Y axis FPS will be shown. \
+Measurements will be taken for:
+
+- A baseline (i.e., without a server running)
+- A version with only `threading` for both server and timer
+- A version with both `multiprocessing` for the server and `threading` for the timer
 
 #### Results
+
+First of all let's show how the game works: there are two version, one with 100 and one with 1000 dots. They are created with a randomized colour and position and they move each frame in a random direction by ([-5,+5], [-5,+5]) pixels i.e., the offset could be (-1,4) or (0,0) or (-5,-5) etc.\
+
+The code is something like this:
+
+```python
+# create random offsets for both x and y coordinates
+xmov = random.randint(-5,5)
+ymov = random.randint(-5,5)
+
+# move the dot by a certain offset
+dot.drect.move_ip(xmov, ymov)
+```
+
+The two versions look like this:
+![100 dots](imgs/100_dots.gif) ![1000 dots](imgs/1000_dots.gif)
+
+Then two more versions were tested (for both 100 and 1000 dots, so four extra versions in total) which included an alive server concurrent with Pygame: one leveraging `threading` and one leveraging `multiprocessing`.
+
+Here follows the test machine's specifications:
+
+- OS: Ubuntu 24.04.1 LTS x86_64 
+- Kernel: 6.8.0-52-generic 
+- Shell: bash 5.2.21
+- CPU: 13th Gen Intel i7-13620H 
+- GPU: NVIDIA GeForce RTX 4050 Laptop GPU 
+- Memory: 15610MiB 
+- Python version: 3.12.3 
+- Power Mode: Balanced
+- Alimentation: 100W via type C 
+
+Here follows all tests performed:
+
+- Baseline (without server, only Pygame running) with 100 dots 
+- Baseline (without server, only Pygame running) with 1000 dots
+- Server in a separate thread via `threading` with 100 dots
+- Server in a separate thread via `threading` with 1000 dots
+- Server in a separate process via `multiprocessing` with 100 dots
+- Server in a separate process via `multiprocessing` with 1000 dots
+
+All servers' internal timers (i.e., the poll interval for the heartbeats) have been set to 300ms, like so: `self.heartbeat_timer = 0.003`.\
+Servers' `serve_forever()` poll interval was not changed since it does not seem to limit responsiveness. This was observed with `node_bobPOC.py` that accepted HTTP requests every 300ms even tho `serve_forever()` was not redefined.
+
+An example of node Bob's log follows, and it shows that even if its polling timeout is the default one of 0.5s, it does responds to requests more or less once every 400ms:
+
+```shell
+127.0.0.1 - - [07/Feb/2025 16:48:22] "POST /RPC2 HTTP/1.1" 200 -
+
+ Alice's heartbeat: 2025-02-07 16:48:22.885066
+
+127.0.0.1 - - [07/Feb/2025 16:48:22] "POST /RPC2 HTTP/1.1" 200 -
+
+ Alice's heartbeat: 2025-02-07 16:48:22.889263
+
+127.0.0.1 - - [07/Feb/2025 16:48:22] "POST /RPC2 HTTP/1.1" 200 -
+
+ Alice's heartbeat: 2025-02-07 16:48:22.893254
+
+127.0.0.1 - - [07/Feb/2025 16:48:22] "POST /RPC2 HTTP/1.1" 200 -
+
+ Alice's heartbeat: 2025-02-07 16:48:22.897146
+
+127.0.0.1 - - [07/Feb/2025 16:48:22] "POST /RPC2 HTTP/1.1" 200 -
+```
+
+Let's now show the results.
 
 ## Raftian
 
