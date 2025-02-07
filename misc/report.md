@@ -353,7 +353,14 @@ An example of node Bob's log follows, and it shows that even if its polling time
 127.0.0.1 - - [07/Feb/2025 16:48:22] "POST /RPC2 HTTP/1.1" 200 -
 ```
 
-Let's now show the results.
+Here are the sources for all code and logs:
+- [performance evaluation code directory](https://github.com/mhetacc/RuntimesConcurrencyDistribution/tree/main/POCs/performance_eval)
+- [random dots, pygame only](https://github.com/mhetacc/RuntimesConcurrencyDistribution/blob/main/POCs/performance_eval/random_dots_pygame.py)
+- [random dots and server on different thread](https://github.com/mhetacc/RuntimesConcurrencyDistribution/blob/main/POCs/performance_eval/threading_alice_peval.py)
+- [random dots and server on different process](https://github.com/mhetacc/RuntimesConcurrencyDistribution/blob/main/POCs/performance_eval/multiprocess_alice_peval.py)
+- [logs directory](https://github.com/mhetacc/RuntimesConcurrencyDistribution/tree/main/POCs/performance_eval/logs)
+
+Let's now show the results. TODO
 
 ## Raftian
 
