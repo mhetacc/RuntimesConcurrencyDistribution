@@ -328,6 +328,8 @@ Here follows all tests performed:
 - Server in a separate process via `multiprocessing` with 100 dots
 - Server in a separate process via `multiprocessing` with 1000 dots
 
+All tests let the game run for five minutes.
+
 All servers' internal timers (i.e., the poll interval for the heartbeats) have been set to 300ms, like so: `self.heartbeat_timer = 0.003`.\
 Servers' `serve_forever()` poll interval was not changed since it does not seem to limit responsiveness. This was observed with `node_bobPOC.py` that accepted HTTP requests every 300ms even tho `serve_forever()` was not redefined.
 
@@ -360,7 +362,26 @@ Here are the sources for all code and logs:
 - [random dots and server on different process](https://github.com/mhetacc/RuntimesConcurrencyDistribution/blob/main/POCs/performance_eval/multiprocess_alice_peval.py)
 - [logs directory](https://github.com/mhetacc/RuntimesConcurrencyDistribution/tree/main/POCs/performance_eval/logs)
 
-Let's now show the results. TODO
+Let's now show the graph and discuss results:
+
+![Fps comparison](imgs/performance_eval_fps_graph.png)
+
+The colours are arranged as such: darker shades for 1000-dots evaluations, lighter shades for the 100-dots ones.\
+ <span style="color:red">Baselines</span> use shades of red, <span style="color:blue">threading module</span> uses shades of blue and <span style="color:green">multiprocessing module</span> uses shades of green.
+
+We can observe that:
+
+- i) Baselines yield double the fps-es compared to their concurrent counterparts;
+- ii) `multiprocessing` yields worse performance (about -30%) than `threading` in the 100-dots scenario, and perform the same in the 1000-dots scenario.  
+
+We can than conclude that:
+
+- i) Using concurrent code comes with a significant overhead that halves performances
+- ii) `multiprocessing`'s overhead makes it the wrong tool for this specific project
+
+Regarding this last remark: tests were done with games that requires much more computation than the final project, which will likely have no moving elements at all being a strategy game. Hence using the lighter weight `threading` module should yield even greater performance advantages. 
+
+
 
 ## Raftian
 
