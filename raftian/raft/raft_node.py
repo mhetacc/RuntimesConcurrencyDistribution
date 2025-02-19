@@ -31,17 +31,17 @@ class Raft(SimpleXMLRPCServer):
     def __init__(self, addr, requestHandler = ..., logRequests = True, allow_none = False, encoding = None, bind_and_activate = True, use_builtin_types = False,
                  mode: Mode = 3,
                  timeout: float = 0.003,
-                 cluster: list[Server] = None,
-                 log: list[Entry] = None,
-                 term: int = None,
-                 cluster_config: int = None,
-                 votes_count: int = None,
-                 non_voter: bool = True,
-                 voted_for: int = None,
-                 commit_index: int = None,
-                 last_applied: int = None,
-                 next_index_to_send: list[int] = None,
-                 last_index_on_server: list[int] = None
+                 cluster: list[Server] | None = None,
+                 log: list[Entry] | None = None,
+                 term: int | None = None,
+                 cluster_config: int | None = None,
+                 votes_count: int | None = None,
+                 non_voter: bool | None = True,
+                 voted_for: int | None = None,
+                 commit_index: int | None = None,
+                 last_applied: int | None = None,
+                 next_index_to_send: list[int] | None = None,
+                 last_index_on_server: list[int] | None = None
                  ):
         SimpleXMLRPCServer.__init__(addr, requestHandler, logRequests, allow_none, encoding, bind_and_activate, use_builtin_types)
 
@@ -68,19 +68,65 @@ class Raft(SimpleXMLRPCServer):
         # switch self.mode 
         pass
 
+
+
     def append_entries_rpc(
+            self,                   # self is serverproxy i.e., the client
             leader_term: int,
             leader_commit_index: int,
-            leader_id: int,
-            prev_log_index: int,
-            prev_log_term: int,
-            entries: list[Entry] = None
+            #leader_id: int,        # to redirect other clients 
+            leader_prev_log_index: int,
+            leader_prev_log_term: int,
+            entries: list[Entry] | None = None
     ) -> tuple[int, bool]:
         """
         Fired by leader, followers send back ack
-        ack = (follower_term, entry_replicated)
+        ack = (follower_term: int, entry_replicated: bool)
+
+        TODO: must be moved outside of the class and registered by the client server
+        with server.register_function(append_entries_rpc)
         """
         # HERE is what followers do
-        pass
+
+        # leader is still alive
+        self.timer.reset()
+
+        # if leader is out of date -> reject
+        if leader_term < self.term:
+            return (self.term, False)
+
+        # if it was not just an heartbeat
+        if entries is not None:
+
+            # search in log an entry equal to prev_leader_entry
+            # save its log index (!= entry index)
+            entry_log_index: int | None = None
+            for i, my_entry in enumerate(self.log):
+                if (my_entry.index == leader_prev_log_index 
+                    and my_entry.term == leader_prev_log_term):
+                    entry_log_index = i
+
+            # if follower does not have leader last entry
+            # i.e., the one before new entries -> reject
+            if entry_log_index is None:
+                return(self.term, False)
+
+            # delete all log entries from the one equal to prev_leader_entry (excluded)
+            del self.log[(entry_log_index + 1):]
+
+            # append new entries
+            self.log.append(entries)
+
+            # update commit index
+            if leader_commit_index > self.commit_index:
+                self.commit_index = min(leader_commit_index,
+                                        entries[-1].index
+                                        )
+
+
+        # everything went well
+        return (self.term, True)
+        
+        
 
 
