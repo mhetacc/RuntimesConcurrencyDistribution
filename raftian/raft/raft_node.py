@@ -83,6 +83,8 @@ class Raft(SimpleXMLRPCServer):
         Fired by leader, followers send back ack
         ack = (follower_term: int, entry_replicated: bool)
 
+        Payload (i.e., entries) is either None (if used for propagating heartbeat) or a list of entries that have to be propagated on all followers
+
         TODO: must be moved outside of the class and registered by the client server
         with server.register_function(append_entries_rpc)
         """
@@ -91,31 +93,38 @@ class Raft(SimpleXMLRPCServer):
         # leader is still alive
         self.timer.reset()
 
+
         # if leader is out of date -> reject
         if leader_term < self.term:
             return (self.term, False)
+
 
         # if it was not just an heartbeat
         if entries is not None:
 
             # search in log an entry equal to prev_leader_entry
+            # i.e., entry preceding future appended entries.
             # save its log index (!= entry index)
             entry_log_index: int | None = None
             for i, my_entry in enumerate(self.log):
                 if (my_entry.index == leader_prev_log_index 
                     and my_entry.term == leader_prev_log_term):
                     entry_log_index = i
+                    break # no need to search further
 
-            # if follower does not have leader last entry
-            # i.e., the one before new entries -> reject
+
+            # if follower does not have entry equal to prev_leader_entry -> reject
             if entry_log_index is None:
                 return(self.term, False)
+
 
             # delete all log entries from the one equal to prev_leader_entry (excluded)
             del self.log[(entry_log_index + 1):]
 
+
             # append new entries
             self.log.append(entries)
+
 
             # update commit index
             if leader_commit_index > self.commit_index:
@@ -126,6 +135,24 @@ class Raft(SimpleXMLRPCServer):
 
         # everything went well
         return (self.term, True)
+    
+    
+
+    def request_vote_rpc(
+            candidate_term: int,
+            candidate_id: int,
+            candidate_last_log_index: int,
+            candidate_last_log_term: int
+    ) -> tuple[int, bool]:
+        """
+        Fired by candidates, other servers send back ack
+        ack = (server_term: int, vote_granted: bool)
+
+        Used to request vote from all servers in the cluster when a follower becomes a candidate and starts an election
+
+        Depending on the result, candidate will either yield and revert to follower or become the new leader  
+        """
+        pass
         
         
 
