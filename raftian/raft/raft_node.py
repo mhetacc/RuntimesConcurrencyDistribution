@@ -36,7 +36,7 @@ class Raft(SimpleXMLRPCServer):
                  term: int | None = None,
                  cluster_config: int | None = None,
                  votes_count: int | None = None,
-                 non_voter: bool | None = True,
+                 non_voter: bool = True,
                  voted_for: int | None = None,
                  commit_index: int | None = None,
                  last_applied: int | None = None,
