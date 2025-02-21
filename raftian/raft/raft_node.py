@@ -47,17 +47,17 @@ class Raft(SimpleXMLRPCServer):
 
         # instance attributes here
         self.mode: Raft.Mode = mode
-        self.cluster: list[Raft.Server] = cluster
-        self.log: list[Raft.Entry] = log
-        self.term: int = term
-        self.cluster_config: int = cluster_config
-        self.votes_count: int = votes_count
+        self.cluster: list[Raft.Server] | None = cluster
+        self.log: list[Raft.Entry] | None = log
+        self.term: int | None = term
+        self.cluster_config: int | None = cluster_config
+        self.votes_count: int | None = votes_count
         self.non_voter: bool = non_voter
-        self.voted_for: int = voted_for
-        self.commit_index: int = commit_index
-        self.last_applied: int = last_applied
-        self.next_index_to_send: list[int] = next_index_to_send
-        self.last_index_on_server: list[int] = last_index_on_server
+        self.voted_for: int | None = voted_for
+        self.commit_index: int | None = commit_index
+        self.last_applied: int | None = last_applied
+        self.next_index_to_send: list[int] | None = next_index_to_send
+        self.last_index_on_server: list[int] | None = last_index_on_server
 
         # start timer
         self.timer = reset_looping_timer.LoopTimer(timeout, self.on_timeout)
