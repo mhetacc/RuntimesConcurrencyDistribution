@@ -139,6 +139,7 @@ class Raft(SimpleXMLRPCServer):
     
 
     def request_vote_rpc(
+            self,
             candidate_term: int,
             candidate_id: int,
             candidate_last_log_index: int,
@@ -152,7 +153,23 @@ class Raft(SimpleXMLRPCServer):
 
         Depending on the result, candidate will either yield and revert to follower or become the new leader  
         """
-        pass
+        
+        # HERE is what other servers do
+
+        # if candidate less up to date -> reject
+        if self.term > candidate_term:
+            return (self.term, False)
+
+
+        # if a candidate already exists
+        if self.voted_for is not None and not candidate_id:
+            return (self.term, False)
+        
+
+        # vote for candidate
+        self.voted_for = candidate_id
+        return (self.term, True)
+
         
         
 
