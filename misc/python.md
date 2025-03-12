@@ -1764,6 +1764,15 @@ def handle_server():
 threading.Thread(target=handle_server).start()
 ```
 
+### Thread Pool
+
+Two ways:
+
+- `multiprocessing.dummy.ThreadPool`
+- `concurrent.futures.ThreadPoolExecutor`
+
+On the broad look, they do the same thing but `ThreadPoolExecutor` is better.
+
 ### Timer
 
 ```python
@@ -1929,6 +1938,54 @@ m_event.is_set()
 t_event.is_set()
 # so on and so forth
 ```
+
+## concurrent.futures
+
+The proper way to provide parallelism.
+
+`ThreadPoolExecutor` can be used to allocate a predetermined number of available **threads**. Available at `concurrent.futures` module.
+
+### ThreadPoolExecutor
+
+```python
+concurrent.futures.ProcessPoolExecutor(
+    max_workers=None,       
+    mp_context=None, 
+    initializer=None, 
+    initargs=(),                # arguments for initializer
+    max_tasks_per_child=None    # if None worker live as long as pool
+    )
+```
+
+When a worker terminate abruptly it raises a `BrokenProcessPool`  [https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.process.BrokenProcessPool](error)
+
+
+Usage example:
+
+```python
+# oss primes list so -> cluster 
+PRIMES = [
+    112272535095293,
+    112582705942171,
+    112272535095293,
+    115280095190773,
+    115797848077099,
+    1099726899285419
+    ]
+
+def is_pime(n):
+    # returns True if n is prime
+
+def main():
+    # fires process pool
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        for number, prime in zip(PRIMES, executor.map(is_prime, PRIMES)):
+            print('%d is prime: %s' % (number, prime))
+
+# so maybe 
+cluster.map(request_vote, cluster)
+```
+
 
 ## Tkinter 
 
