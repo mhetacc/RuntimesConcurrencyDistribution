@@ -1,7 +1,10 @@
+import multiprocessing.pool
 from xmlrpc.server import SimpleXMLRPCServer
 from enum import Enum
 import reset_looping_timer
 from dataclasses import dataclass
+import random
+import multiprocessing
 
 
 
@@ -29,6 +32,7 @@ class Raft(SimpleXMLRPCServer):
     # class attributes here
     
     def __init__(self, addr, requestHandler = ..., logRequests = True, allow_none = False, encoding = None, bind_and_activate = True, use_builtin_types = False,
+                 id : int = 0,
                  mode: Mode = 3,
                  timeout: float = 0.003,
                  cluster: list[Server] | None = None,
@@ -46,6 +50,7 @@ class Raft(SimpleXMLRPCServer):
         SimpleXMLRPCServer.__init__(addr, requestHandler, logRequests, allow_none, encoding, bind_and_activate, use_builtin_types)
 
         # instance attributes here
+        self.id: int = id
         self.mode: Raft.Mode = mode
         self.cluster: list[Raft.Server] | None = cluster
         self.log: list[Raft.Entry] | None = log
@@ -64,8 +69,11 @@ class Raft(SimpleXMLRPCServer):
         self.timer.start()
     
 
-    def on_timeout():
+    def on_timeout(self):
+        # TODO
         # switch self.mode 
+        if self.mode == Raft.Mode.CANDIDATE:
+            pass
         pass
 
 
@@ -170,7 +178,42 @@ class Raft(SimpleXMLRPCServer):
         self.voted_for = candidate_id
         return (self.term, True)
 
+
+
+    # on follower timeout
+    def to_candidate(self):
+
+        # become candidate, update term and vote for itself
+        self.mode = Raft.Mode.CANDIDATE
+        self.term += self.term
+        self.voted_for = self.id
         
+
+        # reset election timer
+        # TODO check correctness of timer range
+        timeout: float = random.uniform(0.0015, 0.002)
+        self.timer.reset(timeout)
+
+
+        # send request vote rpc to all servers in the cluster
+        # how to make it non-blocking 
+        cluster_pool = multiprocessing.pool.ThreadPool
+
+
+
+    # RUN method of the server
+    def service_actions(self):
+
+        # apply log to state one at a time
+        # i.e., send to Pygame
+        if self.commit_index > self.last_applied:
+            self.last_applied += self.last_applied
+            #TODO 
+            # try statement?
+            # apply log[self.last_applied]
+
+
+        return super().service_actions()
         
 
 
