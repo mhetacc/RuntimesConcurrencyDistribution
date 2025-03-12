@@ -15,7 +15,10 @@ class LoopTimer(Timer):
                 self.function(*self.args, **self.kwargs)
             self.was_reset = False
 
-    def reset(self):
-        # reset flag based since stopping an re starting timers is illigal
+    def reset(self, interval=None):
+        # reset flag based since stopping an re starting timers is illegal
         self.was_reset = True
+
+        if interval is not None:
+            self.interval = interval
 
