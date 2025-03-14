@@ -1945,15 +1945,39 @@ The proper way to provide parallelism.
 
 `ThreadPoolExecutor` can be used to allocate a predetermined number of available **threads**. Available at `concurrent.futures` module.
 
-### ThreadPoolExecutor
+### Executor
+
+Should not be used directly, interface that gets implemented by concrete classes like `ThreadPoolExecutor`.
 
 ```python
-concurrent.futures.ProcessPoolExecutor(
+map(
+    function,       # scheduled callable
+    *iterables,     # collection onto which calling
+    timeout=None,
+    chunksize=1     # no effect with ThreadPool
+)
+```
+
+Signal executor to free all resources, can avoid calling explicitly if `with` statement is used 
+
+```python
+shutdown(
+    wait=True,              # wait for pending futures
+    *,
+    cancel_futures=False    # if True cancel pending futures
+)
+```
+
+### ThreadPoolExecutor
+
+Deadlocks can occur when a Future waits on the results on another Future.
+
+```python
+concurrent.futures.ThreadPoolExecutor(
     max_workers=None,       
-    mp_context=None, 
-    initializer=None, 
+    thread_name_prefix=None,    # easier debugging
+    initializer=None,           # called at start of each worker thread
     initargs=(),                # arguments for initializer
-    max_tasks_per_child=None    # if None worker live as long as pool
     )
 ```
 
@@ -1964,28 +1988,59 @@ Usage example:
 
 ```python
 # oss primes list so -> cluster 
-PRIMES = [
-    112272535095293,
-    112582705942171,
-    112272535095293,
-    115280095190773,
-    115797848077099,
-    1099726899285419
-    ]
 
-def is_pime(n):
-    # returns True if n is prime
+URLS = ['http://www.foxnews.com/',
+        'http://www.cnn.com/',
+        'http://europe.wsj.com/',
+        'http://www.bbc.co.uk/',
+        'http://nonexistent-subdomain.python.org/']
 
-def main():
-    # fires process pool
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-        for number, prime in zip(PRIMES, executor.map(is_prime, PRIMES)):
-            print('%d is prime: %s' % (number, prime))
+# Retrieve a single page and report the URL and contents
+def load_url(url, timeout):
+    with urllib.request.urlopen(url, timeout=timeout) as conn:
+        return conn.read()
 
-# so maybe 
+# We can use a with statement to ensure threads are cleaned up promptly
+with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+    # Start the load operations and mark each future with its URL
+    future_to_url = {executor.submit(load_url, url, 60): url for url in URLS}
+    for future in concurrent.futures.as_completed(future_to_url):
+        url = future_to_url[future]
+        try:
+            data = future.result()
+        except Exception as exc:
+            print('%r generated an exception: %s' % (url, exc))
+        else:
+            print('%r page is %d bytes' % (url, len(data)))
+
+# maybe also 
 cluster.map(request_vote, cluster)
 ```
 
+Observations: 
+1. It would be interesting to preemptively keep a bunch of worker threads to send requests to the cluster, to prevent keep creating and destroying them
+2. "it is recommended that `ThreadPoolExecutor` not be used for long-running tasks"  
+
+```python
+# Oss:
+with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+
+# INTO
+pool = concurrent.futures.ThreadPoolExecutor(max_workers=cluster_size)
+
+# should keep workers alive for the server to use
+```
+
+Warning: if a worker throws an unhandled exception the whole pool dies.
+
+
+### Future
+
+```python
+future.result(timeout=None) 
+# if call does not complete in timeout seconds, raises TimeoutError 
+# timeout can be int or float
+```
 
 ## Tkinter 
 
