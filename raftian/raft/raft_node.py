@@ -4,7 +4,7 @@ from enum import Enum
 import reset_looping_timer
 from dataclasses import dataclass
 import random
-import multiprocessing
+import concurrent.futures
 
 
 
@@ -195,9 +195,10 @@ class Raft(SimpleXMLRPCServer):
         self.timer.reset(timeout)
 
 
+        # TODO
         # send request vote rpc to all servers in the cluster
         # how to make it non-blocking 
-        cluster_pool = multiprocessing.pool.ThreadPool
+            
 
 
 
