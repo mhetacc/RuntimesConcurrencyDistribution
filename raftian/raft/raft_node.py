@@ -1,11 +1,11 @@
-import multiprocessing.pool
 from xmlrpc.server import SimpleXMLRPCServer
 from enum import Enum
 import reset_looping_timer
 from dataclasses import dataclass
 import random
+import threading
 import concurrent.futures
-
+import xmlrpc.client
 
 
 
@@ -72,8 +72,15 @@ class Raft(SimpleXMLRPCServer):
     def on_timeout(self):
         # TODO
         # switch self.mode 
+
         if self.mode == Raft.Mode.CANDIDATE:
             pass
+        elif self.mode == Raft.Mode.LEADER:
+            self.heartbeat()
+        elif self.mode == Raft.Mode.FOLLOWER:
+            pass
+        else:
+            print('Mode wrong') #TODO error message
         pass
 
 
@@ -83,8 +90,8 @@ class Raft(SimpleXMLRPCServer):
             leader_term: int,
             leader_commit_index: int,
             #leader_id: int,        # to redirect other clients 
-            leader_prev_log_index: int,
-            leader_prev_log_term: int,
+            leader_prev_log_index: int | None = None,
+            leader_prev_log_term: int | None = None,
             entries: list[Entry] | None = None
     ) -> tuple[int, bool]:
         """
@@ -200,21 +207,116 @@ class Raft(SimpleXMLRPCServer):
         # how to make it non-blocking 
             
 
+    def heartbeat(self):
+        # send empty append_entries_rpc to all server proxies
+        # TODO: is this correct or are we creating instances of servers everywhere?
+        # TODO: use a threadpool
+
+        # automatic blocking version
+
+        results = []
+
+        for i in range (0,len(self.cluster)):
+            url: str = self.cluster[i].url
+            port: int = self.cluster[i].port
+
+            complete_url = 'http://' + str(url) + ':' + str(port)
+
+            bob_proxy = xmlrpc.client.ServerProxy(complete_url, allow_none=True)
+
+            results.append(bob_proxy.append_entries_rpc(self, self.term, self.commit_index))
+
+        # threadpool executor version
+
+        URLS: list[str] = []
+
+        for i in range (0,len(self.cluster)):
+            url: str = self.cluster[i].url
+            port: int = self.cluster[i].port
+
+            complete_url = 'http://' + str(url) + ':' + str(port)
+            URLS.append(complete_url)
+
+        
+        # TODO ofcs remove
+        URLS = ['http://www.foxnews.com/',
+                'http://www.cnn.com/',
+                'http://europe.wsj.com/',
+                'http://www.bbc.co.uk/',
+                'http://nonexistent-subdomain.python.org/']
+
+        # Retrieve a single page and report the URL and contents
+        def load_url(url, timeout):
+            with urllib.request.urlopen(url, timeout=timeout) as conn:
+                return conn.read()
+
+        # from documentation:
+        #  executor.submit(fn, /, *args, **kwargs) -> Future
+
+        # Fire one append entries and return the result 
+        def encapsulate_proxy(self, bob_url, term, commit_index) -> tuple[int, bool]:
+            with xmlrpc.client.ServerProxy(bob_url, allow_none=True) as bob_proxy:
+                 return bob_proxy.append_entries_rpc(self, term, commit_index)
+
+        # We can use a with statement to ensure threads are cleaned up promptly
+        # TODO always keep them around? maybe at __init__
+        # SHOULD WORK
+        with concurrent.futures.ThreadPoolExecutor(max_workers=len(self.cluster)) as executor:
+            # Start the load operations and mark each future with its URL
+            #future_to_url = {executor.submit(load_url, url, 60): url for url in URLS}
+            future_to_url = {executor.submit(encapsulate_proxy, self, url, self.term, self.commit_index): url for url in URLS}
+            for future in concurrent.futures.as_completed(future_to_url):
+                url = future_to_url[future]
+                try:
+                    data = future.result()
+                except Exception as exc:
+                    print('%r generated an exception: %s' % (url, exc))
+                else:
+                    print('%r page is %d bytes' % (url, len(data)))
+
 
 
     # RUN method of the server
     def service_actions(self):
 
-        # apply log to state one at a time
-        # i.e., send to Pygame
-        if self.commit_index > self.last_applied:
-            self.last_applied += self.last_applied
-            #TODO 
-            # try statement?
-            # apply log[self.last_applied]
+        # # apply log to state one at a time
+        # # i.e., send to Pygame
+        # if self.commit_index > self.last_applied:
+        #     self.last_applied += self.last_applied
+        #     #TODO 
+        #     # try statement?
+        #     # apply log[self.last_applied]
 
 
         return super().service_actions()
         
 
+bob1 = Raft.Server(1, 'localhost', 8001, 100)
+bob2 = Raft.Server(2, 'localhost', 8002, 100)
+bob3 = Raft.Server(3, 'localhost', 8003, 100)
+bob4 = Raft.Server(4, 'localhost', 8004, 100)
 
+bobs_cluster : list[Raft.Server] = [bob1, bob2, bob3, bob4]
+
+# enclose server in a callable function
+def handle_server():
+    with Raft(
+        addr=('localhost', 8000),   # where server lives
+        mode=1,                     # LEADER
+        cluster=bobs_cluster,
+        term=1000
+        ) as server:
+        def print_feedback(value):
+            return value
+        
+        #server.register_function(print_feedback)
+        server.serve_forever()
+
+
+
+
+
+
+# pass all server stuff to a separate thread
+thread = threading.Thread(target=handle_server)
+thread.start()
