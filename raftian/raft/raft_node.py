@@ -47,7 +47,7 @@ class Raft(SimpleXMLRPCServer):
                  next_index_to_send: list[int] | None = None,
                  last_index_on_server: list[int] | None = None
                  ):
-        SimpleXMLRPCServer.__init__(addr, requestHandler, logRequests, allow_none, encoding, bind_and_activate, use_builtin_types)
+        SimpleXMLRPCServer.__init__(self, addr, requestHandler, logRequests, allow_none, encoding, bind_and_activate, use_builtin_types)
 
         # instance attributes here
         self.id: int = id
@@ -208,15 +208,19 @@ class Raft(SimpleXMLRPCServer):
             
 
     def heartbeat(self):
-        # send empty append_entries_rpc to all server proxies
+        # gets called by on_timeout() when in LEADER mode
+        # call empty append_entries_rpc on all server proxies
+
         # TODO: is this correct or are we creating instances of servers everywhere?
         # TODO: use a threadpool
 
-        # automatic blocking version
+
+        # blocking version
 
         results = []
 
         for i in range (0,len(self.cluster)):
+            # one server proxy at a time 
             url: str = self.cluster[i].url
             port: int = self.cluster[i].port
 
@@ -226,11 +230,13 @@ class Raft(SimpleXMLRPCServer):
 
             results.append(bob_proxy.append_entries_rpc(self, self.term, self.commit_index))
 
+        #######################################################################
         # threadpool executor version
 
         URLS: list[str] = []
 
         for i in range (0,len(self.cluster)):
+            # build URLs list 
             url: str = self.cluster[i].url
             port: int = self.cluster[i].port
 
@@ -238,7 +244,8 @@ class Raft(SimpleXMLRPCServer):
             URLS.append(complete_url)
 
         
-        # TODO ofcs remove
+        # TODO remove this
+        # placeholder remained from original code
         URLS = ['http://www.foxnews.com/',
                 'http://www.cnn.com/',
                 'http://europe.wsj.com/',
@@ -246,9 +253,10 @@ class Raft(SimpleXMLRPCServer):
                 'http://nonexistent-subdomain.python.org/']
 
         # Retrieve a single page and report the URL and contents
-        def load_url(url, timeout):
-            with urllib.request.urlopen(url, timeout=timeout) as conn:
-                return conn.read()
+        # should not be needed 
+        # def load_url(url, timeout):
+        #     with urllib.request.urlopen(url, timeout=timeout) as conn:
+        #         return conn.read()
 
         # from documentation:
         #  executor.submit(fn, /, *args, **kwargs) -> Future
@@ -296,12 +304,13 @@ bob2 = Raft.Server(2, 'localhost', 8002, 100)
 bob3 = Raft.Server(3, 'localhost', 8003, 100)
 bob4 = Raft.Server(4, 'localhost', 8004, 100)
 
-bobs_cluster : list[Raft.Server] = [bob1, bob2, bob3, bob4]
+# bobs_cluster : list[Raft.Server] = [bob1, bob2, bob3, bob4]
+bobs_cluster : list[Raft.Server] = [bob1] # easier to test
 
 # enclose server in a callable function
 def handle_server():
     with Raft(
-        addr=('localhost', 8000),   # where server lives
+        ('localhost', 8000),   # where server lives
         mode=1,                     # LEADER
         cluster=bobs_cluster,
         term=1000
@@ -311,9 +320,6 @@ def handle_server():
         
         #server.register_function(print_feedback)
         server.serve_forever()
-
-
-
 
 
 
