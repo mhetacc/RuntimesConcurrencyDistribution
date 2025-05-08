@@ -226,61 +226,68 @@ class Raft(SimpleXMLRPCServer):
 
             complete_url = 'http://' + str(url) + ':' + str(port)
 
+            # print('Complete URL= ',complete_url)
+
             bob_proxy = xmlrpc.client.ServerProxy(complete_url, allow_none=True)
 
-            results.append(bob_proxy.append_entries_rpc(self, self.term, self.commit_index))
+            #results.append(bob_proxy.append_entries_rpc(self, self.term, self.commit_index))
+            res = bob_proxy.append_entries_rpc(self, self.term, self.commit_index)
+            print('Result= ',res)
 
         #######################################################################
         # threadpool executor version
 
-        URLS: list[str] = []
+        print('Results= ',results)
 
-        for i in range (0,len(self.cluster)):
-            # build URLs list 
-            url: str = self.cluster[i].url
-            port: int = self.cluster[i].port
+        if False:
+            URLS: list[str] = []
 
-            complete_url = 'http://' + str(url) + ':' + str(port)
-            URLS.append(complete_url)
+            for i in range (0,len(self.cluster)):
+                # build URLs list 
+                url: str = self.cluster[i].url
+                port: int = self.cluster[i].port
 
-        
-        # TODO remove this
-        # placeholder remained from original code
-        URLS = ['http://www.foxnews.com/',
-                'http://www.cnn.com/',
-                'http://europe.wsj.com/',
-                'http://www.bbc.co.uk/',
-                'http://nonexistent-subdomain.python.org/']
+                complete_url = 'http://' + str(url) + ':' + str(port)
+                URLS.append(complete_url)
 
-        # Retrieve a single page and report the URL and contents
-        # should not be needed 
-        # def load_url(url, timeout):
-        #     with urllib.request.urlopen(url, timeout=timeout) as conn:
-        #         return conn.read()
 
-        # from documentation:
-        #  executor.submit(fn, /, *args, **kwargs) -> Future
+            # TODO remove this
+            # placeholder remained from original code
+            URLS = ['http://www.foxnews.com/',
+                    'http://www.cnn.com/',
+                    'http://europe.wsj.com/',
+                    'http://www.bbc.co.uk/',
+                    'http://nonexistent-subdomain.python.org/']
 
-        # Fire one append entries and return the result 
-        def encapsulate_proxy(self, bob_url, term, commit_index) -> tuple[int, bool]:
-            with xmlrpc.client.ServerProxy(bob_url, allow_none=True) as bob_proxy:
-                 return bob_proxy.append_entries_rpc(self, term, commit_index)
+            # Retrieve a single page and report the URL and contents
+            # should not be needed 
+            # def load_url(url, timeout):
+            #     with urllib.request.urlopen(url, timeout=timeout) as conn:
+            #         return conn.read()
 
-        # We can use a with statement to ensure threads are cleaned up promptly
-        # TODO always keep them around? maybe at __init__
-        # SHOULD WORK
-        with concurrent.futures.ThreadPoolExecutor(max_workers=len(self.cluster)) as executor:
-            # Start the load operations and mark each future with its URL
-            #future_to_url = {executor.submit(load_url, url, 60): url for url in URLS}
-            future_to_url = {executor.submit(encapsulate_proxy, self, url, self.term, self.commit_index): url for url in URLS}
-            for future in concurrent.futures.as_completed(future_to_url):
-                url = future_to_url[future]
-                try:
-                    data = future.result()
-                except Exception as exc:
-                    print('%r generated an exception: %s' % (url, exc))
-                else:
-                    print('%r page is %d bytes' % (url, len(data)))
+            # from documentation:
+            #  executor.submit(fn, /, *args, **kwargs) -> Future
+
+            # Fire one append entries and return the result 
+            def encapsulate_proxy(self, bob_url, term, commit_index) -> tuple[int, bool]:
+                with xmlrpc.client.ServerProxy(bob_url, allow_none=True) as bob_proxy:
+                     return bob_proxy.append_entries_rpc(self, term, commit_index)
+
+            # We can use a with statement to ensure threads are cleaned up promptly
+            # TODO always keep them around? maybe at __init__
+            # SHOULD WORK
+            with concurrent.futures.ThreadPoolExecutor(max_workers=len(self.cluster)) as executor:
+                # Start the load operations and mark each future with its URL
+                #future_to_url = {executor.submit(load_url, url, 60): url for url in URLS}
+                future_to_url = {executor.submit(encapsulate_proxy, self, url, self.term, self.commit_index): url for url in URLS}
+                for future in concurrent.futures.as_completed(future_to_url):
+                    url = future_to_url[future]
+                    try:
+                        data = future.result()
+                    except Exception as exc:
+                        print('%r generated an exception: %s' % (url, exc))
+                    else:
+                        print('%r page is %d bytes' % (url, len(data)))
 
 
 
@@ -310,10 +317,11 @@ bobs_cluster : list[Raft.Server] = [bob1] # easier to test
 # enclose server in a callable function
 def handle_server():
     with Raft(
-        ('localhost', 8000),   # where server lives
-        mode=1,                     # LEADER
+        addr=('localhost', 8000),   # where server lives
+        mode=Raft.Mode.LEADER,                     # LEADER
         cluster=bobs_cluster,
-        term=1000
+        term=1000,
+        timeout=0.5                 # debugging purposes
         ) as server:
         def print_feedback(value):
             return value
