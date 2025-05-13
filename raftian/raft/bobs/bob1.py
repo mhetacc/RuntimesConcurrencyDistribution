@@ -4,7 +4,7 @@ from xmlrpc.server import SimpleXMLRPCServer
 
 with SimpleXMLRPCServer(('localhost', 8001), allow_none=True) as server:
 
-    def append_entries_rpc(self, term, commit_index):
+    def append_entries_rpc(term, commit_index):
         print(f"Received append_entries_rpc with term: {term} and commit_index: {commit_index}")
         # Here you would implement the logic to handle the append entries RPC
         # For now, just return a success message
