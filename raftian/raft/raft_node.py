@@ -6,6 +6,15 @@ import random
 import threading
 import concurrent.futures
 import xmlrpc.client
+from queue import Queue
+
+# testing purposes
+# inside function explicit global keyword
+pygame_commands = Queue()
+pygame_commands.put('cmd1')
+pygame_commands.put('cmd2')
+pygame_commands.put('cmd3')
+pygame_commands.put('cmd4')
 
 
 
@@ -28,7 +37,6 @@ class Raft(SimpleXMLRPCServer):
         port: int
         hp: int
 
-
     # class attributes here
     
     def __init__(self, addr, requestHandler = ..., logRequests = True, allow_none = False, encoding = None, bind_and_activate = True, use_builtin_types = False,
@@ -37,6 +45,7 @@ class Raft(SimpleXMLRPCServer):
                  timeout: float = 0.003,
                  cluster: list[Server] | None = None,
                  log: list[Entry] | None = None,
+                 new_entires: list[Entry] | None = None,
                  term: int | None = None,
                  cluster_config: int | None = None,
                  votes_count: int | None = None,
@@ -44,8 +53,8 @@ class Raft(SimpleXMLRPCServer):
                  voted_for: int | None = None,
                  commit_index: int | None = None,
                  last_applied: int | None = None,
-                 next_index_to_send: list[int] | None = None,
-                 last_index_on_server: list[int] | None = None
+                 next_index_to_send: list[tuple[int, int]] | None = None,
+                 last_index_on_server: list[tuple[int, int]] | None = None
                  ):
         SimpleXMLRPCServer.__init__(self, addr, requestHandler, logRequests, allow_none, encoding, bind_and_activate, use_builtin_types)
 
@@ -54,6 +63,7 @@ class Raft(SimpleXMLRPCServer):
         self.mode: Raft.Mode = mode
         self.cluster: list[Raft.Server] | None = cluster
         self.log: list[Raft.Entry] | None = log
+        self.new_entries: list[Raft.Entry] | None = new_entires
         self.term: int | None = term
         self.cluster_config: int | None = cluster_config
         self.votes_count: int | None = votes_count
@@ -61,10 +71,10 @@ class Raft(SimpleXMLRPCServer):
         self.voted_for: int | None = voted_for
         self.commit_index: int | None = commit_index
         self.last_applied: int | None = last_applied
-        self.next_index_to_send: list[int] | None = next_index_to_send
-        self.last_index_on_server: list[int] | None = last_index_on_server
+        self.next_index_to_send: list[tuple[int, int]] | None = next_index_to_send
+        self.last_index_on_server: list[tuple[int, int]] | None = last_index_on_server
 
-        # start executors pool
+        # # start executors pool
         # self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=len(self.cluster))
 
         # start timer
@@ -88,9 +98,9 @@ class Raft(SimpleXMLRPCServer):
             print('Mode wrong') #TODO error message
         pass
 
+    
 
-
-    def append_entries_rpc(
+    def TOBOB_append_entries_rpc(
             self,                   # self is serverproxy i.e., the client
             leader_term: int,
             leader_commit_index: int,
@@ -155,8 +165,51 @@ class Raft(SimpleXMLRPCServer):
 
         # everything went well
         return (self.term, True)
+ 
+
+
+    def propagate_entries(self):
+
+        # translate pygame commands into entries to send 
+        global pygame_commands
+        if not self.log:
+            # if empty log the following next entry index will be 0
+            log_index: int = -1 
+        else:
+            log_index: int = len(self.log[-1].index) 
+
+        while not pygame_commands.empty():
+            command = pygame_commands.get()
+            log_index += 1
+            self.new_entries.append(Raft.Entry(
+                term=self.term,
+                index=log_index,
+                command=command
+            ))
+
+        # here self.new_entries = [cmd1, cmd2, ... , cmdN]
+
+
+        # for each follower in the cluster
+            # send new entries
+                # if leader is out of date
+                    # revert to follower 
+
+
+                # if result == False
+                    # add last leader entry to new entries
+                    # repeat send
+
+                # if result == True
+                    # entries propagated ++
+        
+        # if entries propagated >= len(cluster)/2
+            # add new entries to leader log
     
-    
+            
+
+
+
 
     def request_vote_rpc(
             self,
@@ -189,7 +242,6 @@ class Raft(SimpleXMLRPCServer):
         # vote for candidate
         self.voted_for = candidate_id
         return (self.term, True)
-
 
 
     # on follower timeout
@@ -244,7 +296,6 @@ class Raft(SimpleXMLRPCServer):
 
         #######################################################################
         # threadpool executor version
-        # conflicts with other threads
 
         URLS: list[str] = []
 
@@ -268,7 +319,7 @@ class Raft(SimpleXMLRPCServer):
 
         if False:
             pass
-        # creates new concurrent futures encapsulating in a with statement
+        # creates new concurrent futures wrapped in a with statement
         # i.e., with concurrent.futures.ThreadPoolExecutor(max_workers=len(self.cluster)) as executor:
         #     #     executor.submit
         with concurrent.futures.ThreadPoolExecutor(max_workers=len(self.cluster)) as executor:
@@ -299,6 +350,10 @@ class Raft(SimpleXMLRPCServer):
         print('Results= ',results)
 
 
+        # if leader is out of date, do nothing
+        # followers will start election by themselves
+
+
     # RUN method of the server
     def service_actions(self):
 
@@ -319,8 +374,7 @@ bob2 = Raft.Server(2, 'localhost', 8002, 100)
 bob3 = Raft.Server(3, 'localhost', 8003, 100)
 bob4 = Raft.Server(4, 'localhost', 8004, 100)
 
-# bobs_cluster : list[Raft.Server] = [bob1, bob2, bob3, bob4]
-bobs_cluster : list[Raft.Server] = [bob1, bob2] # easier to test
+bobs_cluster : list[Raft.Server] = [bob1] # testing purposes
 
 # enclose server in a callable function
 def handle_server():
