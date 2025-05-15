@@ -189,13 +189,31 @@ class Raft(SimpleXMLRPCServer):
 
         # here self.new_entries = [cmd1, cmd2, ... , cmdN]
 
+        entries: list[Raft.Entry] = self.new_entries
+        log_iterator: int = -1
+        last_index: int = self.log[log_iterator].index
+
 
         # for each follower in the cluster
-            # send new entries
-                # if leader is out of date
-                    # revert to follower 
+        for follower in self.cluster:
 
+            # send new entries (local for each follower)
+            url: str = follower.url
+            port: int = follower.port
+            complete_url = 'http://' + str(url) + ':' + str(port)
 
+            proxy = xmlrpc.client.ServerProxy(complete_url, allow_none=True)
+
+            result: tuple[bool, int] = proxy.append_entries_rpc(entries, self.term, last_index)
+            
+            # if leader is out of date
+            if result[1] >= self.term:
+                self.mode = Raft.Mode.FOLLOWER
+                break
+            
+            if result[0] == False:
+                entries.append(self.log[log_iterator])
+                log_iterator -= 1
                 # if result == False
                     # add last leader entry to new entries
                     # repeat send
