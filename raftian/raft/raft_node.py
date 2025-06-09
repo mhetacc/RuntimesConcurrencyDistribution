@@ -189,40 +189,48 @@ class Raft(SimpleXMLRPCServer):
 
         # here self.new_entries = [cmd1, cmd2, ... , cmdN]
 
+        # travel backwards through self.log to search last entry not included in the follower log
+        # use log_iterator for this purpose, soft resets for each follower
         entries: list[Raft.Entry] = self.new_entries
         log_iterator: int = -1
         last_index: int = self.log[log_iterator].index
+        propagation_counter: int = 0
 
 
         # for each follower in the cluster
         for follower in self.cluster:
 
-            # send new entries (local for each follower)
             url: str = follower.url
             port: int = follower.port
             complete_url = 'http://' + str(url) + ':' + str(port)
 
             proxy = xmlrpc.client.ServerProxy(complete_url, allow_none=True)
-
-            result: tuple[bool, int] = proxy.append_entries_rpc(entries, self.term, last_index)
             
-            # if leader is out of date
-            if result[1] >= self.term:
-                self.mode = Raft.Mode.FOLLOWER
-                break
-            
-            if result[0] == False:
-                entries.append(self.log[log_iterator])
-                log_iterator -= 1
-                # if result == False
-                    # add last leader entry to new entries
-                    # repeat send
+            propagation_successful: bool = False
 
-                # if result == True
-                    # entries propagated ++
+            while not propagation_successful:
+                # send new entries (local for each follower)    
+                result: tuple[bool, int] = proxy.append_entries_rpc(entries, self.term, last_index)
+
+                # if leader is out of date
+                if result[1] >= self.term:
+                    self.mode = Raft.Mode.FOLLOWER
+                    break
+                
+                if result[0] == False:
+                    # add another entry from self.log to new entries
+                    entries.append(self.log[log_iterator])
+                    log_iterator -= 1   
+                elif result[0] == True:
+                    # increase propagation counter and move to next follower
+                    propagation_counter += 1
+                    propagation_successful = True
         
-        # if entries propagated >= len(cluster)/2
-            # add new entries to leader log
+        if propagation_counter >= len(self.cluster) / 2:
+            self.log.extend(self.new_entries)
+            self.new_entries.clear()
+        # else:
+        #   new entries not cleaned, so they will be propagated again
     
             
 
@@ -290,11 +298,9 @@ class Raft(SimpleXMLRPCServer):
         """
 
         # TODO: is this correct or are we creating instances of servers everywhere?
-        # TODO: use a threadpool
 
 
         # blocking version
-        # works
 
         results = []
 
