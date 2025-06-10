@@ -74,8 +74,8 @@ class Raft(SimpleXMLRPCServer):
         self.next_index_to_send: list[tuple[int, int]] | None = next_index_to_send
         self.last_index_on_server: list[tuple[int, int]] | None = last_index_on_server
 
-        # # start executors pool
-        # self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=len(self.cluster))
+        # start executors pool
+        self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=len(self.cluster))
 
         # start timer
         self.timer = reset_looping_timer.LoopTimer(timeout, self.on_timeout)
@@ -91,8 +91,8 @@ class Raft(SimpleXMLRPCServer):
         if self.mode == Raft.Mode.CANDIDATE:
             pass
         elif self.mode == Raft.Mode.LEADER:
-            #self.heartbeat()
-            self.propagate_entries()    
+            self.heartbeat()
+            #self.propagate_entries()    
         elif self.mode == Raft.Mode.FOLLOWER:
             pass
         else:
@@ -171,9 +171,9 @@ class Raft(SimpleXMLRPCServer):
 
     def propagate_entries(self):
         
-        # print('##############################start##################################')
-        # print(f'Leader log = {self.log}')
-        # print(f'New entries = {self.new_entries}')
+        print('##############################start##################################')
+        print(f'Leader log = {self.log}')
+        print(f'New entries = {self.new_entries}')
 
         # translate pygame commands into entries to send 
         global pygame_commands
@@ -192,8 +192,8 @@ class Raft(SimpleXMLRPCServer):
                 command=command
             ))
 
-        # print(f'Leader log = {self.log}')
-        # print(f'New entries = {self.new_entries}')
+        print(f'Leader log = {self.log}')
+        print(f'New entries = {self.new_entries}')
 
         # here self.new_entries = [cmd1, cmd2, ... , cmdN]
 
@@ -201,49 +201,114 @@ class Raft(SimpleXMLRPCServer):
         # use log_iterator for this purpose, soft resets for each follower
         entries: list[Raft.Entry] = self.new_entries
         log_iterator: int = -1
-        # last_index: int = self.log[log_iterator].index        # un-necessary
+        
+
+        ######################################################################
+        # blocking version
+
         propagation_counter: int = 0
 
+        if False:
 
-        # for each follower in the cluster
-        for follower in self.cluster:
+            # for each follower in the cluster
+            for follower in self.cluster:           
+
+                url: str = follower.url
+                port: int = follower.port
+                complete_url = 'http://' + str(url) + ':' + str(port)
+
+                proxy = xmlrpc.client.ServerProxy(complete_url, allow_none=True)
+
+                propagation_successful: bool = False
+
+                while not propagation_successful:
+                    # send new entries (local for each follower)    
+                    result: tuple[bool, int] = proxy.append_entries_rpc(entries, self.term, self.commit_index)
+
+                    # if leader is out of date
+                    if result[1] >= self.term:
+                        self.mode = Raft.Mode.FOLLOWER
+                        break
+                    
+                    if result[0] == False:
+                        # add another entry from self.log to new entries
+                        entries.append(self.log[log_iterator])
+                        log_iterator -= 1   
+                    elif result[0] == True:
+                        # increase propagation counter and move to next follower
+                        propagation_counter += 1
+                        propagation_successful = True
+
+            if propagation_counter >= len(self.cluster) / 2:
+                self.log.extend(self.new_entries)
+                self.new_entries.clear()
+            # else:
+            #   new entries not cleaned, so they will be propagated again
+
+
+        ######################################################################
+        # threadpool executor version
+
+        def encapsulate_proxy(self, follower: Raft.Server, entries, log_iterator) -> tuple[int, bool]:
+            """Encapsulate proxy fire it with a threadpool executor"""
+
+            propagation_successful: bool = False    
 
             url: str = follower.url
             port: int = follower.port
             complete_url = 'http://' + str(url) + ':' + str(port)
 
-            proxy = xmlrpc.client.ServerProxy(complete_url, allow_none=True)
-            
-            propagation_successful: bool = False
+            with xmlrpc.client.ServerProxy(complete_url, allow_none=True) as proxy:
+                while not propagation_successful:
+                    # send new entries (local for each follower)    
+                    result: tuple[bool, int] = proxy.append_entries_rpc(entries, self.term, self.commit_index)
 
-            while not propagation_successful:
-                # send new entries (local for each follower)    
-                result: tuple[bool, int] = proxy.append_entries_rpc(entries, self.term, self.commit_index)
+                    # if leader is out of date  
+                    if result[1] >= self.term:
+                        self.mode = Raft.Mode.FOLLOWER
+                        break
+                    
+                    if result[0] == False:
+                        # add another entry from self.log to new entries
+                        entries.append(self.log[log_iterator])
+                        log_iterator -= 1   
+                    elif result[0] == True:
+                        # increase propagation counter and move to next follower
+                        #propagation_counter += 1
+                        propagation_successful = True
 
-                # if leader is out of date
-                if result[1] >= self.term:
-                    self.mode = Raft.Mode.FOLLOWER
-                    break
-                
-                if result[0] == False:
-                    # add another entry from self.log to new entries
-                    entries.append(self.log[log_iterator])
-                    log_iterator -= 1   
-                elif result[0] == True:
-                    # increase propagation counter and move to next follower
-                    propagation_counter += 1
-                    propagation_successful = True
-        
-        if propagation_counter >= len(self.cluster) / 2:
+            return propagation_successful
+
+
+        results = []
+
+        # concurrent futures built-in version
+        # i.e, self.executor.submit
+        future_result = {self.executor.submit(encapsulate_proxy, self, follower, entries, log_iterator): follower for follower in self.cluster}
+        for future in concurrent.futures.as_completed(future_result):
+            try:
+                data = future.result()
+            except Exception as exc:
+                print('%r generated an exception: %s' % (future_result, exc))
+            else:
+                print('Append result ', data)
+                results.append(data)
+
+
+        if results.count(True) >= len(self.cluster) / 2:
             self.log.extend(self.new_entries)
             self.new_entries.clear()
         # else:
         #   new entries not cleaned, so they will be propagated again
 
-        # print('############################end###################################')
-        # print(f'Pygame commands = {pygame_commands}')
-        # print(f'Leader log = {self.log}')
-        # print(f'New entries = {self.new_entries}')
+        ######################################################################
+
+        
+
+        print('############################end###################################')
+        print(f'Pygame commands = {pygame_commands}')
+        print(f'Leader log = {self.log}')
+        print(f'New entries = {self.new_entries}')
     
             
 
@@ -334,54 +399,48 @@ class Raft(SimpleXMLRPCServer):
         #######################################################################
         # threadpool executor version
 
-        URLS: list[str] = []
-
-        for i in range (0,len(self.cluster)):
-            # build URLs list 
-            url: str = self.cluster[i].url
-            port: int = self.cluster[i].port
-
-            complete_url = 'http://' + str(url) + ':' + str(port)
-            URLS.append(complete_url)
-
-
-        def encapsulate_proxy(bob_url, term, commit_index) -> tuple[int, bool]:
+        def encapsulate_proxy(follower: Raft.Server, term, commit_index) -> tuple[int, bool]:
             """Encapsulate proxy fire it with a threadpool executor"""
-            with xmlrpc.client.ServerProxy(bob_url, allow_none=True) as bob_proxy:
-                    return bob_proxy.append_entries_rpc(None, term, commit_index)
+
+            url: str = follower.url
+            port: int = follower.port
+            complete_url = 'http://' + str(url) + ':' + str(port)
+
+            with xmlrpc.client.ServerProxy(complete_url, allow_none=True) as proxy:
+                    return proxy.append_entries_rpc(None, term, commit_index)
 
 
         results = []
 
 
         if False:
-            pass
-        # creates new concurrent futures wrapped in a with statement
-        # i.e., with concurrent.futures.ThreadPoolExecutor(max_workers=len(self.cluster)) as executor:
-        #     #     executor.submit
-        with concurrent.futures.ThreadPoolExecutor(max_workers=len(self.cluster)) as executor:
-            future_result = {executor.submit(encapsulate_proxy, url, None, None): url for url in URLS}
-            for future in concurrent.futures.as_completed(future_result):
-                try:
-                    data = future.result()
-                except Exception as exc:
-                    print('%r generated an exception: %s' % (future_result, exc))
-                else:
-                    print('Append result ', data)
-                    results.append(data)
+            # creates new concurrent futures wrapped in a with statement
+            # i.e., with concurrent.futures.ThreadPoolExecutor(max_workers=len(self.cluster)) as executor:
+            #     #     executor.submit
+            with concurrent.futures.ThreadPoolExecutor(max_workers=len(self.cluster)) as executor:
+                future_result = {executor.submit(encapsulate_proxy, url, None, None): url for url in URLS}
+                for future in concurrent.futures.as_completed(future_result):
+                    try:
+                        data = future.result()
+                    except Exception as exc:
+                        print('%r generated an exception: %s' % (future_result, exc))
+                    else:
+                        print('Append result ', data)
+                        results.append(data)
         
         if False:
-            # concurrent futures built-in version
-            # i.e, self.executor.submit
-            future_result = {self.executor.submit(encapsulate_proxy, url, None, None): url for url in URLS}
-            for future in concurrent.futures.as_completed(future_result):
-                try:
-                    data = future.result()
-                except Exception as exc:
-                    print('%r generated an exception: %s' % (future_result, exc))
-                else:
-                    print('Append result ', data)
-                    results.append(data)
+            pass
+        # concurrent futures built-in version
+        # i.e, self.executor.submit
+        future_result = {self.executor.submit(encapsulate_proxy, follower, None, None): follower for follower in self.cluster}
+        for future in concurrent.futures.as_completed(future_result):
+            try:
+                data = future.result()
+            except Exception as exc:
+                print('%r generated an exception: %s' % (future_result, exc))
+            else:
+                print('Append result ', data)
+                results.append(data)
 
 
         print('Results= ',results)
