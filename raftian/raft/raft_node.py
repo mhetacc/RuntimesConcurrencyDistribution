@@ -171,7 +171,7 @@ class Raft(SimpleXMLRPCServer):
 
     def propagate_entries(self):
         """
-        Send entries to all followers, for each of them traverse backwards through self.log until it finds the last common entry. 
+        Sends entries to all followers, for each of them traverse backwards through self.log until it finds the last common entry. 
         This is done passively: if follower reject entries, add last one not included from self.log and send again.
         """
 
@@ -201,7 +201,7 @@ class Raft(SimpleXMLRPCServer):
         log_iterator: int = -1
 
         def encapsulate_proxy(self, follower: Raft.Server, entries, log_iterator) -> tuple[int, bool]:
-            """Encapsulate proxy fire it with a threadpool executor"""
+            """Encapsulate all propagation procedure, fired with threadpool executor"""
 
             propagation_successful: bool = False    
 
@@ -225,7 +225,6 @@ class Raft(SimpleXMLRPCServer):
                         log_iterator -= 1   
                     elif result[0] == True:
                         # increase propagation counter and move to next follower
-                        #propagation_counter += 1
                         propagation_successful = True
 
             return propagation_successful
@@ -375,7 +374,6 @@ def handle_server():
         addr=('localhost', 8000),   # where server lives
         mode=Raft.Mode.LEADER,                     
         cluster=bobs_cluster,
-        #term=1000,
         timeout=0.5,                 # debugging purposes
         term=1,
         ) as server:
