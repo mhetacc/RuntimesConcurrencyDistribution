@@ -91,8 +91,8 @@ class Raft(SimpleXMLRPCServer):
         if self.mode == Raft.Mode.CANDIDATE:
             pass
         elif self.mode == Raft.Mode.LEADER:
-            self.heartbeat()
-            #self.propagate_entries()    
+            #self.heartbeat()
+            self.propagate_entries()    
         elif self.mode == Raft.Mode.FOLLOWER:
             pass
         else:
@@ -312,9 +312,6 @@ class Raft(SimpleXMLRPCServer):
     
             
 
-
-
-
     def request_vote_rpc(
             self,
             candidate_term: int,
@@ -367,6 +364,7 @@ class Raft(SimpleXMLRPCServer):
         # send request vote rpc to all servers in the cluster
         # how to make it non-blocking 
             
+
 
     def heartbeat(self):
         """ 
@@ -450,6 +448,7 @@ class Raft(SimpleXMLRPCServer):
         # followers will start election by themselves
 
 
+
     # RUN method of the server
     def service_actions(self):
 
@@ -470,7 +469,7 @@ bob2 = Raft.Server(2, 'localhost', 8002, 100)
 bob3 = Raft.Server(3, 'localhost', 8003, 100)
 bob4 = Raft.Server(4, 'localhost', 8004, 100)
 
-bobs_cluster : list[Raft.Server] = [bob1] # testing purposes
+bobs_cluster : list[Raft.Server] = [bob1, bob2] # testing purposes
 
 # enclose server in a callable function
 def handle_server():
