@@ -44,8 +44,8 @@ class Raft(SimpleXMLRPCServer):
                  mode: Mode = 3,
                  timeout: float = 0.003,
                  cluster: list[Server] | None = None,
-                 log: list[Entry] | None = None,
-                 new_entires: list[Entry] | None = None,
+                 log: list[Entry] = [],
+                 new_entries: list[Entry] = [],
                  term: int | None = None,
                  cluster_config: int | None = None,
                  votes_count: int | None = None,
@@ -62,8 +62,8 @@ class Raft(SimpleXMLRPCServer):
         self.id: int = id
         self.mode: Raft.Mode = mode
         self.cluster: list[Raft.Server] | None = cluster
-        self.log: list[Raft.Entry] | None = log
-        self.new_entries: list[Raft.Entry] | None = new_entires
+        self.log: list[Raft.Entry] = log
+        self.new_entries: list[Raft.Entry] = new_entries
         self.term: int | None = term
         self.cluster_config: int | None = cluster_config
         self.votes_count: int | None = votes_count
@@ -91,7 +91,8 @@ class Raft(SimpleXMLRPCServer):
         if self.mode == Raft.Mode.CANDIDATE:
             pass
         elif self.mode == Raft.Mode.LEADER:
-            self.heartbeat()
+            #self.heartbeat()
+            self.propagate_entries()    
         elif self.mode == Raft.Mode.FOLLOWER:
             pass
         else:
@@ -169,6 +170,10 @@ class Raft(SimpleXMLRPCServer):
 
 
     def propagate_entries(self):
+        
+        # print('##############################start##################################')
+        # print(f'Leader log = {self.log}')
+        # print(f'New entries = {self.new_entries}')
 
         # translate pygame commands into entries to send 
         global pygame_commands
@@ -176,7 +181,7 @@ class Raft(SimpleXMLRPCServer):
             # if empty log the following next entry index will be 0
             log_index: int = -1 
         else:
-            log_index: int = len(self.log[-1].index) 
+            log_index: int = self.log[-1].index 
 
         while not pygame_commands.empty():
             command = pygame_commands.get()
@@ -187,13 +192,16 @@ class Raft(SimpleXMLRPCServer):
                 command=command
             ))
 
+        # print(f'Leader log = {self.log}')
+        # print(f'New entries = {self.new_entries}')
+
         # here self.new_entries = [cmd1, cmd2, ... , cmdN]
 
         # travel backwards through self.log to search last entry not included in the follower log
         # use log_iterator for this purpose, soft resets for each follower
         entries: list[Raft.Entry] = self.new_entries
         log_iterator: int = -1
-        last_index: int = self.log[log_iterator].index
+        # last_index: int = self.log[log_iterator].index        # un-necessary
         propagation_counter: int = 0
 
 
@@ -210,7 +218,7 @@ class Raft(SimpleXMLRPCServer):
 
             while not propagation_successful:
                 # send new entries (local for each follower)    
-                result: tuple[bool, int] = proxy.append_entries_rpc(entries, self.term, last_index)
+                result: tuple[bool, int] = proxy.append_entries_rpc(entries, self.term, self.commit_index)
 
                 # if leader is out of date
                 if result[1] >= self.term:
@@ -231,6 +239,11 @@ class Raft(SimpleXMLRPCServer):
             self.new_entries.clear()
         # else:
         #   new entries not cleaned, so they will be propagated again
+
+        # print('############################end###################################')
+        # print(f'Pygame commands = {pygame_commands}')
+        # print(f'Leader log = {self.log}')
+        # print(f'New entries = {self.new_entries}')
     
             
 
@@ -335,7 +348,7 @@ class Raft(SimpleXMLRPCServer):
         def encapsulate_proxy(bob_url, term, commit_index) -> tuple[int, bool]:
             """Encapsulate proxy fire it with a threadpool executor"""
             with xmlrpc.client.ServerProxy(bob_url, allow_none=True) as bob_proxy:
-                    return bob_proxy.append_entries_rpc(term, commit_index)
+                    return bob_proxy.append_entries_rpc(None, term, commit_index)
 
 
         results = []
@@ -407,7 +420,8 @@ def handle_server():
         mode=Raft.Mode.LEADER,                     
         cluster=bobs_cluster,
         #term=1000,
-        timeout=0.5                 # debugging purposes
+        timeout=0.5,                 # debugging purposes
+        term=1,
         ) as server:
         def print_feedback(value):
             return value
