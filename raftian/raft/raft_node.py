@@ -8,6 +8,9 @@ import concurrent.futures
 import xmlrpc.client
 from queue import Queue
 import pygame
+import os
+import signal
+import time
 
 # testing purposes
 # inside function explicit global keyword
@@ -395,7 +398,7 @@ server_thread.start()
 ################################       PYGAME      ################################
 ###################################################################################
 
-def run_pygame():
+def handle_pygame():
     global pygame_commands
 
     pygame.init()
@@ -404,6 +407,9 @@ def run_pygame():
     BLACK = (0, 0, 0)
     WHITE = (255, 255, 255)
     RED = (255, 0, 0)
+    YELLOW = (255, 255, 0)
+    GREEN = (0, 255, 0)
+    BLUE = (0, 0, 255)
 
     # create game window and set res 1000x1200
     DISPLAY = pygame.display.set_mode((1000, 1200))
@@ -478,40 +484,42 @@ def run_pygame():
 
     #################################################################################
 
+    #################################### players #################################### 
+    player1 = pygame.Rect(585, 685, 80, 80)
+    p1_ui = pygame.Surface((80,80))
+    p1_ui.fill(RED)
+    DISPLAY.blit(p1_ui, player1)
 
-    # create "button" rect and its surface
-    # and blit it to display
-    rect_btn = pygame.Rect(585, 685, 80, 80)
-    button = pygame.Surface((80,80))
-    button.fill(RED)
-    DISPLAY.blit(button, rect_btn)
+    player2 = pygame.Rect(835, 185, 80, 80)
+    p2_ui = pygame.Surface((80,80))
+    p2_ui.fill(GREEN)
+    DISPLAY.blit(p2_ui, player2)
 
+    player3 = pygame.Rect(335, 185, 80, 80)
+    p3_ui = pygame.Surface((80,80))
+    p3_ui.fill(BLUE)
+    DISPLAY.blit(p3_ui, player3)
 
-    button_counter = 1
+    player4 = pygame.Rect(85, 935, 80, 80)
+    p4_ui = pygame.Surface((80,80))
+    p4_ui.fill(YELLOW)
+    DISPLAY.blit(p4_ui, player4)
+
+    players = [player1, player2, player3, player4] # useful to extend to n players with randomized positions
+
+    last_message_time = None
 
     # MAIN LOOP
     while True:
         # Process player inputs.
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                os.kill(os.getpid(), signal.SIGINT) # same as Ctrl+C, close also server thread 
                 pygame.quit()
-                raise SystemExit
-
-            # if mouse left button is clicked 
-            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-
-                # gets mouse position
-                pos = pygame.mouse.get_pos()
-
-                # test if a point (ie mouse) is inside the rectangle (ie button)
-                if rect_btn.collidepoint(pos):
-
-                    # tells server that button has been pressed
-                    pygame_commands.put(f'Button counter = {button_counter}')
-                    button_counter += 1
-
-                    # change header text and renders it
-                    toptext = font.render("Button Pressed", False, BLACK)
+            
+            if last_message_time is not None and time.time() - last_message_time >= .5:
+                    # Reverts header to default text 
+                    toptext = font.render(f"Top Text", False, BLACK)
 
                     # calculate offset
                     toptext_rect = toptext.get_rect()
@@ -522,6 +530,34 @@ def run_pygame():
                     # then draws changed header text
                     DISPLAY.blit(header, rect_header)
                     DISPLAY.blit(toptext, (rect_header.centerx - xoffset, rect_header.centery - yoffset))
+                    last_message_time = None
+
+            # if mouse left button is clicked 
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+
+                # gets mouse position
+                pos = pygame.mouse.get_pos()
+
+                for player in players:
+                    if player.collidepoint(pos):
+                        # starts timer to revert header text
+                        last_message_time = time.time()
+
+                        player_number = players.index(player) + 1
+
+                        # change header text and renders it
+                        toptext = font.render(f"Player {player_number} pressed", False, BLACK)
+                        
+                        # calculate offset
+                        toptext_rect = toptext.get_rect()
+                        xoffset = toptext_rect.width/2
+                        yoffset = toptext_rect.height/2
+
+                        # must first re-draw header surface otherwise previous text remains 
+                        # then draws changed header text
+                        DISPLAY.blit(header, rect_header)
+                        DISPLAY.blit(toptext, (rect_header.centerx - xoffset, rect_header.centery - yoffset))
+
 
 
         # Do logical updates here.
@@ -536,8 +572,10 @@ def run_pygame():
         pygame.display.flip()  # Refresh on-screen display
         clock.tick(60)         # sets framerate
 
+####################################################################################
 
-pygame_thread = threading.Thread(target=run_pygame)
+
+pygame_thread = threading.Thread(target=handle_pygame)
 pygame_thread.start()
 
 server_thread.join()

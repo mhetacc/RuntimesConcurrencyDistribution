@@ -6,6 +6,8 @@ import datetime
 
 ############################## logs ###############################
 
+# Oss: without bob1.py restart, writes in the same log file 
+
 # logs are in the form "logs/filename/datetime.filename.log"
 filename = 'bob1'
 
