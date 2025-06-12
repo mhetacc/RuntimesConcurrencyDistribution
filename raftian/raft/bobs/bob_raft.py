@@ -11,6 +11,30 @@ import pygame
 import os
 import signal
 import time
+import logging
+from pathlib import Path
+import datetime
+
+
+############################## logs ###############################
+
+# Oss: without bob1.py restart, writes in the same log file 
+
+# logs are in the form "logs/filename/datetime.filename.log"
+filename = 'bob_raft'
+
+# create logger and makes it so that it record any message level
+logger = logging.getLogger()
+logging.basicConfig(level=logging.INFO, encoding='utf-8')
+
+
+logpath = Path(f'logs/{filename}/{datetime.datetime.now()}.{filename}.log')
+
+# logger handler to sent all to correct path
+filehandle = logging.FileHandler(logpath)
+logger.addHandler(filehandle)
+
+########################################################################
 
 # testing purposes
 # inside function explicit global keyword
@@ -79,6 +103,9 @@ class Raft(SimpleXMLRPCServer):
         self.last_applied: int | None = last_applied
         self.next_index_to_send: list[tuple[int, int]] | None = next_index_to_send
         self.last_index_on_server: list[tuple[int, int]] | None = last_index_on_server
+        
+        # internal attributes 
+        self.last_propagated : time.time | None = None
 
         # start executors pool
         self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=len(self.cluster))
@@ -97,82 +124,13 @@ class Raft(SimpleXMLRPCServer):
         if self.mode == Raft.Mode.CANDIDATE:
             pass
         elif self.mode == Raft.Mode.LEADER:
-            #self.heartbeat()
-            self.propagate_entries()    
+            self.heartbeat() 
         elif self.mode == Raft.Mode.FOLLOWER:
             pass
         else:
             print('Mode wrong') #TODO error message
         pass
 
-    
-
-    def TOBOB_append_entries_rpc(
-            self,                   # self is serverproxy i.e., the client
-            leader_term: int,
-            leader_commit_index: int,
-            #leader_id: int,        # to redirect other clients 
-            leader_prev_log_index: int | None = None,
-            leader_prev_log_term: int | None = None,
-            entries: list[Entry] | None = None
-    ) -> tuple[int, bool]:
-        """
-        Fired by leader, followers send back ack
-        ack = (follower_term: int, entry_replicated: bool)
-
-        Payload (i.e., entries) is either None (if used for propagating heartbeat) or a list of entries that have to be propagated on all followers
-
-        TODO: must be moved outside of the class and registered by the client server
-        with server.register_function(append_entries_rpc)
-        """
-        # HERE is what followers do
-
-        # leader is still alive
-        self.timer.reset()
-
-
-        # if leader is out of date -> reject
-        if leader_term < self.term:
-            return (self.term, False)
-
-
-        # if it was not just an heartbeat
-        if entries is not None:
-
-            # search in log an entry equal to prev_leader_entry
-            # i.e., entry preceding future appended entries.
-            # save its log index (!= entry index)
-            entry_log_index: int | None = None
-            for i, my_entry in enumerate(self.log):
-                if (my_entry.index == leader_prev_log_index 
-                    and my_entry.term == leader_prev_log_term):
-                    entry_log_index = i
-                    break # no need to search further
-
-
-            # if follower does not have entry equal to prev_leader_entry -> reject
-            if entry_log_index is None:
-                return(self.term, False)
-
-
-            # delete all log entries from the one equal to prev_leader_entry (excluded)
-            del self.log[(entry_log_index + 1):]
-
-
-            # append new entries
-            self.log.append(entries)
-
-
-            # update commit index
-            if leader_commit_index > self.commit_index:
-                self.commit_index = min(leader_commit_index,
-                                        entries[-1].index
-                                        )
-
-
-        # everything went well
-        return (self.term, True)
- 
 
 
     def propagate_entries(self):
@@ -427,12 +385,19 @@ class Raft(SimpleXMLRPCServer):
         #     # try statement?
         #     # apply log[self.last_applied]
 
+        # propagate entries every 0.5 seconds
+        if self.last_propagated is None:
+            self.last_propagated = time.time()
+        elif time.time() - self.last_propagated >= .5:
+            # if pygame pipe not empty send commands to Leader
+            global pygame_commands
+            if not pygame_commands.empty():
+                self.propagate_entries()
+            self.last_propagated = time.time()
 
-        # if pygame pipe not empty send commands to Leader
-        global pygame_commands
-        if not pygame_commands.empty():
-            self.propagate_entries()
-
+        
+        
+        
 
         return super().service_actions()
         
@@ -637,10 +602,106 @@ def handle_server():
         timeout=0.5,                 # debugging purposes
         term=1,
         ) as server:
-        def print_feedback(value):
-            return value
-        
-        #server.register_function(print_feedback)
+
+
+        def append_entries_rpc(entries: list[Raft.Entry], term: int, commit_index: int) -> tuple[bool, int]:
+
+            ################################# FOLLOWER mode #####################################
+            if server.mode != Raft.Mode.LEADER:
+                # TODO
+                logger.info(f"Received append_entries_rpc with term: {term} and commit_index: {commit_index}")
+                logger.info(f"Entries: {entries}")  
+                # Here you would implement the logic to handle the append entries RPC
+                # For now, just return a success message
+                #return (True, server.term)
+            
+
+            """
+            Fired by leader, followers send back ack
+            ack = (follower_term: int, entry_replicated: bool)
+
+            Payload (i.e., entries) is either None (if used for propagating heartbeat) or a list of entries that have to be propagated on all followers
+
+            TODO: must be moved outside of the class and registered by the client server
+            with server.register_function(append_entries_rpc)
+            """
+            # HERE is what followers do
+
+            # leader is still alive
+            server.timer.reset()
+
+
+            # if leader is out of date -> reject
+            if term < server.term:
+                return (False, server.term)
+
+
+            # if it was not just an heartbeat
+            if entries is not None:
+
+                # search in log an entry equal to prev_leader_entry
+                # i.e., entry preceding future appended entries.
+                # save its log index (!= entry index)
+                entry_log_index: int | None = None
+                for i, my_entry in enumerate(server.log):
+                    if (my_entry.index == entries[0].index 
+                        and my_entry.term == entries[0].term):
+                        entry_log_index = i
+                        break # no need to search further
+
+
+                # if follower does not have entry equal to prev_leader_entry -> reject
+                if entry_log_index is None:
+                    return(False, server.term)
+
+
+                # delete all log entries from the one equal to prev_leader_entry (excluded)
+                del server.log[(entry_log_index + 1):]
+
+
+                # append new entries
+                server.log.extend(entries)
+
+
+                # update commit index
+                if commit_index > server.commit_index:
+                    server.commit_index = min (commit_index, entries[-1].index)
+
+
+                # everything went well
+                return (True, server.term)
+ 
+
+
+
+            
+            ################################# LEADER mode #####################################
+            else:
+
+                # if leader out of date
+                    # reject
+                    # revert to follower mode
+                if term > server.term:
+                    server.mode = Raft.Mode.FOLLOWER
+                    return (False, server.term)
+                
+                # add commands to pygame_commands 
+                # ack to follower
+                for entry in entries:
+                    pygame_commands.put(entry)
+
+                logger.info(f"Leader received append_entries_rpc with term: {term} and commit_index: {commit_index}")
+                logger.info(f"Received Entries: {entries}")  
+                logger.info(f"Leader {server.id} pygame_commands = {pygame_commands}")
+                
+                return (True, server.term)
+                
+                
+
+
+                
+                
+        server.register_function(append_entries_rpc)
         server.serve_forever()
 
 

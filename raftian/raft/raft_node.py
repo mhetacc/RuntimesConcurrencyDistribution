@@ -11,6 +11,30 @@ import pygame
 import os
 import signal
 import time
+import logging
+from pathlib import Path
+import datetime
+
+
+############################## logs ###############################
+
+# Oss: without bob1.py restart, writes in the same log file 
+
+# logs are in the form "logs/filename/datetime.filename.log"
+filename = 'raft_node'
+
+# create logger and makes it so that it record any message level
+logger = logging.getLogger()
+logging.basicConfig(level=logging.INFO, encoding='utf-8')
+
+
+logpath = Path(f'logs/{filename}/{datetime.datetime.now()}.{filename}.log')
+
+# logger handler to sent all to correct path
+filehandle = logging.FileHandler(logpath)
+logger.addHandler(filehandle)
+
+########################################################################
 
 # testing purposes
 # inside function explicit global keyword
@@ -105,74 +129,6 @@ class Raft(SimpleXMLRPCServer):
 
     
 
-    def TOBOB_append_entries_rpc(
-            self,                   # self is serverproxy i.e., the client
-            leader_term: int,
-            leader_commit_index: int,
-            #leader_id: int,        # to redirect other clients 
-            leader_prev_log_index: int | None = None,
-            leader_prev_log_term: int | None = None,
-            entries: list[Entry] | None = None
-    ) -> tuple[int, bool]:
-        """
-        Fired by leader, followers send back ack
-        ack = (follower_term: int, entry_replicated: bool)
-
-        Payload (i.e., entries) is either None (if used for propagating heartbeat) or a list of entries that have to be propagated on all followers
-
-        TODO: must be moved outside of the class and registered by the client server
-        with server.register_function(append_entries_rpc)
-        """
-        # HERE is what followers do
-
-        # leader is still alive
-        self.timer.reset()
-
-
-        # if leader is out of date -> reject
-        if leader_term < self.term:
-            return (self.term, False)
-
-
-        # if it was not just an heartbeat
-        if entries is not None:
-
-            # search in log an entry equal to prev_leader_entry
-            # i.e., entry preceding future appended entries.
-            # save its log index (!= entry index)
-            entry_log_index: int | None = None
-            for i, my_entry in enumerate(self.log):
-                if (my_entry.index == leader_prev_log_index 
-                    and my_entry.term == leader_prev_log_term):
-                    entry_log_index = i
-                    break # no need to search further
-
-
-            # if follower does not have entry equal to prev_leader_entry -> reject
-            if entry_log_index is None:
-                return(self.term, False)
-
-
-            # delete all log entries from the one equal to prev_leader_entry (excluded)
-            del self.log[(entry_log_index + 1):]
-
-
-            # append new entries
-            self.log.append(entries)
-
-
-            # update commit index
-            if leader_commit_index > self.commit_index:
-                self.commit_index = min(leader_commit_index,
-                                        entries[-1].index
-                                        )
-
-
-        # everything went well
-        return (self.term, True)
- 
-
-
     def propagate_entries(self):
         """
         Sends entries to all followers, for each of them traverse backwards through self.log until it finds the last common entry. 
@@ -180,82 +136,145 @@ class Raft(SimpleXMLRPCServer):
 
         TODO: this needs to be fired every .5s or so, hence either a separate looping timer or count timer clicks some way or another or fire from service actions() 
         """
-
-        # TODO pygame commands translation can be decoupled 
-        # translate pygame commands into entries to send 
         global pygame_commands
-        if not self.log:
-            # if empty log the following next entry index will be 0
-            log_index: int = -1 
-        else:
-            log_index: int = self.log[-1].index 
-
-        while not pygame_commands.empty():
-            command = pygame_commands.get()
-            log_index += 1
-            self.new_entries.append(Raft.Entry(
-                term=self.term,
-                index=log_index,
-                command=command
-            ))
-
-        # here self.new_entries = [cmd1, cmd2, ... , cmdN]
-
-        # travel backwards through self.log to search last entry not included in the follower log
-        # use log_iterator for this purpose, soft resets for each follower
-        entries: list[Raft.Entry] = self.new_entries
-        log_iterator: int = -1
-
-        def encapsulate_proxy(self, follower: Raft.Server, entries, log_iterator) -> tuple[int, bool]:
-            """Encapsulate all propagation procedure, fired with threadpool executor"""
-
-            propagation_successful: bool = False    
-
-            url: str = follower.url
-            port: int = follower.port
-            complete_url = 'http://' + str(url) + ':' + str(port)
-
-            with xmlrpc.client.ServerProxy(complete_url, allow_none=True) as proxy:
-                while not propagation_successful:
-                    # send new entries (local for each follower)    
-                    result: tuple[bool, int] = proxy.append_entries_rpc(entries, self.term, self.commit_index)
-
-                    # if leader is out of date  
-                    if result[1] >= self.term:
-                        self.mode = Raft.Mode.FOLLOWER
-                        break
-                    
-                    if result[0] == False:
-                        # add another entry from self.log to new entries
-                        entries.append(self.log[log_iterator])
-                        log_iterator -= 1   
-                    elif result[0] == True:
-                        # increase propagation counter and move to next follower
-                        propagation_successful = True
-
-            return propagation_successful
 
 
-        results = []
+        if self.mode != Raft.Mode.LEADER:
+            # all a follower is allowed to do is communicate its internal commands to the leader
+            # leader will be responsible for propagation
+            # meaning: followers do not apply commands immediately, but only when they are propagated back to them by the leader
 
-        future_result = {self.executor.submit(encapsulate_proxy, self, follower, entries, log_iterator): follower for follower in self.cluster}
-        for future in concurrent.futures.as_completed(future_result):
-            try:
-                data = future.result()
-            except Exception as exc:
-                print('%r generated an exception: %s' % (future_result, exc))
+            while not pygame_commands.empty():
+                command = pygame_commands.get()
+                self.new_entries.append(Raft.Entry(
+                    term=self.term,
+                    index=None,
+                    command=command
+                ))
+
+            
+            def encapsulate_proxy(self, leader: Raft.Server, entries) -> tuple[int, bool]:
+                """Encapsulate all propagation procedure, fired with threadpool executor"""
+
+                propagation_successful: bool = False    
+
+                url: str = leader.url
+                port: int = leader.port
+                complete_url = 'http://' + str(url) + ':' + str(port)
+
+                with xmlrpc.client.ServerProxy(complete_url, allow_none=True) as proxy:
+                    while not propagation_successful:
+                        # send new entries (local for each follower)    
+                        result: tuple[bool, int] = proxy.append_entries_rpc(entries, self.term, self.commit_index)
+
+                        # if leader is out of date  
+                        if result[1] <= self.term:
+                            self.to_candidate() #TODO
+                        
+                        if result[0] == True:
+                            propagation_successful = True
+
+                return propagation_successful
+
+
+            results = []
+
+
+            future_result = {self.executor.submit(encapsulate_proxy, self, server, entries, log_iterator): server for server in self.cluster if server.mode == Raft.Mode.LEADER}
+            for future in concurrent.futures.as_completed(future_result):
+                try:
+                    data = future.result()
+                except Exception as exc:
+                    print('%r generated an exception: %s' % (future_result, exc))
+                else:
+                    print('Append result ', data)
+                    results.append(data)
+
+
+            if True in results:
+                # there should be only one leader, so if True is in results, it means that entries were propagated successfully
+                self.new_entries.clear()
+            # else:
+            #   new entries not cleaned, so they will be sent to Leader again
+            
+            
+
+        ################################# LEADER mode #####################################
+        else: 
+            # translate pygame commands into entries to send 
+            if not self.log:
+                # if empty log the following next entry index will be 0
+                log_index: int = -1 
             else:
-                print('Append result ', data)
-                results.append(data)
+                log_index: int = self.log[-1].index 
+
+            while not pygame_commands.empty():
+                command = pygame_commands.get()
+                log_index += 1
+                self.new_entries.append(Raft.Entry(
+                    term=self.term,
+                    index=log_index,
+                    command=command
+                ))
+
+            # here self.new_entries = [cmd1, cmd2, ... , cmdN]
+
+            # travel backwards through self.log to search last entry not included in the follower log
+            # use log_iterator for this purpose, soft resets for each follower
+            entries: list[Raft.Entry] = self.new_entries
+            log_iterator: int = -1
+
+            def encapsulate_proxy(self, follower: Raft.Server, entries, log_iterator) -> tuple[int, bool]:
+                """Encapsulate all propagation procedure, fired with threadpool executor"""
+
+                propagation_successful: bool = False    
+
+                url: str = follower.url
+                port: int = follower.port
+                complete_url = 'http://' + str(url) + ':' + str(port)
+
+                with xmlrpc.client.ServerProxy(complete_url, allow_none=True) as proxy:
+                    while not propagation_successful:
+                        # send new entries (local for each follower)    
+                        result: tuple[bool, int] = proxy.append_entries_rpc(entries, self.term, self.commit_index)
+
+                        # if leader is out of date  
+                        if result[1] >= self.term:
+                            self.mode = Raft.Mode.FOLLOWER
+                            break
+                        
+                        if result[0] == False:
+                            # add another entry from self.log to new entries
+                            entries.append(self.log[log_iterator])
+                            log_iterator -= 1   
+                        elif result[0] == True:
+                            # increase propagation counter and move to next follower
+                            propagation_successful = True
+
+                return propagation_successful
 
 
-        if results.count(True) >= len(self.cluster) / 2:
-            self.log.extend(self.new_entries)
-            self.new_entries.clear()
-        # else:
-        #   new entries not cleaned, so they will be propagated again
+            results = []
+
+            future_result = {self.executor.submit(encapsulate_proxy, self, follower, entries, log_iterator): follower for follower in self.cluster}
+            for future in concurrent.futures.as_completed(future_result):
+                try:
+                    data = future.result()
+                except Exception as exc:
+                    print('%r generated an exception: %s' % (future_result, exc))
+                else:
+                    print('Append result ', data)
+                    results.append(data)
+
+
+            if results.count(True) >= len(self.cluster) / 2:
+                self.log.extend(self.new_entries)
+                self.new_entries.clear()
+                self.commit_index = max(self.commit_index, self.log[-1].index)  # IMPORTANT ensure that entries get applied
+            # else:
+            #   new entries not cleaned, so they will be propagated again
             
-            
+             
 
     def request_vote_rpc(
             self,
@@ -288,6 +307,7 @@ class Raft(SimpleXMLRPCServer):
         # vote for candidate
         self.voted_for = candidate_id
         return (self.term, True)
+
 
 
     # on follower timeout
@@ -567,10 +587,44 @@ def handle_server():
         timeout=0.5,                 # debugging purposes
         term=1,
         ) as server:
-        def print_feedback(value):
-            return value
-        
-        #server.register_function(print_feedback)
+
+        def append_entries_rpc(entries, term, commit_index) -> tuple[bool, int]:
+
+            if server.mode != Raft.Mode.LEADER:
+                # TODO
+                logger.info(f"Received append_entries_rpc with term: {term} and commit_index: {commit_index}")
+                logger.info(f"Entries: {entries}")  
+                # Here you would implement the logic to handle the append entries RPC
+                # For now, just return a success message
+                return (True, server.term)
+            
+            ################################# LEADER mode #####################################
+            else:
+
+                # if leader out of date
+                    # reject
+                    # revert to follower mode
+                if term > server.term:
+                    server.mode = Raft.Mode.FOLLOWER
+                    return (False, server.term)
+                
+                # add commands to pygame_commands 
+                # ack to follower
+                for entry in entries:
+                    pygame_commands.put(entry)
+
+                logger.info(f"Leader received append_entries_rpc with term: {term} and commit_index: {commit_index}")
+                logger.info(f"Received Entries: {entries}")  
+                logger.info(f"Leader {server.id} pygame_commands = {pygame_commands}")
+
+                return (True, server.term)
+                
+                
+
+
+                
+                
+        server.register_function(append_entries_rpc)
         server.serve_forever()
 
 
