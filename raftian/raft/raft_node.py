@@ -391,16 +391,16 @@ class Raft(SimpleXMLRPCServer):
       
         if time.time() - self.countdown >= .5:
             # do actions every 0.5 seconds
+
+            # propagate entries to cluster
             global pygame_commands
             if not pygame_commands.empty():
                 self.propagate_entries()
         
 
-
-            # apply to state i.e., traverse log between [last_applied, commit_index]
-            # and add all entries to raft_orders queue 
-
-            if self.commit_index >= self.last_applied:
+            # apply to state i.e., traverse self.log between [last_applied, commit_index]
+            # and add all entries to raft_orders Queue() 
+            if self.commit_index >= self.last_applied:   
                 global raft_orders
 
                 # first time anything gets applied to state
@@ -408,12 +408,17 @@ class Raft(SimpleXMLRPCServer):
                     raft_orders.put(self.log[0]) 
                     self.last_applied = self.log[0].index
 
+
+                # find log index (!= entry.index) where last applied entry resides 
                 last_applied_log_position: int | None = None
                 for i, my_entry in enumerate(self.log):
                     if (my_entry.index == self.last_applied):
                         last_applied_log_position = i
                         break # no need to search further
                 
+
+                # iterate trough remaining self.log until all entries between [last_applied, commit_index] are applied to state
+                # i.e., they are written in raft_orders Queue()
                 log_iterator = last_applied_log_position + 1
 
                 while self.last_applied != self.commit_index:
