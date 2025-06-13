@@ -39,10 +39,10 @@ logger.addHandler(filehandle)
 # user inputs trough Pygame which writes them here
 # Raft reads them and propagate them to the cluster
 pygame_commands = Queue()
-pygame_commands.put('cmd1')
-pygame_commands.put('cmd2')
-pygame_commands.put('cmd3')
-pygame_commands.put('cmd4')
+#pygame_commands.put('cmd1')
+#pygame_commands.put('cmd2')
+#pygame_commands.put('cmd3')
+#pygame_commands.put('cmd4')
 
 
 # commands that have been applied to state are written here by Raft
@@ -344,7 +344,7 @@ class Raft(SimpleXMLRPCServer):
         Takes urls and ports of proxies from self.cluster: list[Server]
         """
 
-        def encapsulate_proxy(follower: Raft.Server, term, commit_index) -> tuple[int, bool]:
+        def encapsulate_proxy(follower: Raft.Server, leader_term, leader_commit_index) -> tuple[int, bool]:
             """Encapsulate proxy fire it with a threadpool executor"""
 
             url: str = follower.url
@@ -352,14 +352,14 @@ class Raft(SimpleXMLRPCServer):
             complete_url = 'http://' + str(url) + ':' + str(port)
 
             with xmlrpc.client.ServerProxy(complete_url, allow_none=True) as proxy:
-                    return proxy.append_entries_rpc(None, term, commit_index)
+                    return proxy.append_entries_rpc(None, leader_term, leader_commit_index)
 
 
         results = []
 
 
         # fire function using threadpool executor
-        future_result = {self.executor.submit(encapsulate_proxy, follower, None, None): follower for follower in self.cluster}
+        future_result = {self.executor.submit(encapsulate_proxy, follower, self.term, self.commit_index): follower for follower in self.cluster}
         for future in concurrent.futures.as_completed(future_result):
             try:
                 data = future.result()
@@ -393,11 +393,11 @@ class Raft(SimpleXMLRPCServer):
         if time.time() - self.countdown >= .5:
             logger.info('Service actions countdown expired')
             # do actions every 0.5 seconds
+            global pygame_commands
 
-            logger.info(f'pygame_commands = {pygame_commands}')
+            logger.info(f'pygame_commands = {list(pygame_commands.queue)}')
 
             # propagate entries to cluster
-            global pygame_commands
             if not pygame_commands.empty():
                 self.propagate_entries()
 
@@ -434,7 +434,7 @@ class Raft(SimpleXMLRPCServer):
                     log_iterator = log_iterator + 1
                 # here self.last_applied == self.commit_index
 
-                logger.info(f'Applied entries to state, raft_orders = {raft_orders}')
+                logger.info(f'Applied entries to state, raft_orders = {list(raft_orders.queue)}')
                 logger.info(f'last_applied = {self.last_applied}, commit_index = {self.commit_index}')
 
             # reset countdown
@@ -450,9 +450,11 @@ class Raft(SimpleXMLRPCServer):
 ###################################################################################
 
 def handle_pygame():
-    global pygame_commands
 
     pygame.init()
+
+    global pygame_commands
+
 
     GREY = (125, 125, 125)
     BLACK = (0, 0, 0)
@@ -567,6 +569,7 @@ def handle_pygame():
             if event.type == pygame.QUIT:
                 os.kill(os.getpid(), signal.SIGINT) # same as Ctrl+C, close also server thread 
                 pygame.quit()
+                
             
             if last_message_time is not None and time.time() - last_message_time >= .5:
                     # Reverts header to default text 
@@ -727,7 +730,7 @@ def handle_server():
 
                 logger.info(f"Leader received append_entries_rpc with term: {term} and commit_index: {commit_index}")
                 logger.info(f"Received Entries: {entries}")  
-                logger.info(f"Leader {server.id}, pygame_commands = {pygame_commands}")
+                logger.info(f"Leader {server.id}, pygame_commands = {list(pygame_commands.queue)}")
                 
                 return (True, server.term)
 
