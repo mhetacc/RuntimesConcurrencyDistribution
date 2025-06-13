@@ -345,7 +345,7 @@ class Raft(SimpleXMLRPCServer):
         Takes urls and ports of proxies from self.cluster: list[Server]
         """
 
-        def encapsulate_proxy(follower: Raft.Server, term, commit_index) -> tuple[int, bool]:
+        def encapsulate_proxy(follower: Raft.Server, leader_term, leader_commit_index) -> tuple[int, bool]:
             """Encapsulate proxy fire it with a threadpool executor"""
 
             url: str = follower.url
@@ -353,14 +353,14 @@ class Raft(SimpleXMLRPCServer):
             complete_url = 'http://' + str(url) + ':' + str(port)
 
             with xmlrpc.client.ServerProxy(complete_url, allow_none=True) as proxy:
-                    return proxy.append_entries_rpc(None, term, commit_index)
+                    return proxy.append_entries_rpc(None, leader_term, leader_commit_index)
 
 
         results = []
 
 
         # fire function using threadpool executor
-        future_result = {self.executor.submit(encapsulate_proxy, follower, None, None): follower for follower in self.cluster}
+        future_result = {self.executor.submit(encapsulate_proxy, follower, self.term, self.commit_index): follower for follower in self.cluster}
         for future in concurrent.futures.as_completed(future_result):
             try:
                 data = future.result()
@@ -381,6 +381,7 @@ class Raft(SimpleXMLRPCServer):
 
     # RUN method of the server
     def service_actions(self):
+        
 
         # # apply log to state one at a time
         # # i.e., send to Pygame
@@ -390,19 +391,24 @@ class Raft(SimpleXMLRPCServer):
         #     # try statement?
         #     # apply log[self.last_applied]
 
-      
         if time.time() - self.countdown >= .5:
+            logger.info('Service actions countdown expired')
             # do actions every 0.5 seconds
+
+            logger.info(f'pygame_commands = {pygame_commands}')
 
             # propagate entries to cluster
             global pygame_commands
             if not pygame_commands.empty():
                 self.propagate_entries()
-        
+
+            logger.info(f'self.new_entries = {self.new_entries}')
 
             # apply to state i.e., traverse self.log between [last_applied, commit_index]
             # and add all entries to raft_orders Queue() 
             if self.commit_index >= self.last_applied:   
+                logger.info('Applying entries to state')
+                logger.info(f'last_applied = {self.last_applied}, commit_index = {self.commit_index}, log = {self.log}')
                 global raft_orders
 
                 # first time anything gets applied to state
@@ -429,11 +435,16 @@ class Raft(SimpleXMLRPCServer):
                     log_iterator = log_iterator + 1
                 # here self.last_applied == self.commit_index
 
+                logger.info(f'Applied entries to state, raft_orders = {raft_orders}')
+                logger.info(f'last_applied = {self.last_applied}, commit_index = {self.commit_index}')
+
             # reset countdown
             self.countdown = time.time()
+            
 
         return super().service_actions()
         
+    
 
 
 ###################################################################################
@@ -629,7 +640,7 @@ bobs_cluster : list[Raft.Server] = [bob1] # testing purposes
 def handle_server():
     with Raft(
         addr=('localhost', 8000),   # where server lives
-        id=1,                        
+        id=0,                        
         mode=Raft.Mode.LEADER,                     
         cluster=bobs_cluster,
         timeout=0.5,                 # debugging purposes
@@ -707,14 +718,15 @@ def handle_server():
             
             ################################# LEADER mode #####################################
             else:
+                logger.info('Leader Mode')
+                logger.info(f'terms: leader term = {server.term}, follower term = {term}')
 
-                # if leader out of date
-                    # reject
-                    # revert to follower mode
+                # if leader out of date reject and revert to follower mode
                 if term > server.term:
                     server.mode = Raft.Mode.FOLLOWER
                     return (False, server.term)
                 
+
                 # add commands to pygame_commands 
                 # ack to follower
                 for entry in entries:
@@ -722,7 +734,7 @@ def handle_server():
 
                 logger.info(f"Leader received append_entries_rpc with term: {term} and commit_index: {commit_index}")
                 logger.info(f"Received Entries: {entries}")  
-                logger.info(f"Leader {server.id} pygame_commands = {pygame_commands}")
+                logger.info(f"Leader {server.id}, pygame_commands = {pygame_commands}")
 
                 return (True, server.term)
                 
