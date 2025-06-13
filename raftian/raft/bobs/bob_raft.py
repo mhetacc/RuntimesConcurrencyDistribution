@@ -36,13 +36,19 @@ logger.addHandler(filehandle)
 
 ########################################################################
 
-# testing purposes
-# inside function explicit global keyword
+# user inputs trough Pygame which writes them here
+# Raft reads them and propagate them to the cluster
 pygame_commands = Queue()
 pygame_commands.put('cmd1')
 pygame_commands.put('cmd2')
 pygame_commands.put('cmd3')
 pygame_commands.put('cmd4')
+
+
+# commands that have been applied to state are written here by Raft
+# Pygame reads them and update UI accordingly 
+raft_orders = Queue() 
+
 
 
 # TODO: put class in separate file
@@ -81,7 +87,7 @@ class Raft(SimpleXMLRPCServer):
                  non_voter: bool = True,
                  voted_for: int | None = None,
                  commit_index: int | None = None,
-                 last_applied: int | None = None,
+                 last_applied: int = -1,
                  next_index_to_send: list[tuple[int, int]] | None = None,
                  last_index_on_server: list[tuple[int, int]] | None = None
                  ):
@@ -100,12 +106,12 @@ class Raft(SimpleXMLRPCServer):
         self.non_voter: bool = non_voter
         self.voted_for: int | None = voted_for
         self.commit_index: int | None = commit_index
-        self.last_applied: int | None = last_applied
+        self.last_applied: int = last_applied
         self.next_index_to_send: list[tuple[int, int]] | None = next_index_to_send
         self.last_index_on_server: list[tuple[int, int]] | None = last_index_on_server
         
         # internal attributes 
-        self.last_propagated : time.time | None = None
+        self.countdown : time.time = time.time()  # used to countdown various actions, e.g. propagate entries every 0.5 seconds
 
         # start executors pool
         self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=len(self.cluster))
@@ -118,9 +124,6 @@ class Raft(SimpleXMLRPCServer):
     
 
     def on_timeout(self):
-        # TODO
-        # switch self.mode 
-
         if self.mode == Raft.Mode.CANDIDATE:
             pass
         elif self.mode == Raft.Mode.LEADER:
@@ -274,6 +277,7 @@ class Raft(SimpleXMLRPCServer):
             if results.count(True) >= len(self.cluster) / 2:
                 self.log.extend(self.new_entries)
                 self.new_entries.clear()
+                self.commit_index = max(self.commit_index, self.log[-1].index)  # IMPORTANT ensure that entries get applied
             # else:
             #   new entries not cleaned, so they will be propagated again
             
@@ -385,15 +389,47 @@ class Raft(SimpleXMLRPCServer):
         #     # try statement?
         #     # apply log[self.last_applied]
 
-        # propagate entries every 0.5 seconds
-        if self.last_propagated is None:
-            self.last_propagated = time.time()
-        elif time.time() - self.last_propagated >= .5:
-            # if pygame pipe not empty send commands to Leader
+        if time.time() - self.countdown >= .5:
+            # do actions every 0.5 seconds
+
+            # propagate entries to cluster
             global pygame_commands
             if not pygame_commands.empty():
                 self.propagate_entries()
-            self.last_propagated = time.time()
+        
+
+            # apply to state i.e., traverse self.log between [last_applied, commit_index]
+            # and add all entries to raft_orders Queue() 
+            if self.commit_index >= self.last_applied:   
+                global raft_orders
+
+                # first time anything gets applied to state
+                if self.last_applied == -1:
+                    raft_orders.put(self.log[0]) 
+                    self.last_applied = self.log[0].index
+
+
+                # find log index (!= entry.index) where last applied entry resides 
+                last_applied_log_position: int | None = None
+                for i, my_entry in enumerate(self.log):
+                    if (my_entry.index == self.last_applied):
+                        last_applied_log_position = i
+                        break # no need to search further
+                
+
+                # iterate trough remaining self.log until all entries between [last_applied, commit_index] are applied to state
+                # i.e., they are written in raft_orders Queue()
+                log_iterator = last_applied_log_position + 1
+
+                while self.last_applied != self.commit_index:
+                    raft_orders.put(self.log[log_iterator])
+                    self.last_applied = self.log[log_iterator]
+                    log_iterator = log_iterator + 1
+                # here self.last_applied == self.commit_index
+
+            # reset countdown
+            self.countdown = time.time()
+
 
         
         

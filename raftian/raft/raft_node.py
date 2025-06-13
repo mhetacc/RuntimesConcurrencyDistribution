@@ -75,9 +75,10 @@ class Raft(SimpleXMLRPCServer):
     
     def __init__(self, addr, requestHandler = ..., logRequests = True, allow_none = False, encoding = None, bind_and_activate = True, use_builtin_types = False,
                  id : int = 0,
-                 mode: Mode = 3,
+                 mode: Mode = Mode.FOLLOWER,
                  timeout: float = 0.003,
                  cluster: list[Server] | None = None,
+                 leader_id: int | None = None,
                  log: list[Entry] = [],
                  new_entries: list[Entry] = [],
                  term: int | None = None,
@@ -86,7 +87,7 @@ class Raft(SimpleXMLRPCServer):
                  non_voter: bool = True,
                  voted_for: int | None = None,
                  commit_index: int | None = None,
-                 last_applied: int  = -1,
+                 last_applied: int = -1,
                  next_index_to_send: list[tuple[int, int]] | None = None,
                  last_index_on_server: list[tuple[int, int]] | None = None
                  ):
@@ -96,6 +97,7 @@ class Raft(SimpleXMLRPCServer):
         self.id: int = id
         self.mode: Raft.Mode = mode
         self.cluster: list[Raft.Server] | None = cluster
+        self.leader_id: int | None = leader_id
         self.log: list[Raft.Entry] = log
         self.new_entries: list[Raft.Entry] = new_entries
         self.term: int | None = term
@@ -634,7 +636,10 @@ def handle_server():
         term=1,
         ) as server:
 
-        def append_entries_rpc(entries, term, commit_index) -> tuple[bool, int]:
+
+        def append_entries_rpc(entries: list[Raft.Entry], term: int, commit_index: int) -> tuple[bool, int]:
+
+            ################################# FOLLOWER mode #####################################
 
             if server.mode != Raft.Mode.LEADER:
                 # TODO
@@ -642,6 +647,62 @@ def handle_server():
                 logger.info(f"Entries: {entries}")  
                 # Here you would implement the logic to handle the append entries RPC
                 # For now, just return a success message
+                #return (True, server.term)
+            
+
+            """
+            Fired by leader, followers send back ack
+            ack = (follower_term: int, entry_replicated: bool)
+
+            Payload (i.e., entries) is either None (if used for propagating heartbeat) or a list of entries that have to be propagated on all followers
+
+            TODO: must be moved outside of the class and registered by the client server
+            with server.register_function(append_entries_rpc)
+            """
+            # HERE is what followers do
+
+            # leader is still alive
+            server.timer.reset()
+
+
+            # if leader is out of date -> reject
+            if term < server.term:
+                return (False, server.term)
+
+
+            # if it was not just an heartbeat
+            if entries is not None:
+
+                # search in log an entry equal to prev_leader_entry
+                # i.e., entry preceding future appended entries.
+                # save its log index (!= entry index)
+                entry_log_index: int | None = None
+                for i, my_entry in enumerate(server.log):
+                    if (my_entry.index == entries[0].index 
+                        and my_entry.term == entries[0].term):
+                        entry_log_index = i
+                        break # no need to search further
+
+
+                # if follower does not have entry equal to prev_leader_entry -> reject
+                if entry_log_index is None:
+                    return(False, server.term)
+
+
+                # delete all log entries from the one equal to prev_leader_entry (excluded)
+                del server.log[(entry_log_index + 1):]
+
+
+                # append new entries
+                server.log.extend(entries)
+
+
+                # update commit index
+                if commit_index > server.commit_index:
+                    server.commit_index = min (commit_index, entries[-1].index)
+
+
+                # everything went well
                 return (True, server.term)
             
             ################################# LEADER mode #####################################
