@@ -405,7 +405,7 @@ class Raft(SimpleXMLRPCServer):
 
             # apply to state i.e., traverse self.log between [last_applied, commit_index]
             # and add all entries to raft_orders Queue() 
-            if self.commit_index >= self.last_applied:   
+            if self.commit_index is not None and self.commit_index >= self.last_applied:   
                 logger.info('Applying entries to state')
                 logger.info(f'last_applied = {self.last_applied}, commit_index = {self.commit_index}, log = {self.log}')
                 global raft_orders
@@ -567,8 +567,9 @@ def handle_pygame():
         # Process player inputs.
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                os.kill(os.getpid(), signal.SIGINT) # same as Ctrl+C, close also server thread 
                 pygame.quit()
+                os.kill(os.getpid(), signal.SIGINT) # same as Ctrl+C, close also server thread 
+                
                 
             
             if last_message_time is not None and time.time() - last_message_time >= .5:

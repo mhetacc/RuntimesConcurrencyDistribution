@@ -277,7 +277,12 @@ class Raft(SimpleXMLRPCServer):
             if results.count(True) >= len(self.cluster) / 2:
                 self.log.extend(self.new_entries)
                 self.new_entries.clear()
-                self.commit_index = max(self.commit_index, self.log[-1].index)  # IMPORTANT ensure that entries get applied
+                # TODO remove likely not necessary
+                # if self.commit_index is not None:
+                #     self.commit_index = max(self.commit_index, self.log[-1].index)  # IMPORTANT ensure that entries get applied
+                # else:
+                #     self.commit_index = self.log[-1].index
+                self.commit_index = self.log[-1].index  # IMPORTANT ensure that entries get applied
             # else:
             #   new entries not cleaned, so they will be propagated again
             
@@ -406,7 +411,7 @@ class Raft(SimpleXMLRPCServer):
 
             # apply to state i.e., traverse self.log between [last_applied, commit_index]
             # and add all entries to raft_orders Queue() 
-            if self.commit_index >= self.last_applied:   
+            if self.commit_index is not None and self.commit_index >= self.last_applied:   
                 logger.info('Applying entries to state')
                 logger.info(f'last_applied = {self.last_applied}, commit_index = {self.commit_index}, log = {self.log}')
                 global raft_orders
@@ -424,14 +429,18 @@ class Raft(SimpleXMLRPCServer):
                         last_applied_log_position = i
                         break # no need to search further
                 
+                logger.info(f'last_applied_log_position = {last_applied_log_position}')
+                logger.info(f'log = {self.log}')
+                
 
                 # iterate trough remaining self.log until all entries between [last_applied, commit_index] are applied to state
                 # i.e., they are written in raft_orders Queue()
                 log_iterator = last_applied_log_position + 1
 
                 while self.last_applied != self.commit_index:
+                    logger.info(f'log iterator = {log_iterator}')
                     raft_orders.put(self.log[log_iterator])
-                    self.last_applied = self.log[log_iterator]
+                    self.last_applied = self.log[log_iterator].index
                     log_iterator = log_iterator + 1
                 # here self.last_applied == self.commit_index
 
@@ -452,9 +461,9 @@ class Raft(SimpleXMLRPCServer):
 ###################################################################################
 
 def handle_pygame():
-    global pygame_commands
-
     pygame.init()
+    
+    global pygame_commands
 
     GREY = (125, 125, 125)
     BLACK = (0, 0, 0)
@@ -561,14 +570,16 @@ def handle_pygame():
     players = [player1, player2, player3, player4] # useful to extend to n players with randomized positions
 
     last_message_time = None
+    click_counter = 0
 
     # MAIN LOOP
     while True:
         # Process player inputs.
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                pygame.quit() # calls at the end of the loop
                 os.kill(os.getpid(), signal.SIGINT) # same as Ctrl+C, close also server thread 
-                pygame.quit()
+                
             
             if last_message_time is not None and time.time() - last_message_time >= .5:
                     # Reverts header to default text 
@@ -600,6 +611,10 @@ def handle_pygame():
 
                         # change header text and renders it
                         toptext = font.render(f"Player {player_number} pressed", False, BLACK)
+
+                        # add command to pygame_commands Queue
+                        click_counter += 1
+                        pygame_commands.put(f'p{player_number}: #{click_counter}')
                         
                         # calculate offset
                         toptext_rect = toptext.get_rect()
