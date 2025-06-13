@@ -550,12 +550,11 @@ def handle_pygame():
     #################################################################################
 
     #################################### players #################################### 
-    # class Player(pygame.Rect): ??
     @dataclass
     class Player:
         id: int
         hp: int
-        rc: pygame.Rect
+        rc: pygame.Rect # represent player position and size and exposes useful methods like collidepoint()
 
     player1 = Player(
         id=1,
@@ -595,7 +594,8 @@ def handle_pygame():
 
     players = [player1, player2, player3, player4] # useful to extend to n players with randomized positions
 
-    last_message_time = None
+
+    last_message_time = None # used to revert header text after some time
     click_counter = 0
 
     # MAIN LOOP
@@ -652,11 +652,16 @@ def handle_pygame():
 
             # apply state 
             while not raft_orders.empty():
-                order = raft_orders.get()
-                # here you can apply the order to the game state
-                # e.g., move player, change score, etc.
-                # for now just print it
+                order: int = raft_orders.get()
                 logger.info(f'order: {order}')
+
+                for player in players:
+                    if player.id == order and player.hp > 0:
+                        player.hp -= 30  # apply damage to player:
+                    
+                    logger.info(f'Player {player.id}, HP: {player.hp}')
+
+
 
 
         # Do logical updates here.
