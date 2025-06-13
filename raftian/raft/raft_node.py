@@ -69,7 +69,6 @@ class Raft(SimpleXMLRPCServer):
         id: int
         url: str
         port: int
-        hp: int
 
     # class attributes here
     
@@ -461,9 +460,13 @@ class Raft(SimpleXMLRPCServer):
 ###################################################################################
 
 def handle_pygame():
+
+
+
     pygame.init()
     
-    global pygame_commands
+    global pygame_commands  # write player inputs in this Queue
+    global raft_orders      # read applied-to-state commands from this Queue
 
     GREY = (125, 125, 125)
     BLACK = (0, 0, 0)
@@ -547,25 +550,48 @@ def handle_pygame():
     #################################################################################
 
     #################################### players #################################### 
-    player1 = pygame.Rect(585, 685, 80, 80)
+    # class Player(pygame.Rect): ??
+    @dataclass
+    class Player:
+        id: int
+        hp: int
+        rc: pygame.Rect
+
+    player1 = Player(
+        id=1,
+        hp=100,
+        rc=pygame.Rect(585, 685, 80, 80)  # x, y, width, height
+    )
     p1_ui = pygame.Surface((80,80))
     p1_ui.fill(RED)
-    DISPLAY.blit(p1_ui, player1)
+    DISPLAY.blit(p1_ui, player1.rc)
 
-    player2 = pygame.Rect(835, 185, 80, 80)
+    player2 = Player(
+        id=2,
+        hp=100,
+        rc=pygame.Rect(835, 185, 80, 80)  # x, y, width, height
+    )
     p2_ui = pygame.Surface((80,80))
     p2_ui.fill(GREEN)
-    DISPLAY.blit(p2_ui, player2)
+    DISPLAY.blit(p2_ui, player2.rc)
 
-    player3 = pygame.Rect(335, 185, 80, 80)
+    player3 = Player(
+        id=3,
+        hp=100,
+        rc=pygame.Rect(335, 185, 80, 80)  # x, y, width, height
+    )
     p3_ui = pygame.Surface((80,80))
     p3_ui.fill(BLUE)
-    DISPLAY.blit(p3_ui, player3)
+    DISPLAY.blit(p3_ui, player3.rc)
 
-    player4 = pygame.Rect(85, 935, 80, 80)
+    player4 = Player(
+        id=4,
+        hp=100,
+        rc=pygame.Rect(85, 935, 80, 80)  # x, y, width, height
+    )
     p4_ui = pygame.Surface((80,80))
     p4_ui.fill(YELLOW)
-    DISPLAY.blit(p4_ui, player4)
+    DISPLAY.blit(p4_ui, player4.rc)
 
     players = [player1, player2, player3, player4] # useful to extend to n players with randomized positions
 
@@ -603,18 +629,16 @@ def handle_pygame():
                 pos = pygame.mouse.get_pos()
 
                 for player in players:
-                    if player.collidepoint(pos):
+                    if player.rc.collidepoint(pos):
                         # starts timer to revert header text
                         last_message_time = time.time()
 
-                        player_number = players.index(player) + 1
-
                         # change header text and renders it
-                        toptext = font.render(f"Player {player_number} pressed", False, BLACK)
+                        toptext = font.render(f"Player {player.id} pressed", False, BLACK)
 
                         # add command to pygame_commands Queue
                         click_counter += 1
-                        pygame_commands.put(f'p{player_number}: #{click_counter}')
+                        pygame_commands.put(player.id)  # put player id in the queue
                         
                         # calculate offset
                         toptext_rect = toptext.get_rect()
@@ -626,6 +650,13 @@ def handle_pygame():
                         DISPLAY.blit(header, rect_header)
                         DISPLAY.blit(toptext, (rect_header.centerx - xoffset, rect_header.centery - yoffset))
 
+            # apply state 
+            while not raft_orders.empty():
+                order = raft_orders.get()
+                # here you can apply the order to the game state
+                # e.g., move player, change score, etc.
+                # for now just print it
+                logger.info(f'order: {order}')
 
 
         # Do logical updates here.
@@ -644,10 +675,10 @@ def handle_pygame():
 ####################################################################################
 
 
-bob1 = Raft.Server(1, 'localhost', 8001, 100)
-bob2 = Raft.Server(2, 'localhost', 8002, 100)
-bob3 = Raft.Server(3, 'localhost', 8003, 100)
-bob4 = Raft.Server(4, 'localhost', 8004, 100)
+bob1 = Raft.Server(1, 'localhost', 8001)
+bob2 = Raft.Server(2, 'localhost', 8002)
+bob3 = Raft.Server(3, 'localhost', 8003)
+bob4 = Raft.Server(4, 'localhost', 8004)
 
 bobs_cluster : list[Raft.Server] = [bob1] # testing purposes
 
