@@ -462,6 +462,8 @@ def handle_pygame():
 
 
     pygame.init()
+
+    pygame.display.set_caption(f'{filename}')  # set window title
     
     global pygame_commands  # write player inputs in this Queue
     global raft_orders      # read applied-to-state commands from this Queue
@@ -722,8 +724,9 @@ bob1 = Raft.Server(1, 'localhost', 8001)
 bob2 = Raft.Server(2, 'localhost', 8002)
 bob3 = Raft.Server(3, 'localhost', 8003)
 bob4 = Raft.Server(4, 'localhost', 8004)
+bob_raft = Raft.Server(5, 'localhost', 8005)
 
-bobs_cluster : list[Raft.Server] = [bob1] # testing purposes
+bobs_cluster : list[Raft.Server] = [bob_raft] # testing purposes
 
 # enclose server in a callable function
 def handle_server():

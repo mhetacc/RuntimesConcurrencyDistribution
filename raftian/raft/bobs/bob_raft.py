@@ -21,7 +21,7 @@ import datetime
 # Oss: without bob1.py restart, writes in the same log file 
 
 # logs are in the form "logs/filename/datetime.filename.log"
-filename = 'bob_raft'
+filename = 'raft_node'
 
 # create logger and makes it so that it record any message level
 logger = logging.getLogger()
@@ -49,8 +49,6 @@ pygame_commands = Queue()
 # Pygame reads them and update UI accordingly 
 raft_orders = Queue() 
 
-
-
 # TODO: put class in separate file
 class Raft(SimpleXMLRPCServer):
     class Mode(Enum):
@@ -69,7 +67,6 @@ class Raft(SimpleXMLRPCServer):
         id: int
         url: str
         port: int
-        hp: int
 
     # class attributes here
     
@@ -109,7 +106,7 @@ class Raft(SimpleXMLRPCServer):
         self.last_applied: int = last_applied
         self.next_index_to_send: list[tuple[int, int]] | None = next_index_to_send
         self.last_index_on_server: list[tuple[int, int]] | None = last_index_on_server
-        
+
         # internal attributes 
         self.countdown : time.time = time.time()  # used to countdown various actions, e.g. propagate entries every 0.5 seconds
 
@@ -127,14 +124,14 @@ class Raft(SimpleXMLRPCServer):
         if self.mode == Raft.Mode.CANDIDATE:
             pass
         elif self.mode == Raft.Mode.LEADER:
-            self.heartbeat() 
+            self.heartbeat()
         elif self.mode == Raft.Mode.FOLLOWER:
             pass
         else:
             print('Mode wrong') #TODO error message
         pass
 
-
+    
 
     def propagate_entries(self):
         """
@@ -277,11 +274,16 @@ class Raft(SimpleXMLRPCServer):
             if results.count(True) >= len(self.cluster) / 2:
                 self.log.extend(self.new_entries)
                 self.new_entries.clear()
-                self.commit_index = max(self.commit_index, self.log[-1].index)  # IMPORTANT ensure that entries get applied
+                # TODO remove likely not necessary
+                # if self.commit_index is not None:
+                #     self.commit_index = max(self.commit_index, self.log[-1].index)  # IMPORTANT ensure that entries get applied
+                # else:
+                #     self.commit_index = self.log[-1].index
+                self.commit_index = self.log[-1].index  # IMPORTANT ensure that entries get applied
             # else:
             #   new entries not cleaned, so they will be propagated again
             
-            
+             
 
     def request_vote_rpc(
             self,
@@ -314,6 +316,7 @@ class Raft(SimpleXMLRPCServer):
         # vote for candidate
         self.voted_for = candidate_id
         return (self.term, True)
+
 
 
     # on follower timeout
@@ -423,14 +426,18 @@ class Raft(SimpleXMLRPCServer):
                         last_applied_log_position = i
                         break # no need to search further
                 
+                logger.info(f'last_applied_log_position = {last_applied_log_position}')
+                logger.info(f'log = {self.log}')
+                
 
                 # iterate trough remaining self.log until all entries between [last_applied, commit_index] are applied to state
                 # i.e., they are written in raft_orders Queue()
                 log_iterator = last_applied_log_position + 1
 
                 while self.last_applied != self.commit_index:
+                    logger.info(f'log iterator = {log_iterator}')
                     raft_orders.put(self.log[log_iterator])
-                    self.last_applied = self.log[log_iterator]
+                    self.last_applied = self.log[log_iterator].index
                     log_iterator = log_iterator + 1
                 # here self.last_applied == self.commit_index
 
@@ -443,6 +450,7 @@ class Raft(SimpleXMLRPCServer):
 
         return super().service_actions()
         
+    
 
 
 ###################################################################################
@@ -451,10 +459,14 @@ class Raft(SimpleXMLRPCServer):
 
 def handle_pygame():
 
+
+
     pygame.init()
 
-    global pygame_commands
-
+    pygame.display.set_caption(f'{filename}')  # set window title
+    
+    global pygame_commands  # write player inputs in this Queue
+    global raft_orders      # read applied-to-state commands from this Queue
 
     GREY = (125, 125, 125)
     BLACK = (0, 0, 0)
@@ -538,54 +550,67 @@ def handle_pygame():
     #################################################################################
 
     #################################### players #################################### 
-    player1 = pygame.Rect(585, 685, 80, 80)
-    p1_ui = pygame.Surface((80,80))
-    p1_ui.fill(RED)
-    DISPLAY.blit(p1_ui, player1)
+    @dataclass
+    class Player:
+        id: int
+        hp: int
+        rc: pygame.Rect     # represent player position and size and exposes useful methods like collidepoint()
+        ui: pygame.Surface  # expose UI of the player e.g., colour 
 
-    player2 = pygame.Rect(835, 185, 80, 80)
-    p2_ui = pygame.Surface((80,80))
-    p2_ui.fill(GREEN)
-    DISPLAY.blit(p2_ui, player2)
+    player1 = Player(
+        id=1,
+        hp=100,
+        rc=pygame.Rect(585, 685, 80, 80),  # x, y, width, height
+        ui=pygame.Surface((80,80))
+    )
+    player1.ui.fill(RED)
+    DISPLAY.blit(player1.ui, player1.rc)
 
-    player3 = pygame.Rect(335, 185, 80, 80)
-    p3_ui = pygame.Surface((80,80))
-    p3_ui.fill(BLUE)
-    DISPLAY.blit(p3_ui, player3)
+    player2 = Player(
+        id=2,
+        hp=100,
+        rc=pygame.Rect(835, 185, 80, 80), # x, y, width, height
+        ui=pygame.Surface((80,80))
+    )
+    player2.ui.fill(GREEN)
+    DISPLAY.blit(player2.ui, player2.rc)
 
-    player4 = pygame.Rect(85, 935, 80, 80)
-    p4_ui = pygame.Surface((80,80))
-    p4_ui.fill(YELLOW)
-    DISPLAY.blit(p4_ui, player4)
+    player3 = Player(
+        id=3,
+        hp=100,
+        rc=pygame.Rect(335, 185, 80, 80),  # x, y, width, height
+        ui=pygame.Surface((80,80))
+    )
+    player3.ui.fill(BLUE)
+    DISPLAY.blit(player3.ui, player3.rc)
+
+    player4 = Player(
+        id=4,
+        hp=100,
+        rc=pygame.Rect(85, 935, 80, 80),  # x, y, width, height
+        ui=pygame.Surface((80,80))
+    )
+    player4.ui.fill(YELLOW)
+    DISPLAY.blit(player4.ui, player4.rc)
+
+
+    player_UI_cleaner = pygame.Surface((80, 80))  # used to clean player UI before re-blitting
+    player_UI_cleaner.fill(WHITE)  
 
     players = [player1, player2, player3, player4] # useful to extend to n players with randomized positions
 
-    last_message_time = None
+
+    last_message_time = None # used to revert header text after some time
+    click_counter = 0
 
     # MAIN LOOP
     while True:
         # Process player inputs.
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit()
+                pygame.quit() # calls at the end of the loop
                 os.kill(os.getpid(), signal.SIGINT) # same as Ctrl+C, close also server thread 
                 
-                
-            
-            if last_message_time is not None and time.time() - last_message_time >= .5:
-                    # Reverts header to default text 
-                    toptext = font.render(f"Top Text", False, BLACK)
-
-                    # calculate offset
-                    toptext_rect = toptext.get_rect()
-                    xoffset = toptext_rect.width/2
-                    yoffset = toptext_rect.height/2
-
-                    # must first re-draw header surface otherwise previous text remains 
-                    # then draws changed header text
-                    DISPLAY.blit(header, rect_header)
-                    DISPLAY.blit(toptext, (rect_header.centerx - xoffset, rect_header.centery - yoffset))
-                    last_message_time = None
 
             # if mouse left button is clicked 
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -594,47 +619,111 @@ def handle_pygame():
                 pos = pygame.mouse.get_pos()
 
                 for player in players:
-                    if player.collidepoint(pos):
-                        # starts timer to revert header text
-                        last_message_time = time.time()
+                    if player.rc.collidepoint(pos):
 
-                        player_number = players.index(player) + 1
+                        if player.hp > 0:  
+                            # starts timer to revert header text
+                            last_message_time = time.time()
 
-                        # change header text and renders it
-                        toptext = font.render(f"Player {player_number} pressed", False, BLACK)
-                        
-                        # calculate offset
-                        toptext_rect = toptext.get_rect()
-                        xoffset = toptext_rect.width/2
-                        yoffset = toptext_rect.height/2
+                            # change header text and renders it
+                            toptext = font.render(f"Player {player.id} pressed", False, BLACK)
 
-                        # must first re-draw header surface otherwise previous text remains 
-                        # then draws changed header text
-                        DISPLAY.blit(header, rect_header)
-                        DISPLAY.blit(toptext, (rect_header.centerx - xoffset, rect_header.centery - yoffset))
+                            # add command to pygame_commands Queue
+                            click_counter += 1
+                            pygame_commands.put(player.id)  # put player id in the queue
+
+                            # calculate offset
+                            toptext_rect = toptext.get_rect()
+                            xoffset = toptext_rect.width/2
+                            yoffset = toptext_rect.height/2
+
+                            # must first re-draw header surface otherwise previous text remains 
+                            # then draws changed header text
+                            DISPLAY.blit(header, rect_header)
+                            DISPLAY.blit(toptext, (rect_header.centerx - xoffset, rect_header.centery - yoffset))
+                        else:
+                            # starts timer to revert header text
+                            last_message_time = time.time()
+
+                            # change header text and renders it
+                            toptext = font.render(f"Player {player.id} already dead", False, BLACK)
+
+                            # calculate offset
+                            toptext_rect = toptext.get_rect()
+                            xoffset = toptext_rect.width/2
+                            yoffset = toptext_rect.height/2
+
+                            # must first re-draw header surface otherwise previous text remains 
+                            # then draws changed header text
+                            DISPLAY.blit(header, rect_header)
+                            DISPLAY.blit(toptext, (rect_header.centerx - xoffset, rect_header.centery - yoffset))
 
 
 
-        # Do logical updates here.
-        # ...
+        # refresh header
+        if last_message_time is not None and time.time() - last_message_time >= .5:
+            # Reverts header to default text 
+            toptext = font.render(f"Top Text", False, BLACK)
 
+            # calculate offset
+            toptext_rect = toptext.get_rect()
+            xoffset = toptext_rect.width/2
+            yoffset = toptext_rect.height/2
 
-        # Render the graphics here.
-        # ...
+            # must first re-draw header surface otherwise previous text remains 
+            # then draws changed header text
+            DISPLAY.blit(header, rect_header)
+            DISPLAY.blit(toptext, (rect_header.centerx - xoffset, rect_header.centery - yoffset))
+            last_message_time = None
+
+        
+        # apply state 
+        while not raft_orders.empty():
+            order: int = raft_orders.get()
+            logger.info(f'order: {order}')
+
+            for player in players:
+                if player.id == order and player.hp > 0:
+                    player.hp -= 30  # apply damage to player:
+
+                    # modify player UI
+                    if player.hp < 90 and player.hp >= 60:
+                        player.ui.set_alpha(190)
+                        DISPLAY.blit(player_UI_cleaner, player.rc)  # clean player UI
+                        DISPLAY.blit(player.ui, player.rc)  # re-draw player UI
+                    elif player.hp < 60 and player.hp >= 30:
+                        player.ui.set_alpha(150)
+                        DISPLAY.blit(player_UI_cleaner, player.rc)  # clean player UI
+                        DISPLAY.blit(player.ui, player.rc)  # re-draw player UI
+                    elif player.hp < 30 and player.hp > 0:
+                        player.ui.set_alpha(100)
+                        DISPLAY.blit(player_UI_cleaner, player.rc)  # clean player UI
+                        DISPLAY.blit(player.ui, player.rc)  # re-draw player UI
+                    elif player.hp <= 0:
+                        player.ui.fill(BLACK)
+                        player.ui.set_alpha(200)  
+                        DISPLAY.blit(player.ui, player.rc)  # re-draw player UI
+                
+                logger.info(f'Player {player.id}, HP: {player.hp}')
 
 
         # we want to limit display refresh speed
         pygame.display.flip()  # Refresh on-screen display
         clock.tick(60)         # sets framerate
 
+
+
+        # TODO for the future: 
+        # if the game logic becomes more complex, it is better to separate the logic from UI updates
+        # that being said, it requires more loops
 ####################################################################################
 ####################################################################################
 
 
-leader = Raft.Server(0, 'localhost', 8000, 100)
-bob2 = Raft.Server(2, 'localhost', 8002, 100)
-bob3 = Raft.Server(3, 'localhost', 8003, 100)
-bob4 = Raft.Server(4, 'localhost', 8004, 100)
+leader = Raft.Server(0, 'localhost', 8000)
+bob2 = Raft.Server(2, 'localhost', 8002)
+bob3 = Raft.Server(3, 'localhost', 8003)
+bob4 = Raft.Server(4, 'localhost', 8004)
 
 bobs_cluster : list[Raft.Server] = [leader] # testing purposes
 
@@ -642,13 +731,13 @@ bobs_cluster : list[Raft.Server] = [leader] # testing purposes
 def handle_server():
     with Raft(
         addr=('localhost', 8005),   # where server lives
+        id=1,
+        leader_id=0,                        
         mode=Raft.Mode.FOLLOWER,                     
         cluster=bobs_cluster,
-        leader_id=0,
         timeout=0.5,                 # debugging purposes
         term=1,
         ) as server:
-
 
         def append_entries_rpc(entries: list[Raft.Entry], term: int, commit_index: int) -> tuple[bool, int]:
             """
@@ -736,6 +825,7 @@ def handle_server():
                 return (True, server.term)
 
 
+                
                 
         server.register_function(append_entries_rpc)
         server.serve_forever()
