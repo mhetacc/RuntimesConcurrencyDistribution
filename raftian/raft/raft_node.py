@@ -768,7 +768,7 @@ def handle_server():
                     return (False, server.term)
 
                 # update commit index 
-                if commit_index > server.commit_index:
+                if commit_index is not None and commit_index > server.commit_index:
                     server.commit_index = commit_index
 
 

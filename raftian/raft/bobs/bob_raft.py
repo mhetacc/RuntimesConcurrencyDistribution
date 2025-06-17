@@ -742,7 +742,7 @@ def handle_server():
         term=1,
         ) as server:
 
-        def append_entries_rpc(entries, term, commit_index):
+        def append_entries_rpc(entries: list[Raft.Entry], term: int, commit_index: int | None) -> tuple[bool, int]:
             """
             Fired by servers, change behaviour depending on server.Mode
             returns ack = (replication_successful: bool, server_term: int)
@@ -767,7 +767,7 @@ def handle_server():
                     return (False, server.term)
 
                 # update commit index 
-                if commit_index > server.commit_index:
+                if commit_index is not None and commit_index > server.commit_index:
                     server.commit_index = commit_index
 
 
