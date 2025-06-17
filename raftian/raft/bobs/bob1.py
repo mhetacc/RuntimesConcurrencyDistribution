@@ -23,13 +23,18 @@ filehandle = logging.FileHandler(logpath)
 logger.addHandler(filehandle)
 
 ########################################################################
+class LoopingServer(SimpleXMLRPCServer):
+    def __init__(self, uri, allow_none=True):
+        # creates itself (ie server start-up)
+        SimpleXMLRPCServer.__init__(self, addr=uri, allow_none=allow_none)
+        
 
 
 # needs to be Raft node but with register_function(append_entries_rpc)
 
-with SimpleXMLRPCServer(('localhost', 8001), allow_none=True) as server:
+with LoopingServer(('localhost', 8001), allow_none=True) as server:
 
-    def append_entries_rpc(entries, term, commit_index):
+    def append_entries_rpc(entries, term, commit_index) -> tuple[bool, int]:
         print(f"Received append_entries_rpc with term: {term} and commit_index: {commit_index}")
         print(f"Entries: {entries}")
 

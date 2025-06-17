@@ -70,7 +70,9 @@ class Raft(SimpleXMLRPCServer):
 
     # class attributes here
     
-    def __init__(self, addr, requestHandler = ..., logRequests = True, allow_none = False, encoding = None, bind_and_activate = True, use_builtin_types = False,
+    def __init__(self, 
+                 addr, 
+                 allow_none: bool = True,
                  id : int = 0,
                  mode: Mode = Mode.FOLLOWER,
                  timeout: float = 0.003,
@@ -88,7 +90,7 @@ class Raft(SimpleXMLRPCServer):
                  next_index_to_send: list[tuple[int, int]] | None = None,
                  last_index_on_server: list[tuple[int, int]] | None = None
                  ):
-        SimpleXMLRPCServer.__init__(self, addr, requestHandler, logRequests, allow_none, encoding, bind_and_activate, use_builtin_types)
+        SimpleXMLRPCServer.__init__(self, addr=addr, allow_none=allow_none) 
 
         # instance attributes here
         self.id: int = id
@@ -727,6 +729,8 @@ bob4 = Raft.Server(4, 'localhost', 8004)
 bob_raft = Raft.Server(5, 'localhost', 8005)
 
 bobs_cluster : list[Raft.Server] = [bob_raft] # testing purposes
+#bobs_cluster : list[Raft.Server] = [bob1] # testing purposes
+
 
 # enclose server in a callable function
 def handle_server():

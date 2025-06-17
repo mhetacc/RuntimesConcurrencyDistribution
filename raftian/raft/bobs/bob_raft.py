@@ -70,7 +70,9 @@ class Raft(SimpleXMLRPCServer):
 
     # class attributes here
     
-    def __init__(self, addr, requestHandler = ..., logRequests = True, allow_none = False, encoding = None, bind_and_activate = True, use_builtin_types = False,
+    def __init__(self, 
+                 addr : tuple[str, int],
+                 allow_none=True,
                  id : int = 0,
                  mode: Mode = Mode.FOLLOWER,
                  timeout: float = 0.003,
@@ -88,7 +90,7 @@ class Raft(SimpleXMLRPCServer):
                  next_index_to_send: list[tuple[int, int]] | None = None,
                  last_index_on_server: list[tuple[int, int]] | None = None
                  ):
-        SimpleXMLRPCServer.__init__(self, addr, requestHandler, logRequests, allow_none, encoding, bind_and_activate, use_builtin_types)
+        SimpleXMLRPCServer.__init__(self, addr=addr, allow_none=allow_none)
 
         # instance attributes here
         self.id: int = id
@@ -731,6 +733,7 @@ bobs_cluster : list[Raft.Server] = [leader] # testing purposes
 def handle_server():
     with Raft(
         addr=('localhost', 8005),   # where server lives
+        allow_none=True,
         id=1,
         leader_id=0,                        
         mode=Raft.Mode.FOLLOWER,                     
@@ -739,7 +742,7 @@ def handle_server():
         term=1,
         ) as server:
 
-        def append_entries_rpc(entries: list[Raft.Entry], term: int, commit_index: int) -> tuple[bool, int]:
+        def append_entries_rpc(entries, term, commit_index):
             """
             Fired by servers, change behaviour depending on server.Mode
             returns ack = (replication_successful: bool, server_term: int)
