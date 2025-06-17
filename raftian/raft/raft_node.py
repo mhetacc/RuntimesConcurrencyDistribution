@@ -49,8 +49,6 @@ pygame_commands = Queue()
 # Pygame reads them and update UI accordingly 
 raft_orders = Queue() 
 
-
-
 # TODO: put class in separate file
 class Raft(SimpleXMLRPCServer):
     class Mode(Enum):
@@ -554,43 +552,48 @@ def handle_pygame():
     class Player:
         id: int
         hp: int
-        rc: pygame.Rect # represent player position and size and exposes useful methods like collidepoint()
+        rc: pygame.Rect     # represent player position and size and exposes useful methods like collidepoint()
+        ui: pygame.Surface  # expose UI of the player e.g., colour 
 
     player1 = Player(
         id=1,
         hp=100,
-        rc=pygame.Rect(585, 685, 80, 80)  # x, y, width, height
+        rc=pygame.Rect(585, 685, 80, 80),  # x, y, width, height
+        ui=pygame.Surface((80,80))
     )
-    p1_ui = pygame.Surface((80,80))
-    p1_ui.fill(RED)
-    DISPLAY.blit(p1_ui, player1.rc)
+    player1.ui.fill(RED)
+    DISPLAY.blit(player1.ui, player1.rc)
 
     player2 = Player(
         id=2,
         hp=100,
-        rc=pygame.Rect(835, 185, 80, 80)  # x, y, width, height
+        rc=pygame.Rect(835, 185, 80, 80), # x, y, width, height
+        ui=pygame.Surface((80,80))
     )
-    p2_ui = pygame.Surface((80,80))
-    p2_ui.fill(GREEN)
-    DISPLAY.blit(p2_ui, player2.rc)
+    player2.ui.fill(GREEN)
+    DISPLAY.blit(player2.ui, player2.rc)
 
     player3 = Player(
         id=3,
         hp=100,
-        rc=pygame.Rect(335, 185, 80, 80)  # x, y, width, height
+        rc=pygame.Rect(335, 185, 80, 80),  # x, y, width, height
+        ui=pygame.Surface((80,80))
     )
-    p3_ui = pygame.Surface((80,80))
-    p3_ui.fill(BLUE)
-    DISPLAY.blit(p3_ui, player3.rc)
+    player3.ui.fill(BLUE)
+    DISPLAY.blit(player3.ui, player3.rc)
 
     player4 = Player(
         id=4,
         hp=100,
-        rc=pygame.Rect(85, 935, 80, 80)  # x, y, width, height
+        rc=pygame.Rect(85, 935, 80, 80),  # x, y, width, height
+        ui=pygame.Surface((80,80))
     )
-    p4_ui = pygame.Surface((80,80))
-    p4_ui.fill(YELLOW)
-    DISPLAY.blit(p4_ui, player4.rc)
+    player4.ui.fill(YELLOW)
+    DISPLAY.blit(player4.ui, player4.rc)
+
+
+    player_UI_cleaner = pygame.Surface((80, 80))  # used to clean player UI before re-blitting
+    player_UI_cleaner.fill(WHITE)  
 
     players = [player1, player2, player3, player4] # useful to extend to n players with randomized positions
 
@@ -606,21 +609,6 @@ def handle_pygame():
                 pygame.quit() # calls at the end of the loop
                 os.kill(os.getpid(), signal.SIGINT) # same as Ctrl+C, close also server thread 
                 
-            
-            if last_message_time is not None and time.time() - last_message_time >= .5:
-                    # Reverts header to default text 
-                    toptext = font.render(f"Top Text", False, BLACK)
-
-                    # calculate offset
-                    toptext_rect = toptext.get_rect()
-                    xoffset = toptext_rect.width/2
-                    yoffset = toptext_rect.height/2
-
-                    # must first re-draw header surface otherwise previous text remains 
-                    # then draws changed header text
-                    DISPLAY.blit(header, rect_header)
-                    DISPLAY.blit(toptext, (rect_header.centerx - xoffset, rect_header.centery - yoffset))
-                    last_message_time = None
 
             # if mouse left button is clicked 
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -630,52 +618,102 @@ def handle_pygame():
 
                 for player in players:
                     if player.rc.collidepoint(pos):
-                        # starts timer to revert header text
-                        last_message_time = time.time()
 
-                        # change header text and renders it
-                        toptext = font.render(f"Player {player.id} pressed", False, BLACK)
+                        if player.hp > 0:  
+                            # starts timer to revert header text
+                            last_message_time = time.time()
 
-                        # add command to pygame_commands Queue
-                        click_counter += 1
-                        pygame_commands.put(player.id)  # put player id in the queue
-                        
-                        # calculate offset
-                        toptext_rect = toptext.get_rect()
-                        xoffset = toptext_rect.width/2
-                        yoffset = toptext_rect.height/2
+                            # change header text and renders it
+                            toptext = font.render(f"Player {player.id} pressed", False, BLACK)
 
-                        # must first re-draw header surface otherwise previous text remains 
-                        # then draws changed header text
-                        DISPLAY.blit(header, rect_header)
-                        DISPLAY.blit(toptext, (rect_header.centerx - xoffset, rect_header.centery - yoffset))
+                            # add command to pygame_commands Queue
+                            click_counter += 1
+                            pygame_commands.put(player.id)  # put player id in the queue
 
-            # apply state 
-            while not raft_orders.empty():
-                order: int = raft_orders.get()
-                logger.info(f'order: {order}')
+                            # calculate offset
+                            toptext_rect = toptext.get_rect()
+                            xoffset = toptext_rect.width/2
+                            yoffset = toptext_rect.height/2
 
-                for player in players:
-                    if player.id == order and player.hp > 0:
-                        player.hp -= 30  # apply damage to player:
-                    
-                    logger.info(f'Player {player.id}, HP: {player.hp}')
+                            # must first re-draw header surface otherwise previous text remains 
+                            # then draws changed header text
+                            DISPLAY.blit(header, rect_header)
+                            DISPLAY.blit(toptext, (rect_header.centerx - xoffset, rect_header.centery - yoffset))
+                        else:
+                            # starts timer to revert header text
+                            last_message_time = time.time()
+
+                            # change header text and renders it
+                            toptext = font.render(f"Player {player.id} already dead", False, BLACK)
+
+                            # calculate offset
+                            toptext_rect = toptext.get_rect()
+                            xoffset = toptext_rect.width/2
+                            yoffset = toptext_rect.height/2
+
+                            # must first re-draw header surface otherwise previous text remains 
+                            # then draws changed header text
+                            DISPLAY.blit(header, rect_header)
+                            DISPLAY.blit(toptext, (rect_header.centerx - xoffset, rect_header.centery - yoffset))
 
 
 
+        # refresh header
+        if last_message_time is not None and time.time() - last_message_time >= .5:
+            # Reverts header to default text 
+            toptext = font.render(f"Top Text", False, BLACK)
 
-        # Do logical updates here.
-        # ...
+            # calculate offset
+            toptext_rect = toptext.get_rect()
+            xoffset = toptext_rect.width/2
+            yoffset = toptext_rect.height/2
 
+            # must first re-draw header surface otherwise previous text remains 
+            # then draws changed header text
+            DISPLAY.blit(header, rect_header)
+            DISPLAY.blit(toptext, (rect_header.centerx - xoffset, rect_header.centery - yoffset))
+            last_message_time = None
 
-        # Render the graphics here.
-        # ...
+        
+        # apply state 
+        while not raft_orders.empty():
+            order: int = raft_orders.get()
+            logger.info(f'order: {order}')
+
+            for player in players:
+                if player.id == order and player.hp > 0:
+                    player.hp -= 30  # apply damage to player:
+
+                    # modify player UI
+                    if player.hp < 90 and player.hp >= 60:
+                        player.ui.set_alpha(190)
+                        DISPLAY.blit(player_UI_cleaner, player.rc)  # clean player UI
+                        DISPLAY.blit(player.ui, player.rc)  # re-draw player UI
+                    elif player.hp < 60 and player.hp >= 30:
+                        player.ui.set_alpha(150)
+                        DISPLAY.blit(player_UI_cleaner, player.rc)  # clean player UI
+                        DISPLAY.blit(player.ui, player.rc)  # re-draw player UI
+                    elif player.hp < 30 and player.hp > 0:
+                        player.ui.set_alpha(100)
+                        DISPLAY.blit(player_UI_cleaner, player.rc)  # clean player UI
+                        DISPLAY.blit(player.ui, player.rc)  # re-draw player UI
+                    elif player.hp <= 0:
+                        player.ui.fill(BLACK)
+                        player.ui.set_alpha(200)  
+                        DISPLAY.blit(player.ui, player.rc)  # re-draw player UI
+                
+                logger.info(f'Player {player.id}, HP: {player.hp}')
 
 
         # we want to limit display refresh speed
         pygame.display.flip()  # Refresh on-screen display
         clock.tick(60)         # sets framerate
 
+
+
+        # TODO for the future: 
+        # if the game logic becomes more complex, it is better to separate the logic from UI updates
+        # that being said, it requires more loops
 ####################################################################################
 ####################################################################################
 
