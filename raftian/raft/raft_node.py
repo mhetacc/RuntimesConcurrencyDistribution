@@ -71,7 +71,7 @@ class Raft(SimpleXMLRPCServer):
     # class attributes here
     
     def __init__(self, 
-                 addr, 
+                 addr: tuple[str, int],
                  allow_none: bool = True,
                  id : int = 0,
                  mode: Mode = Mode.FOLLOWER,
@@ -90,7 +90,7 @@ class Raft(SimpleXMLRPCServer):
                  next_index_to_send: list[tuple[int, int]] | None = None,
                  last_index_on_server: list[tuple[int, int]] | None = None
                  ):
-        SimpleXMLRPCServer.__init__(self, addr=addr, allow_none=allow_none) 
+        SimpleXMLRPCServer.__init__(self, addr=addr, allow_none=allow_none)
 
         # instance attributes here
         self.id: int = id
@@ -196,7 +196,6 @@ class Raft(SimpleXMLRPCServer):
                 except Exception as exc:
                     print('%r generated an exception: %s' % (future_result, exc))
                 else:
-                    print('propagate entries follower mode')
                     print('Append result ', data)
                     results.append(data)
 
@@ -231,8 +230,15 @@ class Raft(SimpleXMLRPCServer):
 
             # travel backwards through self.log to search last entry not included in the follower log
             # use log_iterator for this purpose, soft resets for each follower
-            entries: list[Raft.Entry] = self.new_entries
-            log_iterator: int = -1
+            if self.log:
+                entries: list[Raft.Entry] = []
+                entries.append(self.log[-1])
+                entries.extend(self.new_entries)
+                log_iterator: int = -2
+            else:
+                entries: list[Raft.Entry] = self.new_entries
+                log_iterator: int = -1
+
 
             def encapsulate_proxy(self: Raft, follower: Raft.Server, entries: list[Raft.Entry], log_iterator) -> tuple[bool, int]:
                 """Encapsulate all propagation procedure, fired with threadpool executor"""
@@ -252,8 +258,7 @@ class Raft(SimpleXMLRPCServer):
                             entries = self.log + entries
 
                         result: tuple[bool, int] = proxy.append_entries_rpc(entries, self.term, self.commit_index)
-                        logger.info(f'Append entries rpc result: {result}')
-                        logger.info(f'result[0]={result[0]}, result[1]={result[1]}')
+                        #logger.info(f'Append entries rpc result: {result}')
 
                         # if leader is out of date  
                         if result[1] > self.term:
@@ -282,18 +287,14 @@ class Raft(SimpleXMLRPCServer):
                 else:
                     results.append(data)
 
-            logger.info('#######################################')
-            logger.info(f'Entries propagated: {results}')
-            logger.info(f'Entries propagated count = {results.count(True)}')
-            logger.info(f'Cluster size / 2 = {len(self.cluster) / 2}')
-            logger.info('#######################################')
 
             if results.count(True) >= len(self.cluster) / 2:
                 self.log.extend(self.new_entries)
                 self.new_entries.clear()
                 self.commit_index = self.log[-1].index  # IMPORTANT ensure that entries get applied
 
-                logger.info(f'commit_index = {self.commit_index}')
+                #logger.info(f'Propagation successful')
+                #logger.info(f'Leader: (commit index: {self.commit_index}, last_applied: {self.last_applied}), log = {self.log}')
             # else:
             #   new entries not cleaned, so they will be propagated again
             
@@ -396,15 +397,6 @@ class Raft(SimpleXMLRPCServer):
 
     # RUN method of the server
     def service_actions(self):
-        
-
-        # # apply log to state one at a time
-        # # i.e., send to Pygame
-        # if self.commit_index > self.last_applied:
-        #     self.last_applied += self.last_applied
-        #     #TODO 
-        #     # try statement?
-        #     # apply log[self.last_applied]
 
         if time.time() - self.countdown >= .5:
             #logger.info('Service actions countdown expired')
@@ -419,9 +411,10 @@ class Raft(SimpleXMLRPCServer):
 
             #logger.info(f'self.new_entries = {self.new_entries}')
 
-            # apply to state i.e., traverse self.log between [last_applied, commit_index]
+            # APPLY TO STATE 
+            # i.e., traverse self.log between [last_applied, commit_index]
             # and add all entries to raft_orders Queue() 
-            if self.commit_index is not None and self.commit_index >= self.last_applied:   
+            if self.commit_index is not None and self.commit_index > self.last_applied:   
                 #logger.info('Applying entries to state')
                 #logger.info(f'last_applied = {self.last_applied}, commit_index = {self.commit_index}, log = {self.log}')
                 global raft_orders
@@ -433,7 +426,7 @@ class Raft(SimpleXMLRPCServer):
 
 
                 # find log index (!= entry.index) where last applied entry resides 
-                last_applied_log_position: int | None = None
+                last_applied_log_position: int = -1
                 for i, my_entry in enumerate(self.log):
                     if (my_entry.index == self.last_applied):
                         last_applied_log_position = i
@@ -454,7 +447,7 @@ class Raft(SimpleXMLRPCServer):
                     log_iterator = log_iterator + 1
                 # here self.last_applied == self.commit_index
 
-                #logger.info(f'Applied entries to state, raft_orders = {list(raft_orders.queue)}')
+                logger.info(f'Applied entries to state, raft_orders = {list(raft_orders.queue)}')
                 #logger.info(f'last_applied = {self.last_applied}, commit_index = {self.commit_index}')
 
             # reset countdown
@@ -623,6 +616,8 @@ def handle_pygame():
             if event.type == pygame.QUIT:
                 pygame.quit() # calls at the end of the loop
                 os.kill(os.getpid(), signal.SIGINT) # same as Ctrl+C, close also server thread 
+
+
                 
 
             # if mouse left button is clicked 
@@ -692,11 +687,11 @@ def handle_pygame():
         
         # apply state 
         while not raft_orders.empty():
-            order: int = raft_orders.get()
-            #logger.info(f'order: {order}')
+            order: Raft.Entry = raft_orders.get()
+            logger.info(f'order: {order}')
 
             for player in players:
-                if player.id == order and player.hp > 0:
+                if player.id == order.command and player.hp > 0:
                     player.hp -= 30  # apply damage to player:
 
                     # modify player UI
@@ -717,7 +712,7 @@ def handle_pygame():
                         player.ui.set_alpha(200)  
                         DISPLAY.blit(player.ui, player.rc)  # re-draw player UI
                 
-                #logger.info(f'Player {player.id}, HP: {player.hp}')
+                logger.info(f'Player {player.id}, HP: {player.hp}')
 
 
         # we want to limit display refresh speed
