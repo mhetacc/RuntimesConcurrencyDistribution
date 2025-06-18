@@ -126,7 +126,8 @@ class Raft(SimpleXMLRPCServer):
         if self.mode == Raft.Mode.CANDIDATE:
             pass
         elif self.mode == Raft.Mode.LEADER:
-            self.heartbeat()
+            #self.heartbeat() 
+            pass
         elif self.mode == Raft.Mode.FOLLOWER:
             pass
         else:
@@ -143,6 +144,8 @@ class Raft(SimpleXMLRPCServer):
         TODO: this needs to be fired every .5s or so, hence either a separate looping timer or count timer clicks some way or another or fire from service actions() 
         """
         global pygame_commands
+
+        
 
 
         if self.mode != Raft.Mode.LEADER:
@@ -193,6 +196,7 @@ class Raft(SimpleXMLRPCServer):
                 except Exception as exc:
                     print('%r generated an exception: %s' % (future_result, exc))
                 else:
+                    print('propagate entries follower mode')
                     print('Append result ', data)
                     results.append(data)
 
@@ -230,7 +234,7 @@ class Raft(SimpleXMLRPCServer):
             entries: list[Raft.Entry] = self.new_entries
             log_iterator: int = -1
 
-            def encapsulate_proxy(self, follower: Raft.Server, entries, log_iterator) -> tuple[int, bool]:
+            def encapsulate_proxy(self: Raft, follower: Raft.Server, entries: list[Raft.Entry], log_iterator) -> tuple[bool, int]:
                 """Encapsulate all propagation procedure, fired with threadpool executor"""
 
                 propagation_successful: bool = False    
@@ -242,7 +246,13 @@ class Raft(SimpleXMLRPCServer):
                 with xmlrpc.client.ServerProxy(complete_url, allow_none=True) as proxy:
                     while not propagation_successful:
                         # send new entries (local for each follower)    
+
+                        if proxy.is_log_empty():
+                            # must propagate all log and all new entries
+                            entries = self.log + entries
+
                         result: tuple[bool, int] = proxy.append_entries_rpc(entries, self.term, self.commit_index)
+                        logger.info(f'Append entries rpc result: {result}')
 
                         # if leader is out of date  
                         if result[1] >= self.term:
@@ -269,9 +279,14 @@ class Raft(SimpleXMLRPCServer):
                 except Exception as exc:
                     print('%r generated an exception: %s' % (future_result, exc))
                 else:
-                    print('Append result ', data)
+                    logger.info('Append result ', data)
                     results.append(data)
 
+            logger.info('#######################################')
+            logger.info(f'Entries propagated: {results}')
+            logger.info(f'Entries propagated count = {results.count(True)}')
+            logger.info(f'Cluster size / 2 = {len(self.cluster) / 2}')
+            logger.info('#######################################')
 
             if results.count(True) >= len(self.cluster) / 2:
                 self.log.extend(self.new_entries)
@@ -750,7 +765,17 @@ def handle_server():
 
             Mode.LEADER: Payload (i.e., entries) is either None (if used for propagating heartbeat) or a list of entries that have to be propagated on all followers;
             Mode.FOLLOWER: Payload is a list of entries that have to be appended to the follower's log. They will applied to state later when back-propagated by the leader. 
+
+            Oss: Raft.Entry get transformed int dicts before being sent over the network, so they are not dataclasses anymore.
             """
+
+
+            # unpack entries into a list of Raft.Entry objects
+            tmp: list[Raft.Entry] = []
+            for entry in entries:
+                tmp.append(Raft.Entry(**entry))
+            entries = tmp
+
 
             logger.info('appended_entries_rpc received')
             ################################# FOLLOWER mode #####################################
