@@ -126,7 +126,7 @@ class Raft(SimpleXMLRPCServer):
         if self.mode == Raft.Mode.CANDIDATE:
             pass
         elif self.mode == Raft.Mode.LEADER:
-            #self.heartbeat() 
+            self.heartbeat() 
             pass
         elif self.mode == Raft.Mode.FOLLOWER:
             pass
@@ -398,7 +398,7 @@ class Raft(SimpleXMLRPCServer):
     # RUN method of the server
     def service_actions(self):
 
-        if time.time() - self.countdown >= .5:
+        if time.time() - self.countdown >= .005:
             #logger.info('Service actions countdown expired')
             # do actions every 0.5 seconds
             global pygame_commands
@@ -453,11 +453,10 @@ class Raft(SimpleXMLRPCServer):
             # reset countdown
             self.countdown = time.time()
 
-
+        logger.info(f'log = {self.log}')
         return super().service_actions()
         
     
-
 
 ###################################################################################
 ################################       PYGAME      ################################
@@ -634,7 +633,6 @@ def handle_pygame():
                             toptext = font.render(f"Player {player.id} pressed", False, BLACK)
 
                             # add command to pygame_commands Queue
-                            click_counter += 1
                             pygame_commands.put(player.id)  # put player id in the queue
 
                             # calculate offset
@@ -685,7 +683,7 @@ def handle_pygame():
         # apply state 
         while not raft_orders.empty():
             order: Raft.Entry = raft_orders.get()
-            logger.info(f'order: {order}')
+            #logger.info(f'order: {order}')
 
             for player in players:
                 if player.id == order.command and player.hp > 0:
@@ -709,7 +707,7 @@ def handle_pygame():
                         player.ui.set_alpha(200)  
                         DISPLAY.blit(player.ui, player.rc)  # re-draw player UI
                 
-                #logger.info(f'Player {player.id}, HP: {player.hp}')
+                ##logger.info(f'Player {player.id}, HP: {player.hp}')
 
 
         # we want to limit display refresh speed
@@ -742,7 +740,7 @@ def handle_server():
         id=0,                        
         mode=Raft.Mode.LEADER,                     
         cluster=bobs_cluster,
-        timeout=0.5,                 # debugging purposes
+        #timeout=0.5,                 # debugging purposes
         term=1,
         ) as server:
 
@@ -764,15 +762,15 @@ def handle_server():
                 tmp.append(Raft.Entry(**entry))
             entries = tmp
 
-            logger.info(f'entries received= {entries}')
+            #logger.info(f'entries received= {entries}')
 
 
-            #logger.info('appended_entries_rpc received')
+            ##logger.info('appended_entries_rpc received')
             ################################# FOLLOWER mode #####################################
             if server.mode != Raft.Mode.LEADER:
-                #logger.info('Follower Mode')
-                #logger.info(f'RPC : leader_term = {term}, leader_commit_index = {commit_index}, entries = {entries}')
-                #logger.info(f'Follower: self.id = {server.id}, self.term = {server.term}, self.commit_index = {server.commit_index}, self.log = {server.log}')
+                ##logger.info('Follower Mode')
+                ##logger.info(f'RPC : leader_term = {term}, leader_commit_index = {commit_index}, entries = {entries}')
+                ##logger.info(f'Follower: self.id = {server.id}, self.term = {server.term}, self.commit_index = {server.commit_index}, self.log = {server.log}')
 
                 # leader is still alive
                 server.timer.reset()
@@ -815,16 +813,16 @@ def handle_server():
                     server.log.extend(entries)
 
 
-                #logger.info('Everything went well')
-                #logger.info(f'Follower: self.id = {server.id}, self.term = {server.term}, self.commit_index = {server.commit_index}, self.log = {server.log}')
+                ##logger.info('Everything went well')
+                ##logger.info(f'Follower: self.id = {server.id}, self.term = {server.term}, self.commit_index = {server.commit_index}, self.log = {server.log}')
                 
                 return (True, server.term)
     
             
             ################################# LEADER mode #####################################
             else:
-                #logger.info('Leader Mode')
-                #logger.info(f'terms: leader term = {server.term}, follower term = {term}')
+                ##logger.info('Leader Mode')
+                ##logger.info(f'terms: leader term = {server.term}, follower term = {term}')
 
                 # if leader out of date reject and revert to follower mode
                 if term > server.term:
@@ -835,7 +833,7 @@ def handle_server():
                 # add commands to pygame_commands 
                 # ack to follower
                 for entry in entries:
-                    logger.info(f'put entry= {entry}')
+                    #logger.info(f'put entry= {entry}')
                     pygame_commands.put(entry.command)
 
                 #logger.info(f"Leader received append_entries_rpc with term: {term} and commit_index: {commit_index}")
