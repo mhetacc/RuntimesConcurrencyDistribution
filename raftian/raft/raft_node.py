@@ -732,6 +732,10 @@ bob_raft = Raft.Server(5, 'localhost', 8005)
 bobs_cluster : list[Raft.Server] = [bob_raft] # testing purposes
 #bobs_cluster : list[Raft.Server] = [bob1] # testing purposes
 
+entry1= Raft.Entry(1,0,1)
+entry2= Raft.Entry(1,1,3)
+entry3= Raft.Entry(1,2,6)
+entry4= Raft.Entry(1,3,7)
 
 # enclose server in a callable function
 def handle_server():
@@ -742,6 +746,7 @@ def handle_server():
         cluster=bobs_cluster,
         #timeout=0.5,                 # debugging purposes
         term=1,
+        log=[entry1, entry2, entry3, entry4]
         ) as server:
 
         def append_entries_rpc(entries: list[Raft.Entry], term: int, commit_index: int) -> tuple[bool, int]:
