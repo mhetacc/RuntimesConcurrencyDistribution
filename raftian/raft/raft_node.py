@@ -253,9 +253,10 @@ class Raft(SimpleXMLRPCServer):
 
                         result: tuple[bool, int] = proxy.append_entries_rpc(entries, self.term, self.commit_index)
                         logger.info(f'Append entries rpc result: {result}')
+                        logger.info(f'result[0]={result[0]}, result[1]={result[1]}')
 
                         # if leader is out of date  
-                        if result[1] >= self.term:
+                        if result[1] > self.term:
                             self.mode = Raft.Mode.FOLLOWER
                             break
                         
@@ -279,7 +280,6 @@ class Raft(SimpleXMLRPCServer):
                 except Exception as exc:
                     print('%r generated an exception: %s' % (future_result, exc))
                 else:
-                    logger.info('Append result ', data)
                     results.append(data)
 
             logger.info('#######################################')
@@ -291,16 +291,12 @@ class Raft(SimpleXMLRPCServer):
             if results.count(True) >= len(self.cluster) / 2:
                 self.log.extend(self.new_entries)
                 self.new_entries.clear()
-                # TODO remove likely not necessary
-                # if self.commit_index is not None:
-                #     self.commit_index = max(self.commit_index, self.log[-1].index)  # IMPORTANT ensure that entries get applied
-                # else:
-                #     self.commit_index = self.log[-1].index
                 self.commit_index = self.log[-1].index  # IMPORTANT ensure that entries get applied
+
+                logger.info(f'commit_index = {self.commit_index}')
             # else:
             #   new entries not cleaned, so they will be propagated again
             
-             
 
     def request_vote_rpc(
             self,
@@ -411,23 +407,23 @@ class Raft(SimpleXMLRPCServer):
         #     # apply log[self.last_applied]
 
         if time.time() - self.countdown >= .5:
-            logger.info('Service actions countdown expired')
+            #logger.info('Service actions countdown expired')
             # do actions every 0.5 seconds
             global pygame_commands
 
-            logger.info(f'pygame_commands = {list(pygame_commands.queue)}')
+            #logger.info(f'pygame_commands = {list(pygame_commands.queue)}')
 
             # propagate entries to cluster
             if not pygame_commands.empty():
                 self.propagate_entries()
 
-            logger.info(f'self.new_entries = {self.new_entries}')
+            #logger.info(f'self.new_entries = {self.new_entries}')
 
             # apply to state i.e., traverse self.log between [last_applied, commit_index]
             # and add all entries to raft_orders Queue() 
             if self.commit_index is not None and self.commit_index >= self.last_applied:   
-                logger.info('Applying entries to state')
-                logger.info(f'last_applied = {self.last_applied}, commit_index = {self.commit_index}, log = {self.log}')
+                #logger.info('Applying entries to state')
+                #logger.info(f'last_applied = {self.last_applied}, commit_index = {self.commit_index}, log = {self.log}')
                 global raft_orders
 
                 # first time anything gets applied to state
@@ -443,8 +439,8 @@ class Raft(SimpleXMLRPCServer):
                         last_applied_log_position = i
                         break # no need to search further
                 
-                logger.info(f'last_applied_log_position = {last_applied_log_position}')
-                logger.info(f'log = {self.log}')
+                #logger.info(f'last_applied_log_position = {last_applied_log_position}')
+                #logger.info(f'log = {self.log}')
                 
 
                 # iterate trough remaining self.log until all entries between [last_applied, commit_index] are applied to state
@@ -452,14 +448,14 @@ class Raft(SimpleXMLRPCServer):
                 log_iterator = last_applied_log_position + 1
 
                 while self.last_applied != self.commit_index:
-                    logger.info(f'log iterator = {log_iterator}')
+                    #logger.info(f'log iterator = {log_iterator}')
                     raft_orders.put(self.log[log_iterator])
                     self.last_applied = self.log[log_iterator].index
                     log_iterator = log_iterator + 1
                 # here self.last_applied == self.commit_index
 
-                logger.info(f'Applied entries to state, raft_orders = {list(raft_orders.queue)}')
-                logger.info(f'last_applied = {self.last_applied}, commit_index = {self.commit_index}')
+                #logger.info(f'Applied entries to state, raft_orders = {list(raft_orders.queue)}')
+                #logger.info(f'last_applied = {self.last_applied}, commit_index = {self.commit_index}')
 
             # reset countdown
             self.countdown = time.time()
@@ -697,7 +693,7 @@ def handle_pygame():
         # apply state 
         while not raft_orders.empty():
             order: int = raft_orders.get()
-            logger.info(f'order: {order}')
+            #logger.info(f'order: {order}')
 
             for player in players:
                 if player.id == order and player.hp > 0:
@@ -721,7 +717,7 @@ def handle_pygame():
                         player.ui.set_alpha(200)  
                         DISPLAY.blit(player.ui, player.rc)  # re-draw player UI
                 
-                logger.info(f'Player {player.id}, HP: {player.hp}')
+                #logger.info(f'Player {player.id}, HP: {player.hp}')
 
 
         # we want to limit display refresh speed
@@ -777,12 +773,12 @@ def handle_server():
             entries = tmp
 
 
-            logger.info('appended_entries_rpc received')
+            #logger.info('appended_entries_rpc received')
             ################################# FOLLOWER mode #####################################
             if server.mode != Raft.Mode.LEADER:
-                logger.info('Follower Mode')
-                logger.info(f'RPC : leader_term = {term}, leader_commit_index = {commit_index}, entries = {entries}')
-                logger.info(f'Follower: self.id = {server.id}, self.term = {server.term}, self.commit_index = {server.commit_index}, self.log = {server.log}')
+                #logger.info('Follower Mode')
+                #logger.info(f'RPC : leader_term = {term}, leader_commit_index = {commit_index}, entries = {entries}')
+                #logger.info(f'Follower: self.id = {server.id}, self.term = {server.term}, self.commit_index = {server.commit_index}, self.log = {server.log}')
 
                 # leader is still alive
                 server.timer.reset()
@@ -825,16 +821,16 @@ def handle_server():
                     server.log.extend(entries)
 
 
-                logger.info('Everything went well')
-                logger.info(f'Follower: self.id = {server.id}, self.term = {server.term}, self.commit_index = {server.commit_index}, self.log = {server.log}')
+                #logger.info('Everything went well')
+                #logger.info(f'Follower: self.id = {server.id}, self.term = {server.term}, self.commit_index = {server.commit_index}, self.log = {server.log}')
                 
                 return (True, server.term)
     
             
             ################################# LEADER mode #####################################
             else:
-                logger.info('Leader Mode')
-                logger.info(f'terms: leader term = {server.term}, follower term = {term}')
+                #logger.info('Leader Mode')
+                #logger.info(f'terms: leader term = {server.term}, follower term = {term}')
 
                 # if leader out of date reject and revert to follower mode
                 if term > server.term:
@@ -847,9 +843,9 @@ def handle_server():
                 for entry in entries:
                     pygame_commands.put(entry)
 
-                logger.info(f"Leader received append_entries_rpc with term: {term} and commit_index: {commit_index}")
-                logger.info(f"Received Entries: {entries}")  
-                logger.info(f"Leader {server.id}, pygame_commands = {list(pygame_commands.queue)}")
+                #logger.info(f"Leader received append_entries_rpc with term: {term} and commit_index: {commit_index}")
+                #logger.info(f"Received Entries: {entries}")  
+                #logger.info(f"Leader {server.id}, pygame_commands = {list(pygame_commands.queue)}")
                 
                 return (True, server.term)
 

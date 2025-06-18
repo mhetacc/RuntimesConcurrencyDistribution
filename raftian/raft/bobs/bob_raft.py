@@ -778,11 +778,14 @@ def handle_server():
                     logger.info('term < server.term')
                     return (False, server.term)
 
-                # update commit index 
-                if commit_index is not None and commit_index > server.commit_index:
-                    logger.info(f'Updating commit index: {server.commit_index} -> {commit_index}')
-                    server.commit_index = commit_index
 
+                # update commit index 
+                if commit_index is not None:
+                    if (server.commit_index is not None and commit_index > server.commit_index) or server.commit_index is None:
+                        logger.info(f'Updating commit index: {server.commit_index} -> {commit_index}')
+                        server.commit_index = commit_index
+                    else:
+                        return (False, server.term)
 
 
                 # if it was not just an heartbeat
