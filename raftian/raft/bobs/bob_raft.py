@@ -159,7 +159,7 @@ class Raft(SimpleXMLRPCServer):
                 ))
 
             
-            def encapsulate_proxy(self, leader: Raft.Server, entries) -> tuple[int, bool]:
+            def encapsulate_proxy(self: Raft, leader: Raft.Server, entries: list[Raft.Entry]) -> tuple[int, bool]:
                 """Encapsulate all propagation procedure, fired with threadpool executor"""
 
                 propagation_successful: bool = False    
@@ -174,9 +174,9 @@ class Raft(SimpleXMLRPCServer):
                         result: tuple[bool, int] = proxy.append_entries_rpc(entries, self.term, self.commit_index)
 
                         # if leader is out of date  
-                        if result[1] <= self.term:
-                            self.to_candidate() #TODO
-                        
+                        if result[1] < self.term:
+                            pass
+                            #self.to_candidate() #TODO
                         if result[0] == True:
                             propagation_successful = True
 
@@ -186,7 +186,7 @@ class Raft(SimpleXMLRPCServer):
             results = []
 
 
-            future_result = {self.executor.submit(encapsulate_proxy, self, server, entries, log_iterator): server for server in self.cluster if server.mode == Raft.Mode.LEADER}
+            future_result = {self.executor.submit(encapsulate_proxy, self, server, self.new_entries): server for server in self.cluster if server.id == self.leader_id}
             for future in concurrent.futures.as_completed(future_result):
                 try:
                     data = future.result()
@@ -614,9 +614,6 @@ def handle_pygame():
                 pygame.quit() # calls at the end of the loop
                 os.kill(os.getpid(), signal.SIGINT) # same as Ctrl+C, close also server thread 
 
-
-                
-
             # if mouse left button is clicked 
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
 
@@ -852,7 +849,7 @@ def handle_server():
                 # add commands to pygame_commands 
                 # ack to follower
                 for entry in entries:
-                    pygame_commands.put(entry)
+                    pygame_commands.put(entry.command)
 
                 logger.info(f"Leader received append_entries_rpc with term: {term} and commit_index: {commit_index}")
                 logger.info(f"Received Entries: {entries}")  
