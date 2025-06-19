@@ -7,17 +7,49 @@ import threading
 import concurrent.futures
 import xmlrpc.client
 from queue import Queue
+import pygame
+import os
+import signal
+import time
+import logging
+from pathlib import Path
+import datetime
 
-# testing purposes
-# inside function explicit global keyword
+
+############################## logs ###############################
+
+# Oss: without bob1.py restart, writes in the same log file 
+
+# logs are in the form "logs/filename/datetime.filename.log"
+filename = 'raft_node'
+
+# create logger and makes it so that it record any message level
+logger = logging.getLogger()
+logging.basicConfig(level=logging.INFO, encoding='utf-8')
+
+
+logpath = Path(f'logs/{filename}/{datetime.datetime.now()}.{filename}.log')
+
+# logger handler to sent all to correct path
+filehandle = logging.FileHandler(logpath)
+logger.addHandler(filehandle)
+
+########################################################################
+
+# user inputs trough Pygame which writes them here
+# Raft reads them and propagate them to the cluster
 pygame_commands = Queue()
-pygame_commands.put('cmd1')
-pygame_commands.put('cmd2')
-pygame_commands.put('cmd3')
-pygame_commands.put('cmd4')
+#pygame_commands.put('cmd1')
+#pygame_commands.put('cmd2')
+#pygame_commands.put('cmd3')
+#pygame_commands.put('cmd4')
 
 
+# commands that have been applied to state are written here by Raft
+# Pygame reads them and update UI accordingly 
+raft_orders = Queue() 
 
+# TODO: put class in separate file
 class Raft(SimpleXMLRPCServer):
     class Mode(Enum):
         LEADER = 1
@@ -35,15 +67,17 @@ class Raft(SimpleXMLRPCServer):
         id: int
         url: str
         port: int
-        hp: int
 
     # class attributes here
     
-    def __init__(self, addr, requestHandler = ..., logRequests = True, allow_none = False, encoding = None, bind_and_activate = True, use_builtin_types = False,
+    def __init__(self, 
+                 addr: tuple[str, int],
+                 allow_none: bool = True,
                  id : int = 0,
-                 mode: Mode = 3,
+                 mode: Mode = Mode.FOLLOWER,
                  timeout: float = 0.003,
                  cluster: list[Server] | None = None,
+                 leader_id: int | None = None,
                  log: list[Entry] = [],
                  new_entries: list[Entry] = [],
                  term: int | None = None,
@@ -52,16 +86,17 @@ class Raft(SimpleXMLRPCServer):
                  non_voter: bool = True,
                  voted_for: int | None = None,
                  commit_index: int | None = None,
-                 last_applied: int | None = None,
+                 last_applied: int = -1,
                  next_index_to_send: list[tuple[int, int]] | None = None,
                  last_index_on_server: list[tuple[int, int]] | None = None
                  ):
-        SimpleXMLRPCServer.__init__(self, addr, requestHandler, logRequests, allow_none, encoding, bind_and_activate, use_builtin_types)
+        SimpleXMLRPCServer.__init__(self, addr=addr, allow_none=allow_none)
 
         # instance attributes here
         self.id: int = id
         self.mode: Raft.Mode = mode
         self.cluster: list[Raft.Server] | None = cluster
+        self.leader_id: int | None = leader_id
         self.log: list[Raft.Entry] = log
         self.new_entries: list[Raft.Entry] = new_entries
         self.term: int | None = term
@@ -70,9 +105,12 @@ class Raft(SimpleXMLRPCServer):
         self.non_voter: bool = non_voter
         self.voted_for: int | None = voted_for
         self.commit_index: int | None = commit_index
-        self.last_applied: int | None = last_applied
+        self.last_applied: int = last_applied
         self.next_index_to_send: list[tuple[int, int]] | None = next_index_to_send
         self.last_index_on_server: list[tuple[int, int]] | None = last_index_on_server
+
+        # internal attributes 
+        self.countdown : time.time = time.time()  # used to countdown various actions, e.g. propagate entries every 0.5 seconds
 
         # start executors pool
         self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=len(self.cluster))
@@ -85,14 +123,10 @@ class Raft(SimpleXMLRPCServer):
     
 
     def on_timeout(self):
-        # TODO
-        # switch self.mode 
-
         if self.mode == Raft.Mode.CANDIDATE:
             pass
         elif self.mode == Raft.Mode.LEADER:
-            #self.heartbeat()
-            self.propagate_entries()    
+            self.heartbeat()
         elif self.mode == Raft.Mode.FOLLOWER:
             pass
         else:
@@ -101,215 +135,173 @@ class Raft(SimpleXMLRPCServer):
 
     
 
-    def TOBOB_append_entries_rpc(
-            self,                   # self is serverproxy i.e., the client
-            leader_term: int,
-            leader_commit_index: int,
-            #leader_id: int,        # to redirect other clients 
-            leader_prev_log_index: int | None = None,
-            leader_prev_log_term: int | None = None,
-            entries: list[Entry] | None = None
-    ) -> tuple[int, bool]:
-        """
-        Fired by leader, followers send back ack
-        ack = (follower_term: int, entry_replicated: bool)
-
-        Payload (i.e., entries) is either None (if used for propagating heartbeat) or a list of entries that have to be propagated on all followers
-
-        TODO: must be moved outside of the class and registered by the client server
-        with server.register_function(append_entries_rpc)
-        """
-        # HERE is what followers do
-
-        # leader is still alive
-        self.timer.reset()
-
-
-        # if leader is out of date -> reject
-        if leader_term < self.term:
-            return (self.term, False)
-
-
-        # if it was not just an heartbeat
-        if entries is not None:
-
-            # search in log an entry equal to prev_leader_entry
-            # i.e., entry preceding future appended entries.
-            # save its log index (!= entry index)
-            entry_log_index: int | None = None
-            for i, my_entry in enumerate(self.log):
-                if (my_entry.index == leader_prev_log_index 
-                    and my_entry.term == leader_prev_log_term):
-                    entry_log_index = i
-                    break # no need to search further
-
-
-            # if follower does not have entry equal to prev_leader_entry -> reject
-            if entry_log_index is None:
-                return(self.term, False)
-
-
-            # delete all log entries from the one equal to prev_leader_entry (excluded)
-            del self.log[(entry_log_index + 1):]
-
-
-            # append new entries
-            self.log.append(entries)
-
-
-            # update commit index
-            if leader_commit_index > self.commit_index:
-                self.commit_index = min(leader_commit_index,
-                                        entries[-1].index
-                                        )
-
-
-        # everything went well
-        return (self.term, True)
- 
-
-
     def propagate_entries(self):
-        
-        print('##############################start##################################')
-        print(f'Leader log = {self.log}')
-        print(f'New entries = {self.new_entries}')
+        """
+        Sends entries to all followers, for each of them traverse backwards through self.log until it finds the last common entry. 
+        This is done passively: if follower reject entries, add last one not included from self.log and send again.
 
-        # translate pygame commands into entries to send 
+        TODO: this needs to be fired every .5s or so, hence either a separate looping timer or count timer clicks some way or another or fire from service actions() 
+        """
         global pygame_commands
-        if not self.log:
-            # if empty log the following next entry index will be 0
-            log_index: int = -1 
-        else:
-            log_index: int = self.log[-1].index 
 
-        while not pygame_commands.empty():
-            command = pygame_commands.get()
-            log_index += 1
-            self.new_entries.append(Raft.Entry(
-                term=self.term,
-                index=log_index,
-                command=command
-            ))
 
-        print(f'Leader log = {self.log}')
-        print(f'New entries = {self.new_entries}')
+        if self.mode != Raft.Mode.LEADER:
+            # all a follower is allowed to do is communicate its internal commands to the leader
+            # leader will be responsible for propagation
+            # meaning: followers do not apply commands immediately, but only when they are propagated back to them by the leader
 
-        # here self.new_entries = [cmd1, cmd2, ... , cmdN]
+            while not pygame_commands.empty():
+                command = pygame_commands.get()
+                self.new_entries.append(Raft.Entry(
+                    term=self.term,
+                    index=None,
+                    command=command
+                ))
 
-        # travel backwards through self.log to search last entry not included in the follower log
-        # use log_iterator for this purpose, soft resets for each follower
-        entries: list[Raft.Entry] = self.new_entries
-        log_iterator: int = -1
-        
+            
+            def encapsulate_proxy(self: Raft, leader: Raft.Server, entries: list[Raft.Entry]) -> tuple[int, bool]:
+                """Encapsulate all propagation procedure, fired with threadpool executor"""
 
-        ######################################################################
-        # blocking version
+                propagation_successful: bool = False    
 
-        propagation_counter: int = 0
+                url: str = leader.url
+                port: int = leader.port
+                complete_url = 'http://' + str(url) + ':' + str(port)
 
-        if False:
+                with xmlrpc.client.ServerProxy(complete_url, allow_none=True) as proxy:
+                    while not propagation_successful:
+                        # send new entries (local for each follower)    
+                        result: tuple[bool, int] = proxy.append_entries_rpc(entries, self.term, self.commit_index, False)
 
-            # for each follower in the cluster
-            for follower in self.cluster:           
+                        # if leader is out of date  
+                        if result[1] < self.term:
+                            pass
+                            #self.to_candidate() #TODO
+                        if result[0] == True:
+                            propagation_successful = True
+
+                return propagation_successful
+
+
+            results = []
+
+
+            future_result = {self.executor.submit(encapsulate_proxy, self, server, self.new_entries): server for server in self.cluster if server.id == self.leader_id}
+            for future in concurrent.futures.as_completed(future_result):
+                try:
+                    data = future.result()
+                except Exception as exc:
+                    print('%r generated an exception: %s' % (future_result, exc))
+                else:
+                    print('Append result ', data)
+                    results.append(data)
+
+
+            if True in results:
+                # there should be only one leader, so if True is in results, it means that entries were propagated successfully
+                self.new_entries.clear()
+            # else:
+            #   new entries not cleaned, so they will be sent to Leader again
+            
+            
+
+        ################################# LEADER mode #####################################
+        else: 
+            # translate pygame commands into entries to send 
+            if not self.log:
+                # if empty log the following next entry index will be 0
+                log_index: int = -1 
+            else:
+                log_index: int = self.log[-1].index 
+
+            while not pygame_commands.empty():
+                command = pygame_commands.get()
+                log_index += 1
+                self.new_entries.append(Raft.Entry(
+                    term=self.term,
+                    index=log_index,
+                    command=command
+                ))
+
+            # here self.new_entries = [cmd1, cmd2, ... , cmdN]
+
+            # travel backwards through self.log to search last entry not included in the follower log
+            # use log_iterator for this purpose, soft resets for each follower
+            if self.log:
+                entries: list[Raft.Entry] = []
+                entries.append(self.log[-1])
+                entries.extend(self.new_entries)
+                log_iterator: int = -2
+            else:
+                entries: list[Raft.Entry] = self.new_entries
+                log_iterator: int = -1
+
+
+            def encapsulate_proxy(self: Raft, follower: Raft.Server, entries: list[Raft.Entry], log_iterator) -> tuple[bool, int]:
+                """Encapsulate all propagation procedure, fired with threadpool executor"""
+
+                propagation_successful: bool = False    
 
                 url: str = follower.url
                 port: int = follower.port
                 complete_url = 'http://' + str(url) + ':' + str(port)
 
-                proxy = xmlrpc.client.ServerProxy(complete_url, allow_none=True)
+                all_log = False
 
-                propagation_successful: bool = False
+                
 
-                while not propagation_successful:
-                    # send new entries (local for each follower)    
-                    result: tuple[bool, int] = proxy.append_entries_rpc(entries, self.term, self.commit_index)
+                with xmlrpc.client.ServerProxy(complete_url, allow_none=True) as proxy:
+                    while not propagation_successful:
+                        # send new entries (local for each follower)    
 
-                    # if leader is out of date
-                    if result[1] >= self.term:
-                        self.mode = Raft.Mode.FOLLOWER
-                        break
-                    
-                    if result[0] == False:
-                        # add another entry from self.log to new entries
-                        entries.append(self.log[log_iterator])
-                        log_iterator -= 1   
-                    elif result[0] == True:
-                        # increase propagation counter and move to next follower
-                        propagation_counter += 1
-                        propagation_successful = True
+                        if entries[0].index == self.log[0].index:
+                            all_log = True
 
-            if propagation_counter >= len(self.cluster) / 2:
+                        if proxy.is_log_empty():
+                            # must propagate all log and all new entries
+                            entries = self.log + entries
+
+                        result: tuple[bool, int] = proxy.append_entries_rpc(entries, self.term, self.commit_index, all_log)
+                        #logger.info(f'Append entries rpc result: {result}')
+
+                        # if leader is out of date  
+                        if result[1] > self.term:
+                            self.mode = Raft.Mode.FOLLOWER
+                            break
+                        
+                        if result[0] == False:
+                            # add another entry from self.log to new entries
+                            entries = [self.log[log_iterator]] + entries
+                            log_iterator -= 1   
+                            logger.info(f'log iterator = {log_iterator}, entries = {entries}')
+                        elif result[0] == True:
+                            # increase propagation counter and move to next follower
+                            propagation_successful = True
+
+                return propagation_successful
+
+
+            results = []
+
+            future_result = {self.executor.submit(encapsulate_proxy, self, follower, entries, log_iterator): follower for follower in self.cluster}
+            for future in concurrent.futures.as_completed(future_result):
+                try:
+                    data = future.result()
+                except Exception as exc:
+                    print('%r generated an exception: %s' % (future_result, exc))
+                else:
+                    results.append(data)
+
+
+            if results.count(True) >= len(self.cluster) / 2:
                 self.log.extend(self.new_entries)
                 self.new_entries.clear()
+                self.commit_index = self.log[-1].index  # IMPORTANT ensure that entries get applied
+
+                #logger.info(f'Propagation successful')
+                #logger.info(f'Leader: (commit index: {self.commit_index}, last_applied: {self.last_applied}), log = {self.log}')
             # else:
             #   new entries not cleaned, so they will be propagated again
-
-
-        ######################################################################
-        # threadpool executor version
-
-        def encapsulate_proxy(self, follower: Raft.Server, entries, log_iterator) -> tuple[int, bool]:
-            """Encapsulate proxy fire it with a threadpool executor"""
-
-            propagation_successful: bool = False    
-
-            url: str = follower.url
-            port: int = follower.port
-            complete_url = 'http://' + str(url) + ':' + str(port)
-
-            with xmlrpc.client.ServerProxy(complete_url, allow_none=True) as proxy:
-                while not propagation_successful:
-                    # send new entries (local for each follower)    
-                    result: tuple[bool, int] = proxy.append_entries_rpc(entries, self.term, self.commit_index)
-
-                    # if leader is out of date  
-                    if result[1] >= self.term:
-                        self.mode = Raft.Mode.FOLLOWER
-                        break
-                    
-                    if result[0] == False:
-                        # add another entry from self.log to new entries
-                        entries.append(self.log[log_iterator])
-                        log_iterator -= 1   
-                    elif result[0] == True:
-                        # increase propagation counter and move to next follower
-                        #propagation_counter += 1
-                        propagation_successful = True
-
-            return propagation_successful
-
-
-        results = []
-
-        # concurrent futures built-in version
-        # i.e, self.executor.submit
-        future_result = {self.executor.submit(encapsulate_proxy, self, follower, entries, log_iterator): follower for follower in self.cluster}
-        for future in concurrent.futures.as_completed(future_result):
-            try:
-                data = future.result()
-            except Exception as exc:
-                print('%r generated an exception: %s' % (future_result, exc))
-            else:
-                print('Append result ', data)
-                results.append(data)
-
-
-        if results.count(True) >= len(self.cluster) / 2:
-            self.log.extend(self.new_entries)
-            self.new_entries.clear()
-        # else:
-        #   new entries not cleaned, so they will be propagated again
-
-        ######################################################################
-
-        
-
-        print('############################end###################################')
-        print(f'Pygame commands = {pygame_commands}')
-        print(f'Leader log = {self.log}')
-        print(f'New entries = {self.new_entries}')
-    
             
 
     def request_vote_rpc(
@@ -345,6 +337,7 @@ class Raft(SimpleXMLRPCServer):
         return (self.term, True)
 
 
+
     # on follower timeout
     def to_candidate(self):
 
@@ -373,31 +366,7 @@ class Raft(SimpleXMLRPCServer):
         Takes urls and ports of proxies from self.cluster: list[Server]
         """
 
-        # TODO: is this correct or are we creating instances of servers everywhere?
-
-
-        # blocking version
-
-        results = []
-
-        if False:
-            for i in range (0,len(self.cluster)):
-                # one server proxy at a time 
-                url: str = self.cluster[i].url
-                port: int = self.cluster[i].port
-
-                complete_url = 'http://' + str(url) + ':' + str(port)
-
-                print('Complete URL= ',complete_url)
-
-                bob_proxy = xmlrpc.client.ServerProxy(complete_url, allow_none=True)
-
-                results.append(bob_proxy.append_entries_rpc(self.term, self.commit_index))
-
-        #######################################################################
-        # threadpool executor version
-
-        def encapsulate_proxy(follower: Raft.Server, term, commit_index) -> tuple[int, bool]:
+        def encapsulate_proxy(follower: Raft.Server, leader_term, leader_commit_index) -> tuple[int, bool]:
             """Encapsulate proxy fire it with a threadpool executor"""
 
             url: str = follower.url
@@ -405,32 +374,14 @@ class Raft(SimpleXMLRPCServer):
             complete_url = 'http://' + str(url) + ':' + str(port)
 
             with xmlrpc.client.ServerProxy(complete_url, allow_none=True) as proxy:
-                    return proxy.append_entries_rpc(None, term, commit_index)
+                    return proxy.append_entries_rpc(None, leader_term, leader_commit_index, False)
 
 
         results = []
 
 
-        if False:
-            # creates new concurrent futures wrapped in a with statement
-            # i.e., with concurrent.futures.ThreadPoolExecutor(max_workers=len(self.cluster)) as executor:
-            #     #     executor.submit
-            with concurrent.futures.ThreadPoolExecutor(max_workers=len(self.cluster)) as executor:
-                future_result = {executor.submit(encapsulate_proxy, url, None, None): url for url in URLS}
-                for future in concurrent.futures.as_completed(future_result):
-                    try:
-                        data = future.result()
-                    except Exception as exc:
-                        print('%r generated an exception: %s' % (future_result, exc))
-                    else:
-                        print('Append result ', data)
-                        results.append(data)
-        
-        if False:
-            pass
-        # concurrent futures built-in version
-        # i.e, self.executor.submit
-        future_result = {self.executor.submit(encapsulate_proxy, follower, None, None): follower for follower in self.cluster}
+        # fire function using threadpool executor
+        future_result = {self.executor.submit(encapsulate_proxy, follower, self.term, self.commit_index): follower for follower in self.cluster}
         for future in concurrent.futures.as_completed(future_result):
             try:
                 data = future.result()
@@ -452,44 +403,493 @@ class Raft(SimpleXMLRPCServer):
     # RUN method of the server
     def service_actions(self):
 
-        # # apply log to state one at a time
-        # # i.e., send to Pygame
-        # if self.commit_index > self.last_applied:
-        #     self.last_applied += self.last_applied
-        #     #TODO 
-        #     # try statement?
-        #     # apply log[self.last_applied]
+        if time.time() - self.countdown >= .005:
+            #logger.info('Service actions countdown expired')
+            # do actions every 0.5 seconds
+            global pygame_commands
+
+            #logger.info(f'pygame_commands = {list(pygame_commands.queue)}')
+
+            # propagate entries to cluster
+            if not pygame_commands.empty():
+                self.propagate_entries()
+
+            #logger.info(f'self.new_entries = {self.new_entries}')
+
+            # APPLY TO STATE 
+            # i.e., traverse self.log between [last_applied, commit_index]
+            # and add all entries to raft_orders Queue() 
+            if self.commit_index is not None and self.commit_index > self.last_applied:   
+                #logger.info('Applying entries to state')
+                #logger.info(f'last_applied = {self.last_applied}, commit_index = {self.commit_index}, log = {self.log}')
+                global raft_orders
+
+                # first time anything gets applied to state
+                if self.last_applied == -1:
+                    raft_orders.put(self.log[0]) 
+                    self.last_applied = self.log[0].index
 
 
+                # find log index (!= entry.index) where last applied entry resides 
+                last_applied_log_position: int = -1
+                for i, my_entry in enumerate(self.log):
+                    if (my_entry.index == self.last_applied):
+                        last_applied_log_position = i
+                        break # no need to search further
+                
+                #logger.info(f'last_applied_log_position = {last_applied_log_position}')
+                #logger.info(f'log = {self.log}')
+                
+
+                # iterate trough remaining self.log until all entries between [last_applied, commit_index] are applied to state
+                # i.e., they are written in raft_orders Queue()
+                log_iterator = last_applied_log_position + 1
+
+                while self.last_applied != self.commit_index:
+                    #logger.info(f'log iterator = {log_iterator}')
+                    raft_orders.put(self.log[log_iterator])
+                    self.last_applied = self.log[log_iterator].index
+                    log_iterator = log_iterator + 1
+                # here self.last_applied == self.commit_index
+
+                #logger.info(f'Applied entries to state, raft_orders = {list(raft_orders.queue)}')
+                #logger.info(f'last_applied = {self.last_applied}, commit_index = {self.commit_index}')
+
+            # reset countdown
+            self.countdown = time.time()
+
+        logger.info(f'log = {self.log}')
         return super().service_actions()
         
+    
 
-bob1 = Raft.Server(1, 'localhost', 8001, 100)
-bob2 = Raft.Server(2, 'localhost', 8002, 100)
-bob3 = Raft.Server(3, 'localhost', 8003, 100)
-bob4 = Raft.Server(4, 'localhost', 8004, 100)
+###################################################################################
+################################       PYGAME      ################################
+###################################################################################
 
-bobs_cluster : list[Raft.Server] = [bob1, bob2] # testing purposes
+def handle_pygame():
+
+
+
+    pygame.init()
+
+    pygame.display.set_caption(f'{filename}')  # set window title
+    
+    global pygame_commands  # write player inputs in this Queue
+    global raft_orders      # read applied-to-state commands from this Queue
+
+    GREY = (125, 125, 125)
+    BLACK = (0, 0, 0)
+    WHITE = (255, 255, 255)
+    RED = (255, 0, 0)
+    YELLOW = (255, 255, 0)
+    GREEN = (0, 255, 0)
+    BLUE = (0, 0, 255)
+
+    # create game window and set res 1000x1200
+    DISPLAY = pygame.display.set_mode((1000, 1200))
+
+    clock = pygame.time.Clock()
+
+    # creates default font 
+    font = pygame.font.Font(None, 60)
+
+    # renders header and footer texts
+    toptext = font.render("Top Text", False, BLACK)
+    bottomtext = font.render("Bottom Text", False, BLACK)
+
+
+    ############################### base surfaces #####################################
+
+    # creates rects to constrain surfaces 
+    # Rect((x0, y0), (width, height))
+    rect_main = pygame.Rect(0, 100, 1000, 1000)
+    rect_header = pygame.Rect(0, 0, 1000, 100)
+    rect_footer = pygame.Rect(0, 1100, 1000, 100)
+
+    # creates surfaces where UI elements are drawn upon
+    # Surface((width, height))
+    mainwindow = pygame.Surface((1000, 1000))
+    header = pygame.Surface((1000, 100))
+    footer = pygame.Surface((1000, 100))
+
+    # color surfaces
+    mainwindow.fill(GREY)
+    header.fill(WHITE)
+    footer.fill(WHITE)
+
+
+    # vertical "game map" lines (on main window)
+    pygame.draw.line(mainwindow, BLACK, (250, 0), (250, 1000), width=1)
+    pygame.draw.line(mainwindow, BLACK, (500, 0), (500, 1000), width=1)
+    pygame.draw.line(mainwindow, BLACK, (750, 0), (750, 1000), width=1)
+
+    # horizontal "game map" lines (on main window)
+    pygame.draw.line(mainwindow, BLACK, (0, 250), (1000, 250), width=1)
+    pygame.draw.line(mainwindow, BLACK, (0, 500), (1000, 500), width=1)
+    pygame.draw.line(mainwindow, BLACK, (0, 750), (1000, 750), width=1)
+
+
+    # draw surfaces on DISPLAY surface "binded" on and by their respective rects
+    # maybe rects were not necessary but they provide nice features nonetheless 
+    DISPLAY.blit(mainwindow, rect_main) 
+    DISPLAY.blit(header, rect_header)
+    DISPLAY.blit(footer, rect_footer)
+
+    ###################################################################################
+
+    ########################### header and footer texts ###############################
+
+    # since all boxes' positions starts from top left corner, to center them we
+    # must calculate the offsets which are width/2 and height/2
+
+    # header
+    toptext_rect = toptext.get_rect()
+    xoffset = toptext_rect.width/2
+    yoffset = toptext_rect.height/2
+
+    DISPLAY.blit(toptext, (rect_header.centerx - xoffset, rect_header.centery - yoffset))
+
+    # footer
+    bottomtext_rect = bottomtext.get_rect()
+    xoffset = bottomtext_rect.width/2
+    yoffset = bottomtext_rect.height/2
+
+    DISPLAY.blit(bottomtext, (rect_footer.centerx - xoffset, rect_footer.centery - yoffset))
+
+    #################################################################################
+
+    #################################### players #################################### 
+    @dataclass
+    class Player:
+        id: int
+        hp: int
+        rc: pygame.Rect     # represent player position and size and exposes useful methods like collidepoint()
+        ui: pygame.Surface  # expose UI of the player e.g., colour 
+
+    player1 = Player(
+        id=1,
+        hp=100,
+        rc=pygame.Rect(585, 685, 80, 80),  # x, y, width, height
+        ui=pygame.Surface((80,80))
+    )
+    player1.ui.fill(RED)
+    DISPLAY.blit(player1.ui, player1.rc)
+
+    player2 = Player(
+        id=2,
+        hp=100,
+        rc=pygame.Rect(835, 185, 80, 80), # x, y, width, height
+        ui=pygame.Surface((80,80))
+    )
+    player2.ui.fill(GREEN)
+    DISPLAY.blit(player2.ui, player2.rc)
+
+    player3 = Player(
+        id=3,
+        hp=100,
+        rc=pygame.Rect(335, 185, 80, 80),  # x, y, width, height
+        ui=pygame.Surface((80,80))
+    )
+    player3.ui.fill(BLUE)
+    DISPLAY.blit(player3.ui, player3.rc)
+
+    player4 = Player(
+        id=4,
+        hp=100,
+        rc=pygame.Rect(85, 935, 80, 80),  # x, y, width, height
+        ui=pygame.Surface((80,80))
+    )
+    player4.ui.fill(YELLOW)
+    DISPLAY.blit(player4.ui, player4.rc)
+
+
+    player_UI_cleaner = pygame.Surface((80, 80))  # used to clean player UI before re-blitting
+    player_UI_cleaner.fill(WHITE)  
+
+    players = [player1, player2, player3, player4] # useful to extend to n players with randomized positions
+
+
+    last_message_time = None # used to revert header text after some time
+    click_counter = 0
+
+    # MAIN LOOP
+    while True:
+        # Process player inputs.
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit() # calls at the end of the loop
+                os.kill(os.getpid(), signal.SIGINT) # same as Ctrl+C, close also server thread 
+
+            # if mouse left button is clicked 
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+
+                # gets mouse position
+                pos = pygame.mouse.get_pos()
+
+                for player in players:
+                    if player.rc.collidepoint(pos):
+
+                        if player.hp > 0:  
+                            # starts timer to revert header text
+                            last_message_time = time.time()
+
+                            # change header text and renders it
+                            toptext = font.render(f"Player {player.id} pressed", False, BLACK)
+
+                            # add command to pygame_commands Queue
+                            pygame_commands.put(player.id)  # put player id in the queue
+
+                            # calculate offset
+                            toptext_rect = toptext.get_rect()
+                            xoffset = toptext_rect.width/2
+                            yoffset = toptext_rect.height/2
+
+                            # must first re-draw header surface otherwise previous text remains 
+                            # then draws changed header text
+                            DISPLAY.blit(header, rect_header)
+                            DISPLAY.blit(toptext, (rect_header.centerx - xoffset, rect_header.centery - yoffset))
+                        else:
+                            # starts timer to revert header text
+                            last_message_time = time.time()
+
+                            # change header text and renders it
+                            toptext = font.render(f"Player {player.id} already dead", False, BLACK)
+
+                            # calculate offset
+                            toptext_rect = toptext.get_rect()
+                            xoffset = toptext_rect.width/2
+                            yoffset = toptext_rect.height/2
+
+                            # must first re-draw header surface otherwise previous text remains 
+                            # then draws changed header text
+                            DISPLAY.blit(header, rect_header)
+                            DISPLAY.blit(toptext, (rect_header.centerx - xoffset, rect_header.centery - yoffset))
+
+
+
+        # refresh header
+        if last_message_time is not None and time.time() - last_message_time >= .5:
+            # Reverts header to default text 
+            toptext = font.render(f"Top Text", False, BLACK)
+
+            # calculate offset
+            toptext_rect = toptext.get_rect()
+            xoffset = toptext_rect.width/2
+            yoffset = toptext_rect.height/2
+
+            # must first re-draw header surface otherwise previous text remains 
+            # then draws changed header text
+            DISPLAY.blit(header, rect_header)
+            DISPLAY.blit(toptext, (rect_header.centerx - xoffset, rect_header.centery - yoffset))
+            last_message_time = None
+
+        
+        # apply state 
+        while not raft_orders.empty():
+            order: Raft.Entry = raft_orders.get()
+            #logger.info(f'order: {order}')
+
+            for player in players:
+                if player.id == order.command and player.hp > 0:
+                    player.hp -= 30  # apply damage to player:
+
+                    # modify player UI
+                    if player.hp < 90 and player.hp >= 60:
+                        player.ui.set_alpha(190)
+                        DISPLAY.blit(player_UI_cleaner, player.rc)  # clean player UI
+                        DISPLAY.blit(player.ui, player.rc)  # re-draw player UI
+                    elif player.hp < 60 and player.hp >= 30:
+                        player.ui.set_alpha(150)
+                        DISPLAY.blit(player_UI_cleaner, player.rc)  # clean player UI
+                        DISPLAY.blit(player.ui, player.rc)  # re-draw player UI
+                    elif player.hp < 30 and player.hp > 0:
+                        player.ui.set_alpha(100)
+                        DISPLAY.blit(player_UI_cleaner, player.rc)  # clean player UI
+                        DISPLAY.blit(player.ui, player.rc)  # re-draw player UI
+                    elif player.hp <= 0:
+                        player.ui.fill(BLACK)
+                        player.ui.set_alpha(200)  
+                        DISPLAY.blit(player.ui, player.rc)  # re-draw player UI
+                
+                #logger.info(f'Player {player.id}, HP: {player.hp}')
+
+
+        # we want to limit display refresh speed
+        pygame.display.flip()  # Refresh on-screen display
+        clock.tick(60)         # sets framerate
+
+
+
+        # TODO for the future: 
+        # if the game logic becomes more complex, it is better to separate the logic from UI updates
+        # that being said, it requires more loops
+####################################################################################
+####################################################################################
+
+
+bob1 = Raft.Server(1, 'localhost', 8001)
+bob2 = Raft.Server(2, 'localhost', 8002)
+bob3 = Raft.Server(3, 'localhost', 8003)
+bob4 = Raft.Server(4, 'localhost', 8004)
+bob_raft = Raft.Server(5, 'localhost', 8005)
+
+bobs_cluster : list[Raft.Server] = [bob1, bob2, bob3, bob4] # testing purposes
+#bobs_cluster : list[Raft.Server] = [bob1] # testing purposes
+
+entry1= Raft.Entry(1,4,5)
+entry2= Raft.Entry(1,5,5)
+entry3= Raft.Entry(1,6,5)
+entry4= Raft.Entry(1,7,5)
 
 # enclose server in a callable function
 def handle_server():
     with Raft(
         addr=('localhost', 8000),   # where server lives
+        id=0,                        
         mode=Raft.Mode.LEADER,                     
         cluster=bobs_cluster,
-        #term=1000,
-        timeout=0.5,                 # debugging purposes
+        #timeout=0.5,                 # debugging purposes
         term=1,
+        log=[entry1, entry2, entry3, entry4]
         ) as server:
-        def print_feedback(value):
-            return value
-        
-        #server.register_function(print_feedback)
+
+        def append_entries_rpc(entries: list[Raft.Entry], term: int, commit_index: int | None, all_log: bool) -> tuple[bool, int]:
+            """
+            Fired by servers, change behaviour depending on server.Mode
+            returns ack = (replication_successful: bool, server_term: int)
+
+            Mode.LEADER: Payload (i.e., entries) is either None (if used for propagating heartbeat) or a list of entries that have to be propagated on all followers;
+            Mode.FOLLOWER: Payload is a list of entries that have to be appended to the follower's log. They will applied to state later when back-propagated by the leader. 
+
+            Oss: Raft.Entry get transformed int dicts before being sent over the network, so they are not dataclasses anymore.
+            """
+
+
+            # unpack entries into a list of Raft.Entry objects
+            tmp: list[Raft.Entry] = []
+            for entry in entries:
+                tmp.append(Raft.Entry(**entry))
+            entries = tmp
+
+            #logger.info(f'entries received= {entries}')
+
+
+            ##logger.info('appended_entries_rpc received')
+            ################################# FOLLOWER mode #####################################
+            if server.mode != Raft.Mode.LEADER:
+                #logger.info('Follower Mode')
+                #logger.info(f'RPC : leader_term = {term}, leader_commit_index = {commit_index}, entries = {entries}')
+                #logger.info(f'Follower: self.id = {server.id}, self.term = {server.term}, self.commit_index = {server.commit_index}, self.log = {server.log}')
+
+                # leader is still alive
+                server.timer.reset()
+
+
+                # if leader is out of date -> reject
+                if term < server.term:
+                    #logger.info('term < server.term')
+                    return (False, server.term)
+
+
+                # update commit index 
+                if commit_index is not None:
+                    if (server.commit_index is not None and commit_index > server.commit_index) or server.commit_index is None:
+                        #logger.info(f'Updating commit index: {server.commit_index} -> {commit_index}')
+                        server.commit_index = commit_index
+                    else:
+                        return (False, server.term)
+
+
+                # if it was not just an heartbeat
+                if entries is not None:
+                    #logger.info(f'entries not None = {entries}')
+
+                    if all_log == True:
+                        # if leader's first entry, clear and rewrite log (leader's log forcing)
+                        server.log.clear()
+
+                    # if log is not empty
+                    if server.log:
+                        #logger.info('Log is not empty')
+                        # search in self.log an entry equal to leader.prev
+                        # i.e., entry preceding future appended entries.
+                        # save its log index (!= entry index)
+                        entry_log_index: int | None = None
+                        for i, my_entry in enumerate(server.log):
+                            if (my_entry.index == entries[0].index 
+                                and my_entry.term == entries[0].term):
+                                entry_log_index = i
+                                break # no need to search further
+                        # here entry_log_index == (position of entry equal to leader.prev) | None
+                        logger.info(f'entry log index = {entry_log_index}')
+
+
+                        # if follower does not have entry equal to prev_leader_entry -> reject
+                        if entry_log_index is None:
+                            #logger.info('Entry log index not found')
+                            return(False, server.term)
+
+
+                        # delete all log entries from the one equal to prev_leader_entry (excluded)
+                        del server.log[(entry_log_index ):]
+
+
+                        # append new entries
+                        server.log.extend(entries)
+                    else:
+                        #logger.info('Log is empty')
+                        # if log is empty, just append entries
+                        server.log.extend(entries)
+                        
+
+                #logger.info('Everything went well')
+                #logger.info(f'Follower: self.id = {server.id}, self.term = {server.term}, self.commit_index = {server.commit_index}, self.log = {server.log}')
+                
+                return (True, server.term)
+    
+            
+            ################################# LEADER mode #####################################
+            else:
+                #logger.info('Leader Mode')
+                #logger.info(f'terms: leader term = {server.term}, follower term = {term}')
+
+                # if leader out of date reject and revert to follower mode
+                if term > server.term:
+                    server.mode = Raft.Mode.FOLLOWER
+                    return (False, server.term)
+                
+
+                # add commands to pygame_commands 
+                # ack to follower
+                for entry in entries:
+                    pygame_commands.put(entry.command)
+
+                #logger.info(f"Leader received append_entries_rpc with term: {term} and commit_index: {commit_index}")
+                #logger.info(f"Received Entries: {entries}")  
+                #logger.info(f"Leader {server.id}, pygame_commands = {list(pygame_commands.queue)}")
+                
+                return (True, server.term)
+
+
+        def is_log_empty() -> bool:
+            """Returns True if log is empty, False otherwise"""
+            if not server.log:
+                return True
+            return False
+                
+        server.register_function(append_entries_rpc)
+        server.register_function(is_log_empty)
         server.serve_forever()
 
 
 # pass all server stuff to a separate thread
-thread = threading.Thread(target=handle_server)
-thread.start()
-thread.join()
+server_thread = threading.Thread(target=handle_server)
+server_thread.start()
 
+pygame_thread = threading.Thread(target=handle_pygame)
+pygame_thread.start()
+
+# safely terminate threads 
+server_thread.join()
+pygame_thread.join()

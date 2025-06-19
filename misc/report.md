@@ -673,6 +673,16 @@ while True:
 
 As we can see in the following image, the system works as intended (ie loops do not block each other): ![](./imgs/raftian_poc.png)
 
+## Propagate Entries
+
+Leader apply to state periodically:
+- propagate entries
+- add to log when propagated # >= cluster / 2
+- check log and last_applied: apply remaining log and update last_applied
+
+Followers apply to state as soon as they receive from leader, instead than waiting for an extra ack from leader (i.e., when leader applies).
+This should prove no problem since in the long run logs will be coherent, hence you could easily implement a recurring integrity check between log and state. 
+
 ## User Interface
 
 ### Technologies Showdown

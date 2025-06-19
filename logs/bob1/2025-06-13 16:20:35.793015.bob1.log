@@ -1,0 +1,196 @@
+Received append_entries_rpc with term: 1 and commit_index: None
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: None
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: None
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: None
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: None
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: None
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: None
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: None
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: None
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: None
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: None
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: None
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: None
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: None
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: None
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: None
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: None
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: None
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: None
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: None
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: None
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: None
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: None
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: None
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: None
+Entries: [{'term': 1, 'index': 0, 'command': 1}]
+Received append_entries_rpc with term: 1 and commit_index: 0
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: 0
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: None
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: None
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: None
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: None
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: None
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: None
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: None
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: None
+Entries: [{'term': 1, 'index': 0, 'command': 1}]
+Received append_entries_rpc with term: 1 and commit_index: 0
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: 0
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: 0
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: 0
+Entries: [{'term': 1, 'index': 1, 'command': 1}]
+Received append_entries_rpc with term: 1 and commit_index: 1
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: 1
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: 1
+Entries: [{'term': 1, 'index': 2, 'command': 1}]
+Received append_entries_rpc with term: 1 and commit_index: 2
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: 2
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: None
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: None
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: None
+Entries: [{'term': 1, 'index': 0, 'command': 4}]
+Received append_entries_rpc with term: 1 and commit_index: 0
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: 0
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: 0
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: 0
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: 0
+Entries: [{'term': 1, 'index': 1, 'command': 3}]
+Received append_entries_rpc with term: 1 and commit_index: 1
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: 1
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: 1
+Entries: [{'term': 1, 'index': 2, 'command': 1}]
+Received append_entries_rpc with term: 1 and commit_index: 2
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: 2
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: 2
+Entries: [{'term': 1, 'index': 3, 'command': 2}]
+Received append_entries_rpc with term: 1 and commit_index: 3
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: 3
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: 3
+Entries: [{'term': 1, 'index': 4, 'command': 4}]
+Received append_entries_rpc with term: 1 and commit_index: 4
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: 4
+Entries: [{'term': 1, 'index': 5, 'command': 1}]
+Received append_entries_rpc with term: 1 and commit_index: 5
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: 5
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: 5
+Entries: [{'term': 1, 'index': 6, 'command': 3}]
+Received append_entries_rpc with term: 1 and commit_index: 6
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: 6
+Entries: [{'term': 1, 'index': 7, 'command': 2}]
+Received append_entries_rpc with term: 1 and commit_index: 7
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: 7
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: 7
+Entries: [{'term': 1, 'index': 8, 'command': 1}]
+Received append_entries_rpc with term: 1 and commit_index: 8
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: 8
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: 8
+Entries: [{'term': 1, 'index': 9, 'command': 4}]
+Received append_entries_rpc with term: 1 and commit_index: 9
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: 9
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: 9
+Entries: [{'term': 1, 'index': 10, 'command': 3}]
+Received append_entries_rpc with term: 1 and commit_index: 10
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: 10
+Entries: [{'term': 1, 'index': 11, 'command': 2}]
+Received append_entries_rpc with term: 1 and commit_index: 11
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: 11
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: 11
+Entries: [{'term': 1, 'index': 12, 'command': 1}]
+Received append_entries_rpc with term: 1 and commit_index: 12
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: 12
+Entries: [{'term': 1, 'index': 13, 'command': 3}]
+Received append_entries_rpc with term: 1 and commit_index: 13
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: 13
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: 13
+Entries: [{'term': 1, 'index': 14, 'command': 2}]
+Received append_entries_rpc with term: 1 and commit_index: 14
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: 14
+Entries: [{'term': 1, 'index': 15, 'command': 3}]
+Received append_entries_rpc with term: 1 and commit_index: 15
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: 15
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: 15
+Entries: [{'term': 1, 'index': 16, 'command': 4}, {'term': 1, 'index': 17, 'command': 1}]
+Received append_entries_rpc with term: 1 and commit_index: 17
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: 17
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: 17
+Entries: [{'term': 1, 'index': 18, 'command': 3}]
+Received append_entries_rpc with term: 1 and commit_index: 18
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: 18
+Entries: None
+Received append_entries_rpc with term: 1 and commit_index: 18
+Entries: None
