@@ -734,7 +734,7 @@ bob3 = Raft.Server(3, 'localhost', 8003)
 bob4 = Raft.Server(4, 'localhost', 8004)
 bob_raft = Raft.Server(5, 'localhost', 8005)
 
-bobs_cluster : list[Raft.Server] = [bob_raft] # testing purposes
+bobs_cluster : list[Raft.Server] = [bob1, bob2, bob3, bob4] # testing purposes
 #bobs_cluster : list[Raft.Server] = [bob1] # testing purposes
 
 entry1= Raft.Entry(1,4,5)
