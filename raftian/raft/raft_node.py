@@ -126,8 +126,7 @@ class Raft(SimpleXMLRPCServer):
         if self.mode == Raft.Mode.CANDIDATE:
             pass
         elif self.mode == Raft.Mode.LEADER:
-            self.heartbeat() 
-            pass
+            self.heartbeat()
         elif self.mode == Raft.Mode.FOLLOWER:
             pass
         else:
@@ -144,8 +143,6 @@ class Raft(SimpleXMLRPCServer):
         TODO: this needs to be fired every .5s or so, hence either a separate looping timer or count timer clicks some way or another or fire from service actions() 
         """
         global pygame_commands
-
-        
 
 
         if self.mode != Raft.Mode.LEADER:
@@ -174,7 +171,7 @@ class Raft(SimpleXMLRPCServer):
                 with xmlrpc.client.ServerProxy(complete_url, allow_none=True) as proxy:
                     while not propagation_successful:
                         # send new entries (local for each follower)    
-                        result: tuple[bool, int] = proxy.append_entries_rpc(entries, self.term, self.commit_index)
+                        result: tuple[bool, int] = proxy.append_entries_rpc(entries, self.term, self.commit_index, False)
 
                         # if leader is out of date  
                         if result[1] < self.term:
@@ -249,15 +246,22 @@ class Raft(SimpleXMLRPCServer):
                 port: int = follower.port
                 complete_url = 'http://' + str(url) + ':' + str(port)
 
+                all_log = False
+
+                
+
                 with xmlrpc.client.ServerProxy(complete_url, allow_none=True) as proxy:
                     while not propagation_successful:
                         # send new entries (local for each follower)    
+
+                        if entries[0].index == self.log[0].index:
+                            all_log = True
 
                         if proxy.is_log_empty():
                             # must propagate all log and all new entries
                             entries = self.log + entries
 
-                        result: tuple[bool, int] = proxy.append_entries_rpc(entries, self.term, self.commit_index)
+                        result: tuple[bool, int] = proxy.append_entries_rpc(entries, self.term, self.commit_index, all_log)
                         #logger.info(f'Append entries rpc result: {result}')
 
                         # if leader is out of date  
@@ -267,8 +271,9 @@ class Raft(SimpleXMLRPCServer):
                         
                         if result[0] == False:
                             # add another entry from self.log to new entries
-                            entries.append(self.log[log_iterator])
+                            entries = [self.log[log_iterator]] + entries
                             log_iterator -= 1   
+                            logger.info(f'log iterator = {log_iterator}, entries = {entries}')
                         elif result[0] == True:
                             # increase propagation counter and move to next follower
                             propagation_successful = True
@@ -369,7 +374,7 @@ class Raft(SimpleXMLRPCServer):
             complete_url = 'http://' + str(url) + ':' + str(port)
 
             with xmlrpc.client.ServerProxy(complete_url, allow_none=True) as proxy:
-                    return proxy.append_entries_rpc(None, leader_term, leader_commit_index)
+                    return proxy.append_entries_rpc(None, leader_term, leader_commit_index, False)
 
 
         results = []
@@ -447,7 +452,7 @@ class Raft(SimpleXMLRPCServer):
                     log_iterator = log_iterator + 1
                 # here self.last_applied == self.commit_index
 
-                logger.info(f'Applied entries to state, raft_orders = {list(raft_orders.queue)}')
+                #logger.info(f'Applied entries to state, raft_orders = {list(raft_orders.queue)}')
                 #logger.info(f'last_applied = {self.last_applied}, commit_index = {self.commit_index}')
 
             # reset countdown
@@ -707,7 +712,7 @@ def handle_pygame():
                         player.ui.set_alpha(200)  
                         DISPLAY.blit(player.ui, player.rc)  # re-draw player UI
                 
-                ##logger.info(f'Player {player.id}, HP: {player.hp}')
+                #logger.info(f'Player {player.id}, HP: {player.hp}')
 
 
         # we want to limit display refresh speed
@@ -732,10 +737,10 @@ bob_raft = Raft.Server(5, 'localhost', 8005)
 bobs_cluster : list[Raft.Server] = [bob_raft] # testing purposes
 #bobs_cluster : list[Raft.Server] = [bob1] # testing purposes
 
-entry1= Raft.Entry(1,0,1)
-entry2= Raft.Entry(1,1,3)
-entry3= Raft.Entry(1,2,6)
-entry4= Raft.Entry(1,3,7)
+entry1= Raft.Entry(1,4,5)
+entry2= Raft.Entry(1,5,5)
+entry3= Raft.Entry(1,6,5)
+entry4= Raft.Entry(1,7,5)
 
 # enclose server in a callable function
 def handle_server():
@@ -749,7 +754,7 @@ def handle_server():
         log=[entry1, entry2, entry3, entry4]
         ) as server:
 
-        def append_entries_rpc(entries: list[Raft.Entry], term: int, commit_index: int) -> tuple[bool, int]:
+        def append_entries_rpc(entries: list[Raft.Entry], term: int, commit_index: int | None, all_log: bool) -> tuple[bool, int]:
             """
             Fired by servers, change behaviour depending on server.Mode
             returns ack = (replication_successful: bool, server_term: int)
@@ -773,9 +778,9 @@ def handle_server():
             ##logger.info('appended_entries_rpc received')
             ################################# FOLLOWER mode #####################################
             if server.mode != Raft.Mode.LEADER:
-                ##logger.info('Follower Mode')
-                ##logger.info(f'RPC : leader_term = {term}, leader_commit_index = {commit_index}, entries = {entries}')
-                ##logger.info(f'Follower: self.id = {server.id}, self.term = {server.term}, self.commit_index = {server.commit_index}, self.log = {server.log}')
+                #logger.info('Follower Mode')
+                #logger.info(f'RPC : leader_term = {term}, leader_commit_index = {commit_index}, entries = {entries}')
+                #logger.info(f'Follower: self.id = {server.id}, self.term = {server.term}, self.commit_index = {server.commit_index}, self.log = {server.log}')
 
                 # leader is still alive
                 server.timer.reset()
@@ -783,51 +788,71 @@ def handle_server():
 
                 # if leader is out of date -> reject
                 if term < server.term:
+                    #logger.info('term < server.term')
                     return (False, server.term)
 
-                # update commit index 
-                if commit_index is not None and commit_index > server.commit_index:
-                    server.commit_index = commit_index
 
+                # update commit index 
+                if commit_index is not None:
+                    if (server.commit_index is not None and commit_index > server.commit_index) or server.commit_index is None:
+                        #logger.info(f'Updating commit index: {server.commit_index} -> {commit_index}')
+                        server.commit_index = commit_index
+                    else:
+                        return (False, server.term)
 
 
                 # if it was not just an heartbeat
                 if entries is not None:
+                    #logger.info(f'entries not None = {entries}')
 
-                    # search in log an entry equal to prev_leader_entry
-                    # i.e., entry preceding future appended entries.
-                    # save its log index (!= entry index)
-                    entry_log_index: int | None = None
-                    for i, my_entry in enumerate(server.log):
-                        if (my_entry.index == entries[0].index 
-                            and my_entry.term == entries[0].term):
-                            entry_log_index = i
-                            break # no need to search further
+                    if all_log == True:
+                        # if leader's first entry, clear and rewrite log (leader's log forcing)
+                        server.log.clear()
 
-
-                    # if follower does not have entry equal to prev_leader_entry -> reject
-                    if entry_log_index is None:
-                        return(False, server.term)
-
-
-                    # delete all log entries from the one equal to prev_leader_entry (excluded)
-                    del server.log[(entry_log_index + 1):]
-
-
-                    # append new entries
-                    server.log.extend(entries)
+                    # if log is not empty
+                    if server.log:
+                        #logger.info('Log is not empty')
+                        # search in self.log an entry equal to leader.prev
+                        # i.e., entry preceding future appended entries.
+                        # save its log index (!= entry index)
+                        entry_log_index: int | None = None
+                        for i, my_entry in enumerate(server.log):
+                            if (my_entry.index == entries[0].index 
+                                and my_entry.term == entries[0].term):
+                                entry_log_index = i
+                                break # no need to search further
+                        # here entry_log_index == (position of entry equal to leader.prev) | None
+                        logger.info(f'entry log index = {entry_log_index}')
 
 
-                ##logger.info('Everything went well')
-                ##logger.info(f'Follower: self.id = {server.id}, self.term = {server.term}, self.commit_index = {server.commit_index}, self.log = {server.log}')
+                        # if follower does not have entry equal to prev_leader_entry -> reject
+                        if entry_log_index is None:
+                            #logger.info('Entry log index not found')
+                            return(False, server.term)
+
+
+                        # delete all log entries from the one equal to prev_leader_entry (excluded)
+                        del server.log[(entry_log_index ):]
+
+
+                        # append new entries
+                        server.log.extend(entries)
+                    else:
+                        #logger.info('Log is empty')
+                        # if log is empty, just append entries
+                        server.log.extend(entries)
+                        
+
+                #logger.info('Everything went well')
+                #logger.info(f'Follower: self.id = {server.id}, self.term = {server.term}, self.commit_index = {server.commit_index}, self.log = {server.log}')
                 
                 return (True, server.term)
     
             
             ################################# LEADER mode #####################################
             else:
-                ##logger.info('Leader Mode')
-                ##logger.info(f'terms: leader term = {server.term}, follower term = {term}')
+                #logger.info('Leader Mode')
+                #logger.info(f'terms: leader term = {server.term}, follower term = {term}')
 
                 # if leader out of date reject and revert to follower mode
                 if term > server.term:
@@ -838,7 +863,6 @@ def handle_server():
                 # add commands to pygame_commands 
                 # ack to follower
                 for entry in entries:
-                    #logger.info(f'put entry= {entry}')
                     pygame_commands.put(entry.command)
 
                 #logger.info(f"Leader received append_entries_rpc with term: {term} and commit_index: {commit_index}")
@@ -848,9 +872,14 @@ def handle_server():
                 return (True, server.term)
 
 
-                
+        def is_log_empty() -> bool:
+            """Returns True if log is empty, False otherwise"""
+            if not server.log:
+                return True
+            return False
                 
         server.register_function(append_entries_rpc)
+        server.register_function(is_log_empty)
         server.serve_forever()
 
 
