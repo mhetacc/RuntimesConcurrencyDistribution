@@ -1,0 +1,4 @@
+info message
+warning message
+error message
+info with variables, path = logs/loggingPOC/2024-12-04 14:38:49.188615.loggingPOC.log, name = loggingPOC
