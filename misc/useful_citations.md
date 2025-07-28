@@ -18,3 +18,9 @@ The `xmlrpc.client` and `xmlrpc.server` modules make implementing remote procedu
 https://realpython.com/async-io-python/
 
 Coroutines are repurposed generators that take advantage of the peculiarities of generator methods.
+
+# Report Info Gather
+
+## Concurrency
+
+
