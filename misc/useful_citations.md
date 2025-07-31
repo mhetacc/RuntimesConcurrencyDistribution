@@ -61,3 +61,11 @@ In 2024, the revenue from the worldwide gaming market was 187.7bln
 
 https://www.pwc.com/gx/en/news-room/press-releases/2025/pwc-global-entertainment-media-outlook.html
 Global entertainment and media industry revenues to hit US$3.5 trillion by 2029, driven by advertising, live events, and video games: PwC Global Entertainment & Media Outlook 
+
+## Distributed computing
+https://www.distributed-systems.net/index.php/books/ds3/
+https://link.springer.com/chapter/10.1007/978-1-84882-745-5_11
+
+
+
+Distributed computing is a field of computer science that studies distributed systems, defined as computer systems whose inter-communicating components are located on different networked computers.
