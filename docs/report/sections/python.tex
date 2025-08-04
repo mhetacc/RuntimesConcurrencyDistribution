@@ -1,0 +1,35 @@
+\section{Python} \label{sec:python}
+
+We will now discuss the technologies employed in the development the the project (section \ref{sec:python}) as well as presenting our implementation of the algorithm Raft (section \ref{sec:raft}).
+
+Python is a high-level, dynamically typed and interpreted programming language that is often used for scripting, data analysis and developing small applications, making it a non-obvious choice for this project, which is nothing of the above. 
+
+As a language, it has two main of advantages compared to others: first of all it is undoubtedly the most popular and widely used in the world \cite{tiobe} \cite{ieeeSpect} which translates to abundant documentation and resources, and secondly it has a huge ecosystem of libraries that implement all the functionalities we need for this project, namely: \textit{xmlrpc} for the remote procedure calls (RPCs), \textit{threading} to handle local concurrency and \textit{Pygame} to manage everything game-related.
+
+\subsection{Remote Procedure Calls} \label{sec:xmlrpc}
+
+In Rafts' specifications it is stated that nodes communicate with each other via remote procedure calls \cite{raft}, which in distributed computing is when a program causes a procedure (or subroutine) to execute in another address space (commonly on another computer on a shared network) calling it as if it were local (that is, the programmer writes the same code whether the subroutine is local or remote).
+
+There are many libraries that implement this functionality, like gRPC (\url{https://grpc.io/}) which is a high performance open source RPC framework used by many big players, like Netflix \footnote{Netflix Ribbon is an Inter Process Communication library built in software load balancers: \url{https://github.com/Netflix/ribbon}} and Cockroach Labs \footnote{Cockroach Labs is the company behind CockroachDB, a highly resilient distributed database: \url{https://www.cockroachlabs.com/}}, available for many languages (Python included), but we opted for the standard library \textit{xmlrpc} \footnote{XML-RPC is a Remote Procedure Call method that uses XML passed via HTTP as a transport: \url{https://docs.python.org/3/library/xmlrpc.html}} thanks to its promised simplicity and ease of use. 
+
+The library provides both server and client implementations, encapsulating the former in its own loop, while the latter can be fired as needed allowing a bit more flexibility in its usage.
+
+In the following code \verb|client| encapsulates a server living in its own networked location and is used to call the remote procedure \verb|test_foo(int)| like it was a local one.
+
+\begin{python}
+with xmlrpc.client.ServerProxy('http://localhost:8000', allow_none=True) as client:
+    print(client.test_foo(42)) # print returned value
+\end{python}
+
+The server must be instantiated and left alive, and all remote procedure calls registered with \verb|register_function|.
+
+\begin{python}
+with SimpleXMLRPCServer (('localhost', 8000)) as server:
+    def test_foo(number):
+        return f'The number is {number}'
+
+    server.register_function(test_foo)  
+    server.serve_forever() # keep server alive
+\end{python}
+
+For this project we extend \textit{SimpleXMLRPCServer} to create a class that implements the Raft protocol (more details in section \ref{sec:implementation})
