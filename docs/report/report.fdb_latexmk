@@ -1,13 +1,13 @@
 # Fdb version 4
-["bibtex report"] 1754395277.39897 "report.aux" "report.bbl" "report" 1754395297.85434 0
+["bibtex report"] 1754408642.78296 "report.aux" "report.bbl" "report" 1754408644.76466 0
   "./report.bib" 1754392182.22637 11088 e1d91766eaa595d48f8bdeae040e9985 ""
   "/usr/share/texlive/texmf-dist/bibtex/bst/acmart/ACM-Reference-Format.bst" 1680299675 90332 18dc4e5c9b5c2ddd337e9f97727d04f1 ""
-  "report.aux" 1754395297.63601 4017 b35e3617886b5c2e278b0fe509131fd2 "pdflatex"
+  "report.aux" 1754408644.56876 5404 48cf991dbb920dd7c30fcad9a847f28a "pdflatex"
   (generated)
   "report.bbl"
   "report.blg"
   (rewritten before read)
-["pdflatex"] 1754395296.7943 "/home/mhetac/Documents/GitHub/RuntimesConcurrencyDistribution/docs/report/report.tex" "report.pdf" "report" 1754395297.85446 0
+["pdflatex"] 1754408642.84648 "/home/mhetac/Documents/GitHub/RuntimesConcurrencyDistribution/docs/report/report.tex" "report.pdf" "report" 1754408644.7648 0
   "/etc/texmf/web2c/texmf.cnf" 1731932711.72022 475 c0e671620eb5563b2130f56340a5fde8 ""
   "/home/mhetac/Documents/GitHub/RuntimesConcurrencyDistribution/docs/report/report.tex" 1754320719.12355 13500 aa1dab7bca8924f9456d83e3cf661b5b ""
   "/usr/share/texlive/texmf-dist/fonts/enc/dvips/inconsolata/i4-t1-4.enc" 1558214095 7693 0f2dce6d313c82989ec3a67fc24df2a0 ""
@@ -86,6 +86,7 @@
   "/usr/share/texlive/texmf-dist/fonts/vf/public/libertine/LinLibertineT-tlf-ts1.vf" 1490131464 640 f2633b196ddbd644937d19e300a5024e ""
   "/usr/share/texlive/texmf-dist/fonts/vf/public/libertine/LinLibertineTB-tlf-t1.vf" 1490131464 1768 5d66dfd9709f1f38b8fb3cb38db46402 ""
   "/usr/share/texlive/texmf-dist/fonts/vf/public/libertine/LinLibertineTI-tlf-t1.vf" 1490131464 1768 b3bfd8ed1fe2dce5fd19610abe4c3dbe ""
+  "/usr/share/texlive/texmf-dist/fonts/vf/public/newtx/ntxsy.vf" 1699567298 1804 0d5405efa3655e9ce85ebf4efa9b7f0b ""
   "/usr/share/texlive/texmf-dist/fonts/vf/public/newtx/ntxsy7.vf" 1699567298 1932 eb3a33127536e5b93d4fbe6076112b0d ""
   "/usr/share/texlive/texmf-dist/fonts/vf/public/newtx/nxlmi.vf" 1569879884 2744 3e5ba39e1559219ae379b7645e2f9524 ""
   "/usr/share/texlive/texmf-dist/tex/context/base/mkii/supp-pdf.mkii" 1461363279 71627 94eb9990bed73c364d7f53f960cc8c5b ""
@@ -216,13 +217,17 @@
   "/usr/share/texmf/web2c/texmf.cnf" 1707919699 40399 f2c302f7d2af602abb742093540a5834 ""
   "/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map" 1743673054.10926 5352258 625d145f3708f99ff2144a56c0e20fa1 ""
   "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1743673063 7453521 177a431387c98bb1593578671e94b705 ""
-  "comment.cut" 1754395297.55101 64 0754424945249fbfae64d8991d811e64 "pdflatex"
-  "report.aux" 1754395297.63601 4017 b35e3617886b5c2e278b0fe509131fd2 "pdflatex"
-  "report.bbl" 1754395277.44596 9924 70b88db72ff4b4bdfd377a8c8d02ca22 "bibtex report"
-  "report.out" 1754395297.63701 2151 bf8779b3f3f0cb5747fd48d83c2181ce "pdflatex"
+  "comment.cut" 1754408644.49676 64 0754424945249fbfae64d8991d811e64 "pdflatex"
+  "images/1000dots.png" 1754405057.08062 4011610 c8cfd8393a87bcae88c2675793ca2795 ""
+  "images/100dots.png" 1754405057.10062 4011609 6e88aa6c834f2f0454456b5a9e47f075 ""
+  "images/TIOBEindex.png" 1754402432.44566 371976 ba4cfcaee9ce89deb54e5d2b6caf0004 ""
+  "images/performance_eval_fps_graph.png" 1754401105.23594 649644 787c62ab1130451a8195c7f121d2cffa ""
+  "report.aux" 1754408644.56876 5404 48cf991dbb920dd7c30fcad9a847f28a "pdflatex"
+  "report.bbl" 1754408642.84179 9924 70b88db72ff4b4bdfd377a8c8d02ca22 "bibtex report"
+  "report.out" 1754408644.56876 2151 2bd8522dac6a3c922e1412c89fd216a0 "pdflatex"
   "report.tex" 1754320719.12355 13500 aa1dab7bca8924f9456d83e3cf661b5b ""
-  "sections/introduction.tex" 1754314724.1682 6692 e6b8c1fcdf79d567b8b574a722ab6129 ""
-  "sections/python.tex" 1754395296.60401 6344 33ba1f82c90ab9419d2008cc5b3b367e ""
+  "sections/introduction.tex" 1754401580.91341 6662 76c985a3cdf084808e92fbcf130bb55b ""
+  "sections/python.tex" 1754408639.21985 10346 0c8a918e0e0d1af9ea541eaa8320352c ""
   (generated)
   "comment.cut"
   "report.aux"

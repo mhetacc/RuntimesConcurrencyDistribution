@@ -20,7 +20,7 @@ import time
 
 # logs are in the form "./logs/performance_evaluation/filename/datetime.filename_{number_of_dots}.log"
 filename = 'random_dots_pygame'
-number_of_dots = 100 # used later, assigned now for path name
+number_of_dots = 1000 # used later, assigned now for path name
 
 # create logger and makes it so that it record any message level
 logger = logging.getLogger()
