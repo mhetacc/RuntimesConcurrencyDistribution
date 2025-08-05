@@ -8,13 +8,13 @@ As a language, it has two main of advantages compared to others: first of all it
 
 \subsection{Remote Procedure Calls} \label{sec:xmlrpc}
 
-In Rafts' specifications it is stated that nodes communicate with each other via remote procedure calls \cite{raft}, which in distributed computing is when a program causes a procedure (or subroutine) to execute in another address space (commonly on another computer on a shared network) calling it as if it were local (that is, the programmer writes the same code whether the subroutine is local or remote).
+In Raft's specifications it is stated that nodes communicate with each other via remote procedure calls \cite{raft}, which in distributed computing is when a program causes a procedure (or subroutine) to execute in another address space (commonly on another computer on a shared network) calling it as if it were local (that is, the programmer writes the same code whether the subroutine is local or remote).
 
 There are many libraries that implement this functionality, like gRPC (\url{https://grpc.io/}) which is a high performance open source RPC framework used by many big players, like Netflix \footnote{Netflix Ribbon is an Inter Process Communication library built in software load balancers: \url{https://github.com/Netflix/ribbon}} and Cockroach Labs \footnote{Cockroach Labs is the company behind CockroachDB, a highly resilient distributed database: \url{https://www.cockroachlabs.com/}}, available for many languages (Python included), but we opted for the standard library \textit{xmlrpc} \footnote{XML-RPC is a Remote Procedure Call method that uses XML passed via HTTP as a transport: \url{https://docs.python.org/3/library/xmlrpc.html}} thanks to its promised simplicity and ease of use. 
 
 The library provides both server and client implementations, encapsulating the former in its own loop, while the latter can be fired as needed allowing a bit more flexibility in its usage.
 
-In the following code \verb|client| encapsulates a server living in its own networked location and is used to call the remote procedure \verb|test_foo(int)| like it was a local one.
+In the following code \verb|client| encapsulates a server living in its own networked location and is used to call the remote procedure \verb|test_foo| like it was a local one.
 
 \begin{python}
 with xmlrpc.client.ServerProxy('http://localhost:8000', allow_none=True) as client:
@@ -33,3 +33,17 @@ with SimpleXMLRPCServer (('localhost', 8000)) as server:
 \end{python}
 
 For this project we extend \textit{SimpleXMLRPCServer} to create a class that implements the Raft protocol (more details in section \ref{sec:implementation})
+
+\subsection{Concurrency} \label{sec:threading}
+
+In this project the need for concurrent programming arises from two challenges: every server have an internal timer that fires at certain intervals, and every node have to run a game engine and the server itself at the same time, both of which can be simplified as two \textit{"while true"} loops. 
+
+Most Raft implementations achieve concurrency with asynchronous programming, using libraries such as \textit{asyncio} \footnote{asyncio is a library to write concurrent code using the async/await syntax: \url{https://docs.python.org/3/library/asyncio.html}}, which while powerful and efficient, makes writing code a bit awkward and cumbersome. We thus opted for a more traditional approach, using multithreaded programming: in computer science, a thread of execution is the smallest sequence of programmed instruction that can be managed independently by the scheduler \cite{lamportMultiprocessor}, and multiple threads may be executed concurrently sharing resources such as memory, which is directly counterpointed to multiprocessing where each process has its own storage space (moreover, processes are typically made of threads). 
+
+In Python there are two modules of the standard library to handle them: \textit{threading} \footnote{The threading module provides a way to run multiple threads (smaller units of a process) concurrently within a single process: \url{https://docs.python.org/3/library/threading.html}} and \textit{multiprocessing} \footnote{The multiprocessing module is a package that supports spawning processes using an API similar to the threading module: \url{https://docs.python.org/3/library/multiprocessing.html}}. It is fundamental to note that the former does not provide real multi-threading since, due to the Global Interpreter Lock of CPython (the, for want of a better word, "official" Python implementation), only one thread can execute bytecode at once. To cite directly from the documentation: \textit{"[GIL is] The mechanism used by the CPython interpreter to assure that only one thread executes Python bytecode at a time. This simplifies the CPython implementation by making the object model (including critical built-in types such as dict) implicitly safe against concurrent access. Locking the entire interpreter makes it easier for the interpreter to be multi-threaded, at the expense of much of the parallelism afforded by multi-processor machines."} \footnote{Global Interpreter Lock: \url{https://docs.python.org/3/glossary.html\#term-global-interpreter-lock}}.
+
+Thankfully, this does not apply with the \textit{multiprocessing} module, which creates separate processes instead, offering both local and remote concurrency effectively side-stepping the Global Interpreter Lock, which allows programmers to fully leverage multi-processors machines. As previously stated, processes are much heavier than threads and thus more expensive to create, but do not incur the risks of shared memory. 
+
+\subsubsection{Comparison}
+
+ma quindi quale xeo mejo 
