@@ -111,3 +111,17 @@ All tests have been performed with the following machine:
     \item Power Mode: Balanced;
     \item Alimentation: 100W via type C.
 \end{itemize}
+
+\subsection{Game Engine} \label{sec:pygame}
+
+There are many ways to implement a graphical user interface: from clever shell tricks like htop \footnote{htop is a cross-platform text-mode interactive process viewer: \url{https://htop.dev/}}, to full fledged game engines like Unity \footnote{Unity is a cross-platform game engine developed by Unity Technologies: \url{https://unity.com/}}, we really had the luxury, and challenge, of choice.
+
+More serious solutions like Godot (robust, open-source, based on C++, allows even 3D development) or Phaser (lightweight and easy to use, based on JavaScript), come with their own editor and have a \textit{top-down} approach, meaning the developer is supposed to build the graphical components first, and then go down to code as needed for scripting and refining. This is not optimal for our needs since it would make it more challenging to implement the Raft protocol.
+
+What we wanted was a \textit{bottom-up} approach, where everything stems from the code itself to simplify merging all project's components, better yet if using the same programming language. Python offers exactly this since not only natively supports both RPCs and concurrency (as previously stated) but also has a module in the standard library that handles graphical user interfaces (UIs), namely tkinter, and the community-developed framework Pygame.
+
+\subsubsection{Comparison}
+
+Deciding between tkinter and Pygame ultimately came down to ease of development, power and flexibility. Let's briefly list the strengths and weaknesses of both: tkinter, being part of the standard library, is very well documented and supported, but since tis made to develop static UIs of simple applications it does not support advanced 
+
+That being said we ultimately decided to opt for the framework Pygame since it offers way more flexibility, easier to handle   
