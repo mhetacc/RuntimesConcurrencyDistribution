@@ -1,10 +1,10 @@
 \section{Python} \label{sec:python}
 
-We will now discuss the technologies employed in the development the the project (section \ref{sec:python}) as well as presenting our implementation of the algorithm Raft (section \ref{sec:raft}).
+We will now discuss the technologies employed in the development of the project (section \ref{sec:python}) as well as presenting our implementation of the algorithm Raft.
 
-Python is a high-level, dynamically typed and interpreted programming language that is often used for scripting, data analysis and developing small applications, making it a non-obvious choice for this project, which is nothing of the above. 
+Python is a high-level, dynamically typed and interpreted programming language that is often used for scripting, data analysis and developing small applications, making it a non-obvious choice for this project, which does not fall into any of these categories.
 
-As a language, it has two main of advantages compared to others: first of all it is undoubtedly the most popular and widely used in the world (figure \ref{fig:tiobe}) \cite{tiobe,ieeeSpect} which translates to abundant documentation and resources, and secondly it has a huge ecosystem of libraries that implement all the functionalities we need for this project, namely: \textit{xmlrpc} for the remote procedure calls (RPCs), \textit{threading} to handle local concurrency and \textit{Pygame} to manage everything game-related.
+As a language, it has two main advantages compared to others: first of all it is undoubtedly the most popular and widely used in the world (figure \ref{fig:tiobe}) \cite{tiobe,ieeeSpect} which translates to abundant documentation and resources, and secondly it has a huge ecosystem of libraries that implement all the functionalities we need for this project, namely: \textit{xmlrpc} for the remote procedure calls (RPCs), \textit{threading} to handle local concurrency and \textit{Pygame} to manage everything game-related.
 
 \begin{figure}[h]
   \centering
@@ -19,18 +19,18 @@ As a language, it has two main of advantages compared to others: first of all it
 
 In Raft's specifications it is stated that nodes communicate with each other via remote procedure calls \cite{raft}, which in distributed computing is when a program causes a procedure (or subroutine) to execute in another address space (commonly on another computer on a shared network) calling it as if it were local (that is, the programmer writes the same code whether the subroutine is local or remote).
 
-There are many libraries that implement this functionality, like gRPC (\url{https://grpc.io/}) which is a high performance open source RPC framework used by many big players, like Netflix \footnote{Netflix Ribbon is an Inter Process Communication library built in software load balancers: \url{https://github.com/Netflix/ribbon}} and Cockroach Labs \footnote{Cockroach Labs is the company behind CockroachDB, a highly resilient distributed database: \url{https://www.cockroachlabs.com/}}, available for many languages (Python included), but we opted for the standard library \textit{xmlrpc} \footnote{XML-RPC is a Remote Procedure Call method that uses XML passed via HTTP as a transport: \url{https://docs.python.org/3/library/xmlrpc.html}} thanks to its promised simplicity and ease of use. 
+There are many libraries that implement this functionality, like gRPC (\url{https://grpc.io/}) which is a high performance open source RPC framework used by many big players, such as Netflix \footnote{Netflix Ribbon is an Inter Process Communication library built in software load balancers: \url{https://github.com/Netflix/ribbon}} and Cockroach Labs \footnote{Cockroach Labs is the company behind CockroachDB, a highly resilient distributed database: \url{https://www.cockroachlabs.com/}}, available for many languages (Python included), but we opted for the standard library \textit{xmlrpc} \footnote{XML-RPC is a Remote Procedure Call method that uses XML passed via HTTP as a transport: \url{https://docs.python.org/3/library/xmlrpc.html}} thanks to its promised simplicity and ease of use. 
 
 The library provides both server and client implementations, encapsulating the former in its own loop, while the latter can be fired as needed allowing a bit more flexibility in its usage.
 
-In the following code \verb|client| encapsulates a server living in its own networked location and is used to call the remote procedure \verb|test_foo| like it was a local one.
+In the following code, \verb|client| is an instance of \verb|ServerProxy|, which acts as the client-side interface for XML-RPC, allowing you to call the remote procedure \verb|test_foo| as if it were a local function, even though it executes on a server in a different networked location.
 
 \begin{python}
 with xmlrpc.client.ServerProxy('http://localhost:8000', allow_none=True) as client:
     print(client.test_foo(42)) # print returned value
 \end{python}
 
-The server must be instantiated and left alive, and all remote procedure calls registered with \verb|register_function|.
+The server must be instantiated and kept running by calling its event loop (e.g., using \verb|serve_forever|), and all remote procedure calls must be registered using the \verb|register_function| method of \verb|SimpleXMLRPCServer|.
 
 \begin{python}
 with SimpleXMLRPCServer (('localhost', 8000)) as server:
@@ -41,17 +41,17 @@ with SimpleXMLRPCServer (('localhost', 8000)) as server:
     server.serve_forever() # keep server alive
 \end{python}
 
-For this project we extend \textit{SimpleXMLRPCServer} to create a class that implements the Raft protocol (more details in section \ref{sec:implementation})
+For this project, we extended \textit{SimpleXMLRPCServer} to create a class that implements the Raft protocol (more details in section \ref{sec:implementation})
 
 \subsection{Concurrency} \label{sec:threading}
 
-In this project the need for concurrent programming arises from two challenges: every server have an internal timer that fires at certain intervals, and every node have to run a game engine and the server itself at the same time, both of which can be simplified as two \textit{"while true"} loops. 
+In this project the need for concurrent programming arises from two challenges: every server have an internal timer that fires at certain intervals, and every node has to run a game engine and the server itself at the same time, both of which can be simplified as two \textit{"while true"} loops. 
 
 Most Raft implementations achieve concurrency with asynchronous programming, using libraries such as \textit{asyncio} \footnote{asyncio is a library to write concurrent code using the async/await syntax: \url{https://docs.python.org/3/library/asyncio.html}}, which while powerful and efficient, makes writing code a bit awkward and cumbersome. We thus opted for a more traditional approach using multithreaded programming: in computer science, a thread of execution is the smallest sequence of programmed instruction that can be managed independently by the scheduler \cite{lamportMultiprocessor}, and multiple threads may be executed concurrently sharing resources such as memory, which is directly counterpointed to multiprocessing where each process has its own storage space (moreover, processes are typically made of threads). 
 
 In Python there are modules in the standard library for both of them, respectively \textit{threading} \footnote{The threading module provides a way to run multiple threads (smaller units of a process) concurrently within a single process: \url{https://docs.python.org/3/library/threading.html}} and \textit{multiprocessing} \footnote{The multiprocessing module is a package that supports spawning processes using an API similar to the threading module: \url{https://docs.python.org/3/library/multiprocessing.html}}. It is fundamental to note that the former does not provide real multi-threading since, due to the Global Interpreter Lock of CPython (the, for want of a better word, "official" Python implementation), only one thread can execute bytecode at once. To cite directly from the documentation: \textit{"[GIL is] The mechanism used by the CPython interpreter to assure that only one thread executes Python bytecode at a time. This simplifies the CPython implementation by making the object model (including critical built-in types such as dict) implicitly safe against concurrent access. Locking the entire interpreter makes it easier for the interpreter to be multi-threaded, at the expense of much of the parallelism afforded by multi-processor machines."} \footnote{Global Interpreter Lock: \url{https://docs.python.org/3/glossary.html\#term-global-interpreter-lock}}.
 
-Thankfully, this does not apply with the \textit{multiprocessing} module, which creates separate processes instead, offering both local and remote concurrency effectively side-stepping the Global Interpreter Lock, allowing programmers to fully leverage multi-processors machines. As previously stated, processes are much heavier than threads and thus more expensive to create, but do not incur the risks of shared memory. 
+Thankfully, this does not apply with the \textit{multiprocessing} module, which creates separate processes instead, offering both local and remote concurrency effectively side-stepping the Global Interpreter Lock, allowing programmers to fully leverage multiple cores. As previously stated, processes are much heavier than threads and thus more expensive to create, but do not incur the risks of shared memory. 
 
 \subsubsection{Comparison}
 
@@ -109,19 +109,36 @@ All tests have been performed with the following machine:
     \item Memory: 15610MiB;
     \item Python version: 3.12.3;
     \item Power Mode: Balanced;
-    \item Alimentation: 100W via type C.
+    \item Power Supply: 100W via type C.
 \end{itemize}
 
-\subsection{Game Engine} \label{sec:pygame}
+\subsection{Game Engines} \label{sec:pygame}
 
-There are many ways to implement a graphical user interface: from clever shell tricks like htop \footnote{htop is a cross-platform text-mode interactive process viewer: \url{https://htop.dev/}}, to full fledged game engines like Unity \footnote{Unity is a cross-platform game engine developed by Unity Technologies: \url{https://unity.com/}}, we really had the luxury, and challenge, of choice.
+There are many ways to implement a graphical user interface: from clever shell tricks like htop \footnote{htop is a cross-platform text-mode interactive process viewer: \url{https://htop.dev/}}, to full fledged game engines like Unity \footnote{Unity is a cross-platform game engine developed by Unity Technologies: \url{https://unity.com/}} or Godot \footnote{Godot is a cross-platform open-source game engine: \url{https://godotengine.org/}} that often come with their own editor and a \textit{top-down} approach, meaning build the UI first and then go down to code as needed for scripting and refining.
 
-More serious solutions like Godot (robust, open-source, based on C++, allows even 3D development) or Phaser (lightweight and easy to use, based on JavaScript), come with their own editor and have a \textit{top-down} approach, meaning the developer is supposed to build the graphical components first, and then go down to code as needed for scripting and refining. This is not optimal for our needs since it would make it more challenging to implement the Raft protocol.
-
-What we wanted was a \textit{bottom-up} approach, where everything stems from the code itself to simplify merging all project's components, better yet if using the same programming language. Python offers exactly this since not only natively supports both RPCs and concurrency (as previously stated) but also has a module in the standard library that handles graphical user interfaces (UIs), namely tkinter, and the community-developed framework Pygame.
+Unfortunately our needs are quite opposite: what we want is a code-only, mono-language framework that while slowing down game development should simplify merging Raft with it. The choice thus boiled down to two alternatives: tkinter and Pygame. 
 
 \subsubsection{Comparison}
 
-Deciding between tkinter and Pygame ultimately came down to ease of development, power and flexibility. Let's briefly list the strengths and weaknesses of both: tkinter, being part of the standard library, is very well documented and supported, but since tis made to develop static UIs of simple applications it does not support advanced 
+Let's list strengths and weaknesses of the two.
 
-That being said we ultimately decided to opt for the framework Pygame since it offers way more flexibility, easier to handle   
+\begin{itemize}
+  \item \textbf{tkinter:} 
+    \begin{itemize} 
+      \item \faThumbsUp[regular] Module of the standard library;
+      \item \faThumbsUp[regular] Few lines of code to make simple UIs;
+      \item \faThumbsDown\ Low flexibility;
+      \item \faThumbsDown\ No game loop;
+      \item \faThumbsDown\ Not a game engine;
+    \end{itemize}
+  \item \textbf{Pygame:}
+    \begin{itemize}
+      \item \faThumbsUp[regular] Extreme flexibility;
+      \item \faThumbsUp[regular] Direct access to game loop;
+      \item \faThumbsUp[regular] APIs to access many kinds of user inputs;
+      \item \faThumbsDown\ Verbose to obtain simple UIs;
+      \item \faThumbsDown\ Non-standard community-made framework.
+    \end{itemize}
+\end{itemize}
+
+We ultimately decided to opt for Pygame for four reasons: it is extremely flexible, exposes many useful functions (for example to catch different user inputs), gives direct access to the game loop and it is a novel and fun framework that has never, to the best of our knowledge, been used in such a fashion. 
