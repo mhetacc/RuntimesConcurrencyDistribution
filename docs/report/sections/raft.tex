@@ -1,0 +1,11 @@
+\section{Raft}
+
+In this section we are not going to present the Raft algorithm, since Ongaro and Ousterhout already did so in their excellent work "In Search of an Understandable Consensus Algorithm" \cite{raft}. Instead, we will discuss our interpretations of its concepts and intuitions that were necessary to adapt it to our own use case.
+
+The algorithm uses three types of nodes, namely leader, follower and candidate, and revolves around three core functionalities: leader election, log replication and overwriting, and cluster membership change. Log compaction is also mentioned, while a byzantine fault tolerant variant is never explored by the original authors.
+
+\subsection{Node Types}
+
+There are three types of node, namely leader, follower and candidate. In this section we are going to show their characteristics and similarities.
+
+\subsubsection{Leader Node}
