@@ -4,8 +4,58 @@ In this section we are not going to present the Raft algorithm, since Ongaro and
 
 The algorithm uses three types of nodes, namely leader, follower and candidate, and revolves around three core functionalities: leader election, log replication and overwriting, and cluster membership change. Log compaction is also mentioned, while a byzantine fault tolerant variant is never explored by the original authors.
 
+On last element, fundamental to the functioning of the algorithm, is the \textit{term}: everything happens in a certain term, which divides time logically and increments on every new leader election. 
+
 \subsection{Node Types}
 
-There are three types of node, namely leader, follower and candidate. In this section we are going to show their characteristics and similarities.
+There are three types of node, namely leader, follower and candidate. In this section we are going to show their characteristics and similarities. Note that all nodes have a timer: they are all randomized for each of them.
 
 \subsubsection{Leader Node}
+
+The algorithm revolves around one leader node, whose job is to synchronize all servers' logs to ensure data consistency. It does so by replicating its own log on all followers (the non-leader nodes) by sending new or, if needed, old entries via remote procedure calls. 
+
+To make sure all nodes believe it is alive, it sends periodically (every 150-300ms) an empty remote procedure call called \textit{heartbeat}
+
+\subsubsection{Follower Node}
+
+All nodes, except for the leader, are classified as followers. They are not allowed to replicate their own log, and when they receive any request they have to forward them to the leader. They are "passive" in this sense, since they can only obey the leader. 
+
+To make sure that the cluster never remains without a leader, every follower have an election timeout (between 150ms and 300ms) which resets every time an RPC from the leader get received. If it times out, the follower change its state to \textit{candidate}, increment its current term and starts a leader election.
+
+\subsubsection{Candidate Node}
+
+When a follower's election timeout times out, it becomes a candidate and starts an election. It votes for itself and then wait for either of two outcomes: it wins, thus becoming a new leader, or looses (ether another leader gets elected or the old one manifest itself) thus reverting back to being a follower.
+
+\subsection{Log}
+
+As stated, the leader's job is to accept requests (in our specific case they are player inputs) and then forward them to the followers. Let's talk about the structure of the log. 
+
+The log is basically a \textit{list} (or an \textit{array}) of entries, where entry is an element that encapsulates data (like an integer or a string), has an index (unique for each entry) and the term of its creation (figure \ref{fig:logStructure}). We defined entires as Python \textit{Data Classes} \footnote{Data Classes module provides a decorator and functions for automatically adding generated special methods to user-defined classes: \url{https://docs.python.org/3/library/dataclasses.html}} (decorators that simulate C's structures) such as shown in code snippet \ref{code:entry}.
+
+\label{code:entry}
+\begin{python} 
+@dataclass
+class Entry:
+    term: int
+    index: int
+    command: str 
+\end{python}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=.8\linewidth]{images/logStructure.png}
+  
+  \caption{Raf's log is fundamentally and array made of entries.}
+  \Description{An array, thus a list of consecutive elements, each of wich is an entry with its own index, term and data.}
+  \label{fig:logStructure}
+\end{figure}
+
+\subsection{Log Replication and Overwriting}
+
+\subsubsection{Log Compaction}
+
+\subsection{Leader Election}
+
+\subsection{Cluster Membership Change}
+
+\subsection{Byzantine Raft}
