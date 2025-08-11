@@ -1,15 +1,16 @@
 \section{Raft} \label{sec:raft}
 
-In this section we are not going to present the Raft algorithm, since Ongaro and Ousterhout already did so in their excellent work "In Search of an Understandable Consensus Algorithm" \cite{raft}. Instead, we will discuss the interpretation and implementation we did to adapt it to our own use case.
+It is not our intention to plagiarize Ongaro and Ousterhout's excellent work "In Search of an Understandable Consensus Algorithm" \cite{raft} by presenting the Raft algorithm's specifications. Instead, we will discuss how we interpreted and implemented it to mold it into our own use case
 
-The algorithm uses three types of nodes, namely leader, follower and candidate, and revolves around three core functionalities: leader election, log replication and overwriting, and cluster membership change. Log compaction is also mentioned, while a byzantine fault tolerant variant is never explored by the original authors.
+The algorithm uses three types of nodes, namely \textit{leader}, \textit{follower} and \textit{candidate}, and revolves around three core functionalities: leader election, log replication and cluster membership change. Log compaction is also mentioned, while a byzantine fault tolerant variant is never explored by the original authors.
 
-One last element, fundamental to the functioning of the algorithm, is the \textit{term}: everything happens in a certain term, which divides time logically and increments every election. 
+One last component, instrumental to the functioning of the algorithm, is the \textit{term}: everything happens in a certain term, which divides time logically and increments every election. 
 
-Our Raft class directly extends \textit{simpleXMLRPCServer} from XML-RPC module, as seen at code \ref{code:raft}.
+Our Raft class directly extends \textit{simpleXMLRPCServer} from XML-RPC module, as shown at code \ref{code:raft}.
 
-\label{code:raft}
-\begin{python} 
+Lastly, to fire off non-blocking concurrent RPCs on the cluster, we leverage the \textit{concurrent.futures} module using \textit{ThreadPoolExecutor}. To avoid having to keep creating and destroying pools every time a server needs to communicate with the cluster, we embedded a finite amount of workers as class attributes (code \ref{code:threadPool}).
+
+\begin{python}[label={code:raft}, caption={Class Raft definition}]
 class Raft(SimpleXMLRPCServer):
     def __init__(self, 
                  addr: tuple[str, int],
@@ -20,12 +21,20 @@ class Raft(SimpleXMLRPCServer):
         SimpleXMLRPCServer.__init__(self, addr=addr, allow_none=allow_none)
 \end{python}
 
+\begin{python}[label={code:threadPool}, caption={ThreadPoolExecutor workers}]
+class Raft(SimpleXMLRPCServer):
+    def __init__(self, 
+                 # ...
+                 )
+        # start executors pool
+        self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=len(self.cluster))
+\end{python}
+
 \subsection{Node Types} \label{sec:nodes}
 
-There are three types of node, namely leader, follower and candidate (code \ref{code:nodeModes}). In this section we are going to show their characteristics and similarities. Note that all nodes have a timer: it is randomized for each of them and has been implemented by extending \textit{threading.Timer} \ref{code:loopingTimer}
+There are three types of node, namely leader, follower and candidate (code \ref{code:nodeModes}). In this section we are going to show their characteristics and similarities. Note that all nodes have a timer: it is randomized for each of them and has been implemented by extending \textit{threading.Timer}, thus making it thread-safe (code \ref{code:loopingTimer})
 
-\label{code:nodeModes}
-\begin{python} 
+\begin{python}[label={code:nodeModes}, caption={Node modes}]
 class Raft(SimpleXMLRPCServer):
     class Mode(Enum):
         LEADER = 1
@@ -38,8 +47,7 @@ class Raft(SimpleXMLRPCServer):
                  )
 \end{python}
 
-\label{code:loopingTimer}
-\begin{python} 
+\begin{python}[label={code:loopingTimer}, caption={Threadsafe looping timer}]
 class LoopTimer(Timer):
     def __init__(self, interval, function, args=None, kwawrgs=None):
         Timer.__init__(self, interval, function, args, kwawrgs)
@@ -63,24 +71,23 @@ To make sure all nodes believe the leader's alive, it sends periodically (every 
 
 \subsubsection{Follower Node}
 
-All nodes, except for the leader, are classified as followers. They are not allowed to replicate their own log, and when they receive any request they have to forward them to the leader.
+All nodes, except for the leader, are classified as followers. They are not allowed to replicate their own log, and when they receive any request they have to forward it to the leader.
 
-To make sure that the cluster never remains without a leader, every follower have an election timeout (between 150ms and 300ms) which resets every time an RPC from the leader gets received. If it times out, the follower change its state to \textit{candidate}, increment its current term and starts a leader election. 
+To make sure the cluster never remains without a leader, every follower have an election timeout (between 150ms and 300ms) which resets every time an RPC from the leader gets received. When times out, the follower change its state to \textit{candidate}, increment its current term and starts a leader election. 
 
-Followers become candidates in another scenario: whenever they receive an entry from the leader, they compare it with their own last log entry. If either leader's term is smaller, or leader's index is smaller while having the same term, the append is rejected and a new election is started. 
+Followers become candidates in another scenario: whenever they receive an entry from the leader, they compare it with their own last log entry. If either leader's term is smaller, or leader's index is smaller while having the same term, the \textit{append entry} is rejected and a new election is started. 
 
 \subsubsection{Candidate Node}
 
-When a follower's election timeout times out, it becomes a candidate and starts an election. It votes for itself and then wait for either of two outcomes: it wins, thus becoming a new leader, or looses (ether another leader gets elected or the old one manifest itself) thus reverting back to being a follower.
+When a follower's election timeout times out, it becomes a candidate, increment its own term and starts an election. It votes for itself and then wait for either of two outcomes: wins, thus becoming a new leader, or looses (ether another leader gets elected or the old one manifest itself) thus reverting back to being a follower.
 
 \subsection{Log}
 
 As stated, the leader's job is to accept requests (in our specific case they are player inputs) and then forward them to the followers. Let's talk about the structure of the log. 
 
-The log is basically a \textit{list} (or an \textit{array}) of entries, where entry is an element that encapsulates data (like an integer or a string), has an index (unique for each entry) and the term of its creation (figure \ref{fig:logStructure}). We defined entires as Python \textit{Data Classes} \footnote{Data Classes module provides a decorator and functions for automatically adding generated special methods to user-defined classes: \url{https://docs.python.org/3/library/dataclasses.html}} (decorators that simulate C's structures) such as shown in code snippet \ref{code:entry}.
+The log is basically a \textit{list} (or an \textit{array}) of entries, where \textit{entry} is an element that encapsulates data (like an integer or a string), has an index (unique for each entry) and the term of its creation (figure \ref{fig:logStructure}). We defined entires as \textit{Data Classes} \footnote{Data Classes module provides a decorator and functions for automatically adding generated special methods to user-defined classes: \url{https://docs.python.org/3/library/dataclasses.html}} (decorators that simulate C's structures) as can be seen in code \ref{code:entry}.
 
-\label{code:entry}
-\begin{python} 
+\begin{python}[label={code:entry}, caption={Dataclass Entry definition}]
 @dataclass
 class Entry:
     term: int
@@ -99,7 +106,112 @@ class Entry:
 
 \subsection{Log Replication and Overwriting}
 
-When the leader have some new entries 
+\subsubsection{Leader's Side}
+
+The leader (each server as a matter of fact) periodically checks whether there are new commands to propagate (always stored in queue \textit{pygame\_commands}), by overriding \textit{SimpleXMLRPCServer}'s method \textit{service\_actions} (code \ref{code:addCommands}, more details in section \ref{sec:raftian}).
+
+Then, translates them into entries by giving each of them the current term and a log index that starts from $lastLogEntry(index) + 1$ and increases by one for each entry. To give and example: if $lastLogEntry(index) = 7$ and we have three new commands, their indexes will respectively be eight (8), nine (9) and ten (10). The translation can be seen at code \ref{code:translateCommands}
+
+At this point it propagates \textit{new\_entries} to the whole cluster, updating the commit index (necessary for applying log to state) as soon as at least half the propagations are successful, like so: $commitIndex = lastNewEntry(index)$. 
+
+What happens if the \textit{append entries} gets rejected? The leader adds to \textit{new\_entries} its own last log entry: $new\_entries = lastLogEntry + new\_entries$ (figure \ref{fig:newEntries}). Then repeats the propagation procedure, for each reject a new \textit{last log entry} gets added, progressively traversing the log backwards. If, at a certain point, $new\_entries == allLog + new\_entries$ (i.e., all leader's log gets propagated) the flag \textit{all\_log} is set to \textit{True}. 
+
+Since every server may reject or accepts different sets of entries, depending on their own local log, every propagation must be "local" for each follower. 
+
+The flow of execution for the log propagation is: \textit{Raft: service\_actions} \faArrowRight\ \textit{Raft: propagate\_entries} \faArrowRight\ \textit{propagate\_entries} \textit{:encapsulates\_proxy:} \textit{append\_entries\_rpc}. The last one gets called as many times as needed on every single follower.
+
+Of course, all propagation happen concurrently using a \textit{ThreadPoolExecutor}, and the code for entries propagation (leader's side) can be seen at listing \ref{code:leaderPropagateEntries}.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=.8\linewidth]{images/newEntries.png}
+  
+  \caption{New entries with the last log's entry added to the begging of the list.}
+  \Description{Two arrays, where the first is only one element (the last log's entry) which gets added at the beggingn of the second array, i.e., the new entries.}
+  \label{fig:newEntries}
+\end{figure}
+
+\begin{python}[label={code:addCommands}, caption={Periodically checks whether there are new commands}]
+def service_actions(self):                      # RUN method of the server, override
+    if time.time() - self.countdown >= .005:    # do actions every .005 seconds
+        global pygame_commands
+
+        if not pygame_commands.empty():         # propagate entries to cluster
+            self.propagate_entries()
+\end{python}
+
+\begin{python}[label={code:translateCommands}, caption={Translates commands into new entries}]
+def propagate_entries():
+# ...
+    while not pygame_commands.empty():
+        command = pygame_commands.get()
+        log_index += 1                          # lastLogEntry(index) + 1
+        self.new_entries.append(Raft.Entry(     # append to support list 'new_entries'
+            term=self.term,
+            index=log_index,
+            command=command
+        ))
+\end{python}
+
+\begin{python}[label={code:leaderPropagateEntries}, caption={Leader propagation procedure, for complete code refer to project's repository}]
+def propagate_entries(self):        
+    # ...          
+    if self.log:                            # travel backwards through self.log for each reject
+        entries: list[Raft.Entry] = []
+        entries.append(self.log[-1])    
+        entries.extend(self.new_entries)    
+        log_iterator: int = -2              # log_iterator soft resets for each follower
+    else:
+        entries: list[Raft.Entry] = self.new_entries
+        log_iterator: int = -1
+        
+    # ...
+    # inner function necessary for concurrent execution
+    def encapsulate_proxy(self, follower, entries, log_iterator):
+        # ...
+        with xmlrpc.client.ServerProxy(complete_url, allow_none=True) as proxy: 
+            while not propagation_successful:
+                # send new entries (local for each follower) 
+                # ...
+                result = proxy.append_entries_rpc(entries, self.term, self.commit_index, all_log)
+                if result[0] == False:
+                    # add another entry from self.log to new entries
+                    entries = [self.log[log_iterator]] + entries 
+                    log_iterator -= 1   
+                elif result[0] == True:
+                    propagation_successful = True
+
+        return propagation_successful # to propagate_entries, make propagation counter increase 
+        # encapsulate_proxy ends
+
+    results = []
+
+    # fires RPCs concurrently using ThreadPoolExecutor 
+    future_result = {           # clever python syntax trick 
+        self.executor.submit(
+            encapsulate_proxy,  # function
+            self,               # function's parameter
+            follower,           # function's parameter
+            entries,            # function's parameter
+            log_iterator        # function's parameter
+            ): follower for follower in self.cluster}
+    for future in concurrent.futures.as_completed(future_result):
+        # results of RPCs
+        data = future.result()
+        results.append(data)
+
+    # finally counts if propagation was successful enough
+    if results.count(True) >= len(self.cluster) / 2:
+        self.log.extend(self.new_entries)               # add new entries to log
+        self.new_entries.clear()                        
+        self.commit_index = self.log[-1].index          # ensure log gets eventually applied
+    else:
+    #   new entries not cleaned, so they will be propagated again
+\end{python}
+
+\subsubsection{Followers' side}
+
+\subsubsection{Apply Log to State}
 
 \subsubsection{Log Compaction}
 

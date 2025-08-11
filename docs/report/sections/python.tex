@@ -23,16 +23,16 @@ There are many libraries that implement this functionality, like gRPC (\url{http
 
 The library provides both server and client implementations, encapsulating the former in its own loop, while the latter can be fired as needed allowing a bit more flexibility in its usage.
 
-In the following code, \verb|client| is an instance of \verb|ServerProxy|, which acts as the client-side interface for XML-RPC, allowing you to call the remote procedure \verb|test_foo| as if it were a local function, even though it executes on a server in a different networked location.
+In code \ref{code:client}, \verb|client| is an instance of \verb|ServerProxy|, which acts as the client-side interface for XML-RPC, allowing you to call the remote procedure \verb|test_foo| as if it were a local function, even though it executes on a server in a different networked location.
 
-\begin{python}
+\begin{python}[label={code:client}, caption={Client as server proxy}]
 with xmlrpc.client.ServerProxy('http://localhost:8000', allow_none=True) as client:
     print(client.test_foo(42)) # print returned value
 \end{python}
 
-The server must be instantiated and kept running by calling its event loop (e.g., using \verb|serve_forever|), and all remote procedure calls must be registered using the \verb|register_function| method of \verb|SimpleXMLRPCServer|.
+The server must be instantiated and kept running by calling its event loop (e.g., using \verb|serve_forever|), and all remote procedure calls must be registered using the \verb|register_function| method of \verb|SimpleXMLRPCServer| (code \ref{code:server}).
 
-\begin{python}
+\begin{python}[label={code:server}, caption={Server}]
 with SimpleXMLRPCServer (('localhost', 8000)) as server:
     def test_foo(number):
         return f'The number is {number}'
@@ -59,8 +59,7 @@ To evaluate which of the two modules is more suited for our purposes, we devised
 
 Then we ran both of them in various scenarios: with the game instance alone (baselines), with a server alive in a thread and with a server alive in a process, and we measured the \textit{frames per second} (FPS) \footnote{Frame rate, most commonly expressed in frames per second or FPS, is typically the frequency (rate) at which consecutive images (frames) are captured or displayed. This definition applies to film and video cameras, computer animation, and motion capture systems, while in the context of computer graphics is the rate at which a system, particularly the graphic card, si able to generate frames. Source: \url{https://en.wikipedia.org/wiki/Frame_rate}} in each case, since it is the most common metric to evaluate game performance. Higher FPS-count translates to a smoother and more responsive, i.e., better, gaming experience.
 
-\label{code:randomdots}
-\begin{python} 
+\begin{python}[label={code:randomdots}, caption={Pygame graphical dot}]
 # create random offsets for both x and y coordinates
 xmov = random.randint(-5,5)
 ymov = random.randint(-5,5)
