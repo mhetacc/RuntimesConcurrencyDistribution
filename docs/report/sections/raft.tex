@@ -75,7 +75,7 @@ All nodes, except for the leader, are classified as followers. They are not allo
 
 To make sure the cluster never remains without a leader, every follower have an election timeout (between 150ms and 300ms) which resets every time an RPC from the leader gets received. When times out, the follower change its state to \textit{candidate}, increment its current term and starts a leader election. 
 
-Followers become candidates in another scenario: whenever they receive an entry from the leader, they compare it with their own last log entry. If either leader's term is smaller, or leader's index is smaller while having the same term, the \textit{append entry} is rejected and a new election is started. 
+Followers become candidates in another scenario: whenever they receive an entry from the leader, they compare it with their own last log entry. If the leader's term is smaller the \textit{append entry} is rejected and a new election is started. 
 
 \subsubsection{Candidate Node}
 
@@ -106,7 +106,18 @@ class Entry:
 
 \subsection{Log Replication and Overwriting}
 
-\subsubsection{Leader Propagates}
+All log propagation revolves around one core remote procedure call named \textit{append\_entries\_rpc}, which the leader calls on a list of server proxies that connects it to the followers, which in turn call on a proxy of the leader. It must be registered in the server to be callable, like can be seen at listing \ref{code:registerFunciton}.
+
+\begin{python}[label={code:registerFunciton}, caption={Register, thus making it callable, the remote procedure call \textit{append\_entries\_rpc}}]
+def handle_server():                                    # enclose server in a callable function
+    with Raft(...) as server:                           # creates SimpleXMLRPCSever
+        def append_entries_rpc(entries, term, commit_index, all_log):
+            # ...
+        server.register_function(append_entries_rpc)    # makes function callable on the other side
+        server.serve_forever()                          # keeps server alive 
+\end{python}
+
+\subsubsection{Leader Propagates Entries}
 
 The leader (each server as a matter of fact) periodically checks whether there are new commands to propagate (always stored in queue \textit{pygame\_commands}), by overriding \textit{SimpleXMLRPCServer}'s method \textit{service\_actions} (listing \ref{code:addCommands}, more details in section \ref{sec:raftian}).
 
@@ -209,11 +220,59 @@ def propagate_entries(self):
     #   new entries are not cleared, so they will be propagated again
 \end{python}
 
-\subsubsection{Follower Recieves}
+\subsubsection{Follower Recieves Entries}
 
-\subsubsection{Apply Log to State}
+When a follower receives an \textit{append entries} request from the leader, first checks whether leader's term is up to date. If its not, i.e., $leaderTerm < followerTerm$, rejects by answering with the tuple $(False, followerTerm)$. In this context \textit{answering} is done via the remote procedure call's return value.
 
-\subsubsection{Log Compaction}
+If, on the other hand, the leader's term is equal or greater than its own (i.e., $leaderTerm \geq followerTerm$), the follower updates its commit index and, if $leaderEntries \neq \emptyset$, checks the \textit{all\_log} flag. If its \textit{True}, clears all its own log to overwrite it with the leader's (fundamental to log forcing, listing \ref{code:clearLog}). Otherwise ($all\_log \neq True$) the leader's did not send all its log, so the follower search trough its own log an entry equal to the leader's previous one (i.e., the entry preceding the new ones). Let's make and example: 
+
+\begin{itemize}
+    \item Leader's log = $[1, 2, 3, 4, 5]$;
+    \item Leader's new entries = $[6, 7]$;
+    \item Thus leader's prev = $[5]$.
+
+\end{itemize}
+
+If it finds and entry equal to leader's previous (i.e, $followerLog(someEntry) == leaderPrev$), deletes all log that follows it and append new entries, otherwise ($\nexists(followerLog(someEntry) == leaderPrev)$) rejects the request. Since the leader, when faced with a reject, adds a new \textit{prev} and keep repeating the send until it comprises all its log, at a certain point the follower will be forced to overwrite all its log, thus making it equal to the leader's. This overwriting is called \textit{log forcing} and ensures that all logs are equal to the leader's.
+The code can be seen at listing \ref{code:searchFollowerLog} (for the complete one refer to the repository).
+
+\begin{python}[label={code:clearLog}, caption={Follower clear its onwn log to overwrite it with the leader's}]
+if all_log == True:
+    server.log.clear() # if leader sent all its log, clear and rewrite log (leader's log forcing)
+\end{python}
+
+\begin{python}[label={code:searchFollowerLog}, caption={Follower search in its own log for an entry equal to leader's prev}]
+if commit_index is not None:                    
+        server.commit_index = commit_index  # update commit index 
+
+if entries is not None:     # not an heartbeat
+    if all_log == True:     # complete overwrite
+        server.log.clear()
+
+    if server.log:  # if follower's log not empty search for an entry equal to leader's prev
+        entry_log_index: int | None = None              # save its log index (!= entry index)
+        for i, my_entry in enumerate(server.log):
+            if (my_entry.index == entries[0].index 
+                and my_entry.term == entries[0].term):
+                entry_log_index = i
+                break # no need to search further
+        # here entry_log_index == (position of entry equal to leader.prev) | None
+
+        if entry_log_index is None:         # entry equal to leader's prev not found
+            return(False, server.term)      # rejects
+
+        del server.log[(entry_log_index ):] # delete all log following leader prev 
+
+    server.log.extend(entries) # append new entries
+\end{python}
+
+\subsubsection{Follower Sends Entries}
+
+\subsubsection{Leader Recieves Entries}
+
+\subsection{Apply Log to State}
+
+\subsection{Log Compaction}
 
 \subsection{Leader Election}
 
