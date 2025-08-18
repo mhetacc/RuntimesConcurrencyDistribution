@@ -515,6 +515,11 @@ INPUT ./images/newEntries.png
 INPUT ./images/newEntries.png
 INPUT ./images/newEntries.png
 INPUT /usr/share/texlive/texmf-dist/fonts/enc/dvips/fontawesome5/fa5free0.enc
+INPUT ./images/applyToState.png
+INPUT ./images/applyToState.png
+INPUT ./images/applyToState.png
+INPUT ./images/applyToState.png
+INPUT ./images/applyToState.png
 OUTPUT comment.cut
 INPUT ./comment.cut
 INPUT ./comment.cut

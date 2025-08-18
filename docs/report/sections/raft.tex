@@ -278,6 +278,44 @@ The leader does very little when receives entries from the followers: it just pu
 
 \subsection{Apply Log to State}
 
+Let's first explain two key attributes: \textit{commit index} and \textit{last applied}. Both of these represent an index, but the former is the highest-index entry successfully propagated in the cluster, while the latter is the highest-index entry already applied to state. 
+
+Every node, whether leader or follower, applies entries to state in the same way: inside their function \textit{service\_actions} they periodically check if there is a discrepancy between \textit{commit index} and \textit{last applied} attributes (i.e., $commit\_index > last\_applied$). Then, starting from the last applied entry, they apply to state all successive entries up to and including the one with the same index as \textit{commit\_index}, updating \textit{last\_applied} as they go. To clarify: servers apply all entries between $log(entry.index == last\_applied)$ and $log(entry.index == commit\_index)$ as shown in figure \ref{fig:applyToState}. 
+
+To apply entries in our context means that they get appended to the queue \textit{raft\_orders}. The code can be seen at listing \ref{code:applyToState} (for the complete source refer to the repository)
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=.8\linewidth]{images/applyToState.png}
+  
+  \caption{All entries between \textit{last\_applied} and \textit{commit\_index} (included) get applied to state.}
+  \Description{An array showing that all entries between the last applied and the last committed get applied to state.}
+  \label{fig:applyToState}
+\end{figure}
+
+\begin{python}[label={code:applyToState}, caption={All nodes apply entries to state based on \textit{commit\_index}}]
+def service_actions(self):
+        # ...
+        if self.commit_index is not None and self.commit_index > self.last_applied:   
+            global raft_orders  # applying means appending entries to this queue
+
+            #...
+
+            last_applied_log_position: int = -1 
+            for i, my_entry in enumerate(self.log):
+                if (my_entry.index == self.last_applied):
+                    last_applied_log_position = i
+                    break # found log position of last applied entry 
+            
+            log_iterator = last_applied_log_position + 1    # improves code clarity 
+
+            while self.last_applied != self.commit_index:
+                raft_orders.put(self.log[log_iterator])
+                self.last_applied = self.log[log_iterator].index
+                log_iterator = log_iterator + 1
+            # here self.last_applied == self.commit_index
+\end{python}
+
 \subsection{Log Compaction}
 
 \subsection{Leader Election}
