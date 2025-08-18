@@ -1,13 +1,13 @@
 # Fdb version 4
-["bibtex report"] 1755183522.17508 "report.aux" "report.bbl" "report" 1755183533.79558 0
+["bibtex report"] 1755526036.63401 "report.aux" "report.bbl" "report" 1755526234.5901 0
   "./report.bib" 1754392182.22637 11088 e1d91766eaa595d48f8bdeae040e9985 ""
   "/usr/share/texlive/texmf-dist/bibtex/bst/acmart/ACM-Reference-Format.bst" 1680299675 90332 18dc4e5c9b5c2ddd337e9f97727d04f1 ""
-  "report.aux" 1755183533.59416 11273 c90e736fee0869099ef628846016df9d "pdflatex"
+  "report.aux" 1755526234.39561 11367 9e61c6cbc6d2567b0f4a236839c0c54c "pdflatex"
   (generated)
   "report.bbl"
   "report.blg"
   (rewritten before read)
-["pdflatex"] 1755183531.53861 "/home/mhetac/Documents/GitHub/RuntimesConcurrencyDistribution/docs/report/report.tex" "report.pdf" "report" 1755183533.79578 0
+["pdflatex"] 1755526232.30951 "/home/mhetac/Documents/GitHub/RuntimesConcurrencyDistribution/docs/report/report.tex" "report.pdf" "report" 1755526234.59025 0
   "/etc/texmf/web2c/texmf.cnf" 1731932711.72022 475 c0e671620eb5563b2130f56340a5fde8 ""
   "/home/mhetac/Documents/GitHub/RuntimesConcurrencyDistribution/docs/report/report.tex" 1755180220.43186 9034 3a70bef315e950b8d98866f570205372 ""
   "/usr/share/texlive/texmf-dist/fonts/enc/dvips/fontawesome5/fa5free0.enc" 1622837620 3083 a707712f77b073b3833e4b1334a30e99 ""
@@ -231,7 +231,7 @@
   "/usr/share/texmf/web2c/texmf.cnf" 1707919699 40399 f2c302f7d2af602abb742093540a5834 ""
   "/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map" 1743673054.10926 5352258 625d145f3708f99ff2144a56c0e20fa1 ""
   "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1743673063 7453521 177a431387c98bb1593578671e94b705 ""
-  "comment.cut" 1755183533.52116 64 0754424945249fbfae64d8991d811e64 "pdflatex"
+  "comment.cut" 1755526234.32261 64 0754424945249fbfae64d8991d811e64 "pdflatex"
   "images/1000dots.png" 1754405057.08062 4011610 c8cfd8393a87bcae88c2675793ca2795 ""
   "images/100dots.png" 1754405057.10062 4011609 6e88aa6c834f2f0454456b5a9e47f075 ""
   "images/TIOBEindex.png" 1754402432.44566 371976 ba4cfcaee9ce89deb54e5d2b6caf0004 ""
@@ -239,13 +239,13 @@
   "images/newEntries.png" 1754922606.65237 82035 4faed7bb3d227fc8a2b140c4de83de72 ""
   "images/performance_eval_fps_graph.png" 1754401105.23594 649644 787c62ab1130451a8195c7f121d2cffa ""
   "lstlisting_settings.tex" 1754910048.17046 1229 8adb8988fc97d3f33aa2dfed26f9b006 ""
-  "report.aux" 1755183533.59416 11273 c90e736fee0869099ef628846016df9d "pdflatex"
-  "report.bbl" 1755183522.22014 9924 70b88db72ff4b4bdfd377a8c8d02ca22 "bibtex report"
-  "report.out" 1755183533.59516 2904 e40c5164c2b39de232d9e7cd97e9bfe8 "pdflatex"
+  "report.aux" 1755526234.39561 11367 9e61c6cbc6d2567b0f4a236839c0c54c "pdflatex"
+  "report.bbl" 1755526036.67821 9924 70b88db72ff4b4bdfd377a8c8d02ca22 "bibtex report"
+  "report.out" 1755526234.39661 2904 e40c5164c2b39de232d9e7cd97e9bfe8 "pdflatex"
   "report.tex" 1755180220.43186 9034 3a70bef315e950b8d98866f570205372 ""
   "sections/introduction.tex" 1754401580.91341 6662 76c985a3cdf084808e92fbcf130bb55b ""
   "sections/python.tex" 1754910698.93516 12725 b96352603393ed124e1af1a2536ab3be ""
-  "sections/raft.tex" 1755183530.24815 16640 07d936d6257b4e6cc6d1cf438afc0b5e ""
+  "sections/raft.tex" 1755526232.09961 17634 b84ba7bfe6614cac740644d7cf578fbc ""
   (generated)
   "comment.cut"
   "report.aux"

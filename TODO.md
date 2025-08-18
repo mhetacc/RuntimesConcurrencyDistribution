@@ -1,0 +1,6 @@
+- [x] check ssect log rep and over
+- [ ] check ssect apply log to state
+- [ ] check ssect leader election
+- [ ] check ssect cluster change
+- [ ] check ssect byzantine 
+- [ ] create next section: raftian

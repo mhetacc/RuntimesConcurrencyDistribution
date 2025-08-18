@@ -85,7 +85,7 @@ When a follower's election timeout times out, it becomes a candidate, increment 
 
 As stated, the leader's job is to accept requests (in our specific case they are player inputs) and then forward them to the followers. Let's talk about the structure of the log. 
 
-The log is basically a \textit{list} (or an \textit{array}) of entries, where \textit{entry} is an element that encapsulates data (like an integer or a string), has an index (unique for each entry) and the term of its creation (figure \ref{fig:logStructure}). We defined entires as \textit{Data Classes} \footnote{Data Classes module provides a decorator and functions for automatically adding generated special methods to user-defined classes: \url{https://docs.python.org/3/library/dataclasses.html}} (decorators that simulate C's structures) as can be seen in code \ref{code:entry}.
+The log is basically a \textit{list} (or an \textit{array}) of entries, where \textit{entry} is an element that encapsulates data (like an integer or a string), has an index (unique for each entry) and the term of its creation (figure \ref{fig:logStructure}). We defined entries as \textit{Data Classes} \footnote{Data Classes module provides a decorator and functions for automatically adding generated special methods to user-defined classes: \url{https://docs.python.org/3/library/dataclasses.html}} (decorators that simulate C's structures) as can be seen in code \ref{code:entry}.
 
 \begin{python}[label={code:entry}, caption={Dataclass Entry definition}]
 @dataclass
@@ -99,16 +99,16 @@ class Entry:
   \centering
   \includegraphics[width=.8\linewidth]{images/logStructure.png}
   
-  \caption{Raf's log is fundamentally and array made of entries.}
-  \Description{An array, thus a list of consecutive elements, each of wich is an entry with its own index, term and data.}
+  \caption{Raft's log is fundamentally an array made of entries.}
+  \Description{An array, thus a list of consecutive elements, each of which is an entry with its own index, term and data.}
   \label{fig:logStructure}
 \end{figure}
 
 \subsection{Log Replication and Overwriting}
 
-All log propagation revolves around one core remote procedure call named \textit{append\_entries\_rpc}, which the leader calls on a list of server proxies that connects it to the followers, which in turn call on a proxy of the leader. It must be registered in the server to be callable, like can be seen at listing \ref{code:registerFunciton}.
+All log propagation revolves around one core remote procedure call named \textit{append\_entries\_rpc}, which the leader calls on a list of server proxies that connects it to the followers, which in turn call on a proxy of the leader. It must be registered in the server to be callable, as can be seen in listing \ref{code:registerFunction}.
 
-\begin{python}[label={code:registerFunciton}, caption={Register, thus making it callable, the remote procedure call \textit{append\_entries\_rpc}}]
+\begin{python}[label={code:registerFunction}, caption={Register, thus making it callable, the remote procedure call \textit{append\_entries\_rpc}}]
 def handle_server():                                    # enclose server in a callable function
     with Raft(...) as server:                           # creates SimpleXMLRPCSever
         def append_entries_rpc(entries, term, commit_index, all_log):
@@ -117,13 +117,13 @@ def handle_server():                                    # enclose server in a ca
         server.serve_forever()                          # keeps server alive 
 \end{python}
 
-\subsubsection{Leader Propagates Entries}
+\subsubsection{Leader Propagates Entries} \label{sec:leaderSends}
 
 The leader (each server as a matter of fact) periodically checks whether there are new commands to propagate (always stored in queue \textit{pygame\_commands}), by overriding \textit{SimpleXMLRPCServer}'s method \textit{service\_actions} (listing \ref{code:addCommands}, more details in section \ref{sec:raftian}).
 
 Then, translates them into entries by giving each of them the current term and a log index that starts from $lastLogEntry(index) + 1$ and increases by one for each entry. To give an example: if $lastLogEntry(index) = 7$ and we have three new commands, their indexes will respectively be eight (8), nine (9) and ten (10). The translation can be seen at listing \ref{code:translateCommands}
 
-At this point it propagates \textit{new\_entries} to the whole cluster, updating the commit index (necessary for applying log to state) as soon as at least half the propagations are successful, like so: $commitIndex = lastNewEntry(index)$. 
+At this point it propagates \textit{new\_entries} to the whole cluster, updating the commit index (necessary for applying log to state) as soon as propagations are successful on at least half of the cluster, like so: $commitIndex = lastNewEntry(index)$. 
 
 What happens if the \textit{append entries} gets rejected? The leader adds to \textit{new\_entries} its own last log entry: $new\_entries = lastLogEntry + new\_entries$ (figure \ref{fig:newEntries}). Then repeats the propagation procedure, for each reject a new \textit{last log entry} gets added, progressively traversing the log backwards. If, at a certain point, $new\_entries == allLog + new\_entries$ (i.e., all leader's log gets propagated) the flag \textit{all\_log} is set to \textit{True}. 
 
@@ -137,8 +137,8 @@ Of course, all propagation happens concurrently using a \textit{ThreadPoolExecut
   \centering
   \includegraphics[width=.8\linewidth]{images/newEntries.png}
   
-  \caption{New entries with the last log's entry added to the begging of the list.}
-  \Description{Two arrays, where the first is only one element (the last log's entry) which gets added at the beggingn of the second array, i.e., the new entries.}
+  \caption{New entries with the last log's entry added to the beginning of the list.}
+  \Description{Two arrays, where the first is only one element (the last log's entry) which gets added at the beginning of the second array, i.e., the new entries.}
   \label{fig:newEntries}
 \end{figure}
 
@@ -222,21 +222,21 @@ def propagate_entries(self):
 
 \subsubsection{Follower Recieves Entries}
 
-When a follower receives an \textit{append entries} request from the leader, first checks whether leader's term is up to date. If its not, i.e., $leaderTerm < followerTerm$, rejects by answering with the tuple $(False, followerTerm)$. In this context \textit{answering} is done via the remote procedure call's return value.
+When a follower receives an \textit{append entries} request from the leader, first checks whether leader's term is up to date. If it's not, i.e., $leaderTerm < followerTerm$, rejects by answering with the tuple $(False, followerTerm)$. In this context, \textit{answering} is done via the remote procedure call's return value.
 
-If, on the other hand, the leader's term is equal or greater than its own (i.e., $leaderTerm \geq followerTerm$), the follower updates its commit index and, if $leaderEntries \neq \emptyset$, checks the \textit{all\_log} flag. If its \textit{True}, clears all its own log to overwrite it with the leader's (fundamental to log forcing, listing \ref{code:clearLog}). Otherwise ($all\_log \neq True$) the leader's did not send all its log, so the follower search trough its own log an entry equal to the leader's previous one (i.e., the entry preceding the new ones). Let's make and example: 
+If, on the other hand, the leader's term is equal or greater than its own (i.e., $leaderTerm \geq followerTerm$), the follower updates its commit index and, if $leaderEntries \neq \emptyset$, checks the \textit{all\_log} flag. If it's \textit{True}, clears all its own log to overwrite it with the leader's (fundamental to log forcing, listing \ref{code:clearLog}). Otherwise ($all\_log \neq True$), the leader did not send all its log, so the follower searches through its own log for an entry equal to the leader's previous one (i.e., the entry preceding the new ones). Let's make an example: 
 
 \begin{itemize}
     \item Leader's log = $[1, 2, 3, 4, 5]$;
     \item Leader's new entries = $[6, 7]$;
     \item Thus leader's prev = $[5]$.
-
 \end{itemize}
 
-If it finds and entry equal to leader's previous (i.e, $followerLog(someEntry) == leaderPrev$), deletes all log that follows it and append new entries, otherwise ($\nexists(followerLog(someEntry) == leaderPrev)$) rejects the request. Since the leader, when faced with a reject, adds a new \textit{prev} and keep repeating the send until it comprises all its log, at a certain point the follower will be forced to overwrite all its log, thus making it equal to the leader's. This overwriting is called \textit{log forcing} and ensures that all logs are equal to the leader's.
+If it finds an entry equal to leader's previous (i.e., $followerLog(someEntry) == leaderPrev$), deletes all log entries that follow it and appends new ones, otherwise ($\nexists(followerLog(someEntry) == leaderPrev)$) rejects the request. Since the leader, when faced with a reject, adds a new \textit{prev} and keeps repeating the send until it comprises all its log, at a certain point the follower will be forced to overwrite all its log, thus making it equal to the leader's. This overwriting is called \textit{log forcing} and ensures that all logs are equal to the leader's.
+
 The code can be seen at listing \ref{code:searchFollowerLog} (for the complete one refer to the repository).
 
-\begin{python}[label={code:clearLog}, caption={Follower clear its onwn log to overwrite it with the leader's}]
+\begin{python}[label={code:clearLog}, caption={Follower clears its own log to overwrite it with the leader's}]
 if all_log == True:
     server.log.clear() # if leader sent all its log, clear and rewrite log (leader's log forcing)
 \end{python}
@@ -268,7 +268,13 @@ if entries is not None:     # not an heartbeat
 
 \subsubsection{Follower Sends Entries}
 
-\subsubsection{Leader Recieves Entries}
+Since every server is a Raftian node with a game instance and thus player inputs, followers have their own Pygame commands to propagate. Just like the leader, in their \textit{service\_actions} function they periodically check whether there are new commands to propagate and call \textit{propagate\_entries} accordingly. Then, they translate all Pygame commands into entries (same code as listing \ref{code:translateCommands}) and propagate them to the leader via \textit{append\_entries\_rpc}. Nothing else. 
+
+As previously stated, followers are \textit{passive}, meaning they do not apply their own player inputs when they register them, but only after the leader propagates them back to the whole cluster.
+
+\subsubsection{Leader Receives Entries}
+
+The leader does very little when receives entries from the followers: it just puts them into its own \textit{pygame\_commands} queue. They will get processed and propagated eventually, as stated in section \ref{sec:leaderSends}.
 
 \subsection{Apply Log to State}
 
