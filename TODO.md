@@ -1,6 +1,6 @@
-- [x] check ssect log rep and over
-- [x] check ssect apply log to state
-- [ ] check ssect leader election
-- [ ] check ssect cluster change
-- [ ] check ssect byzantine 
+- [x] check §§ log rep and over
+- [x] check §§ apply log to state
+- [ ] check §§ leader election
+- [ ] check §§ cluster change
+- [ ] check §§ byzantine 
 - [ ] create next section: raftian

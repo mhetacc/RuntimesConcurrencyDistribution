@@ -318,6 +318,13 @@ def service_actions(self):
 
 \subsection{Log Compaction}
 
+This functionality, and all the successive ones, have not been implemented in the project due to time constraints. We decided to include them anyway since they where still the product of careful consideration and planning, and they could be implemented in the future.
+
+Log compaction, also called \textit{snapshot}, is a way for the servers to clean their log and save it in persistent memory, which could be useful for long running or message heavy applications. Every node autonomously decides when to do it.
+
+The idea follows: inside their function \textit{service\_actions}, the server check whether the log is bigger than a certain size, to be determined by testing, and then call a \textit{snapshot} method accordingly.
+
+
 \subsection{Leader Election}
 
 \subsection{Cluster Membership Change}
