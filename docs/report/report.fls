@@ -520,6 +520,11 @@ INPUT ./images/applyToState.png
 INPUT ./images/applyToState.png
 INPUT ./images/applyToState.png
 INPUT ./images/applyToState.png
+INPUT ./images/raftMembershipChange.png
+INPUT ./images/raftMembershipChange.png
+INPUT ./images/raftMembershipChange.png
+INPUT ./images/raftMembershipChange.png
+INPUT ./images/raftMembershipChange.png
 OUTPUT comment.cut
 INPUT ./comment.cut
 INPUT ./comment.cut

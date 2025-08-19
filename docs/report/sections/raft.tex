@@ -287,7 +287,6 @@ To apply entries in our context means that they get appended to the queue \texti
 \begin{figure}[h]
   \centering
   \includegraphics[width=.8\linewidth]{images/applyToState.png}
-  
   \caption{All entries between \textit{last\_applied} and \textit{commit\_index} (included) get applied to state.}
   \Description{An array showing that all entries between the last applied and the last committed get applied to state.}
   \label{fig:applyToState}
@@ -324,7 +323,7 @@ Log compaction, also called \textit{snapshot}, is a way for the servers to clean
 
 The idea follows: inside their function \textit{service\_actions}, the servers check whether the log is larger than a certain size (to be determined by testing) and then call a \textit{snapshot} method accordingly, which saves all entries in a JSON file, progressively deleting them from the log, from the first one up to (but excluding) the \textit{last applied}.
 
-An alternative interpretation, closer to Ongaro and Ousterhout's idea, is saving the state of the cluster. When applied to our context, we can imagine a JSON file that describes all servers' (i.e., players') state, by saving for each of them \textit{id}, \textit{url}, \textit{port}, and \textit{hp} values. \textit{Index} and \textit{term} of the last snapshotted entry should also be saved, as well as the current configuration (which we will discuss in section \ref{sec:memberChange}). An example of the JSON structure can be seen at listing \ref{code:snapJson}. 
+An alternative interpretation, closer to Ongaro and Ousterhout's idea, is saving the state of the cluster. When applied to our context, we can imagine a JSON file that describes all servers' (i.e., players') state, by saving for each of them \textit{id}, \textit{url}, \textit{port}, and \textit{hp} values. \textit{Index} and \textit{term} of the last snapshotted entry should also be saved, as well as the current configuration (which we will be mentioned in section \ref{sec:raftMissing}). An example of the JSON structure can be seen at listing \ref{code:snapJson}. 
 
 This method requires more pre-processing to generate the JSON, and more post-processing to later check log's correctness, but is also more compact, which helps when the leader calls \textit{install snapshot}, a remote procedure call that can sometimes be needed to bring up to speed new or outdated servers by sending them its own snapshot. 
 
@@ -349,6 +348,18 @@ It goes without saying, but whichever method is ultimately chosen, every new sna
 
 \subsection{Leader Election}
 
-\subsection{Cluster Membership Change} \label{sec:memberChange}
+\subsection{What is Missing} \label{sec:raftMissing}
 
-\subsection{Byzantine Raft}
+There is one last functionality discussed by Ongaro and Ousterhout, which is gracefully managing changes in the cluster's members by leveraging a configuration attribute and keeping multiple configurations alive at the same time (figure \ref{fig:configRaft}). We never intended to include it due to time constraints, therefore there is nothing we can add beyond the original work. 
+
+Another concern, which was not considered in the Raft paper, is faults caused by bad actors that purposely send malicious information. This is a real problem for our use case, since players want to win and are therefore incentivized to act maliciously by cheating (a practice so widespread that has created its own multimillion-dollar market \cite{wiredCheat}).
+
+The implementation of Byzantine fault functionality was beyond the scope of this work, we therefore refer the reader to some example works for further details: "A Raft Algorithm with Byzantine Fault-Tolerant Performance" by Xir and Liu \cite{liuXie}, and "VSSB-Raft: A Secure and Efficient Zero Trust Consensus Algorithm for Blockchain" by Tian et al. \cite{tianetal}.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=.6\linewidth]{images/raftMembershipChange.png}
+  \caption{Cluster goes trough a hybrid configuration to pass from the old to the new one. Source: Raft paper \cite{raft}}
+  \Description{Three configurations for the cluster that overlap themselves as time goes on, to go from the old, to a hybrid to the new one}
+  \label{fig:configRaft}
+\end{figure}
