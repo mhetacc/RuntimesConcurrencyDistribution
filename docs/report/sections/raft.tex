@@ -348,6 +348,49 @@ It goes without saying, but whichever method is ultimately chosen, every new sna
 
 \subsection{Leader Election}
 
+To grant consistency, Raft's design choice is to centralize all decisions on one node, called leader, that synchronizes all cluster's nodes. To make the protocol fault tolerant, the leader can dynamically change over time via a distributed election: whenever a follower finds out that the leader is either outdated or missing (i.e., internal follower's timer times out before receiving any call from it), said follower starts an election. It changes its internal state to \textit{candidate}, increases its own term by one, votes for itself, and then propagates to the whole cluster a specialized remote procedure call named \textit{request\_vote\_rpc} (code, removed in the final version, at listing \ref{code:requestVoteRPC}). Votes are given on a first-come-first-served basis, and to prevent split votes each server's election timeout is randomized between 150ms and 300ms at the start of every election. This ensures that in most cases only one server will be candidate at a time.
+
+At this point there are two possible outcomes: more than half of the cluster votes for the candidate (which we will call \textit{"A"}), that therefore becomes leader and propagates a heartbeat to the whole cluster, or another candidate (which we will call \textit{"B"}) is more up-to-date (i.e., \textit{B's} \textit{term} is greater than \textit{A}'s or equal but with a greater \textit{lastIndex}). In this last case, candidate \textit{A} reverts back to follower and votes for \textit{B}. The pseudocode for all the above can be seen at listing \ref{code:toCandidate}.
+
+One last eventuality is that the old leader manifests itself. In this case, if the old one is equally or more up-to-date than the new one, the latter reverts back to follower and the preceding monarch gets reinstantiated.
+
+\begin{python}[label={code:requestVoteRPC}, caption={Pseudocode for \textit{request\_vote\_rpc}}]
+def request_vote_rpc(...):
+    # if candidate less up to date -> reject
+    if self.term > candidate_term:
+        return (self.term, False)
+
+    # if a candidate already exists
+    if self.voted_for is not None and not candidate_id:
+        return (self.term, False)
+    
+    # vote for candidate
+    self.voted_for = candidate_id
+    return (self.term, True)
+#...
+server.register_function(request_vote_rpc)
+\end{python}
+
+\begin{python}[label={code:toCandidate}, caption={Pseudocode for \textit{to\_candidate}, gets fired on \textit{election timer} timeout}]
+def to_candidate(self):
+    self.mode = Raft.Mode.CANDIDATE
+    self.term += 1
+    self.voted_for = self.id
+    
+    self.timer.reset() # reset election timer
+
+    for server in self.cluster:
+        server.request_vote_rpc(...)
+        count votes
+    
+    if some_return.more_up_to_date:
+        self.mode = Raft.Mode.FOLLOWER
+        self.voted_for = some_return.id
+    
+    if votes > len(self.cluster) / 2:
+        self.to_leader()    # handles mode change and heartbeat
+\end{python}
+
 \subsection{What is Missing} \label{sec:raftMissing}
 
 There is one last functionality discussed by Ongaro and Ousterhout, which is gracefully managing changes in the cluster's members by leveraging a configuration attribute and keeping multiple configurations alive at the same time (figure \ref{fig:configRaft}). We never intended to include it due to time constraints, therefore there is nothing we can add beyond the original work. 
