@@ -525,6 +525,11 @@ INPUT ./images/raftMembershipChange.png
 INPUT ./images/raftMembershipChange.png
 INPUT ./images/raftMembershipChange.png
 INPUT ./images/raftMembershipChange.png
+INPUT ./sections/architecture.tex
+INPUT ./sections/architecture.tex
+INPUT ./sections/architecture.tex
+INPUT ./sections/architecture.tex
+INPUT sections/architecture.tex
 OUTPUT comment.cut
 INPUT ./comment.cut
 INPUT ./comment.cut
