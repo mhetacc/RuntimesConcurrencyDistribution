@@ -454,7 +454,7 @@ def handle_pygame():
     pygame.draw.line(mainwindow, BLACK, (0, 750), (1000, 750), width=1)
 
 
-    # draw surfaces on DISPLAY surface "binded" on and by their respective rects
+    # draw surfaces on DISPLAY surface "bound" on and by their respective rects
     # maybe rects were not necessary but they provide nice features nonetheless 
     DISPLAY.blit(mainwindow, rect_main) 
     DISPLAY.blit(header, rect_header)

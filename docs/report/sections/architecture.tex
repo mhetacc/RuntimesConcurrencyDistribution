@@ -1,3 +1,69 @@
-\section{Architecture}
+\section{Architecture} \label{sec:raftian}
 
-In this section we will talk about how the nodes are structured, how they communicate to each other and how game and server logic share information between them.
+In the previous section (\ref{sec:raft}) we explained in detail how nodes communicate with each other and handle their log. Now we will explain what actually happens inside a node. Before showcasing the architecture, we will briefly explain how Pygame works, and thus take the opportunity to present the user interface.
+
+\subsection{Pygame} 
+
+Pygame's approach is very straightforward: first comes the declaration and set up of all the graphical components, such as game window, fonts, colors, variables and constants. Every element gets positioned on the main window by coordinates \textit{(x,y)}, where \textit{(0,0)} is the top left corner. Most items are made of two fundamental Pygame classes: \textit{Rect}, which creates non-graphical objects that expose many useful methods, for example to position, move, and resize themselves, or to detect collisions and mouse clicks, and \textit{Surface}, which is the most basic graphical component that has dimensions and can be drawn upon. Often we want to bind, thus constrain, surfaces with rects so that we use the latter for spatial operations. One last fundamental is the \textit{blit} function, a method that draws one image onto another or, to be precise, that draws a source Surface onto the object Surface that calls it. We can give it an optional argument to specify a drawing destination, either with coordinates or a rect. To clarify: $baseSurface.blit(sourceSurface,destination)$ draws \textit{sourceSurface} onto \textit{baseSurface} at the coordinates specified by \textit{destination}. An example of all the above can be seen at listing \ref{code:pygameIntro}.
+
+Pygame, being low-level in nature, grants us great flexibility, allowing us to do pretty much whatever we want. For example, we defined our players as dataclasses that encapsulate both the players' data (like \textit{id} or \textit{health points}) and their Rect and Surface objects. An example can be seen at listing \ref{code:pygamePlayer}.
+
+Finally, Pygame gives us direct access to the game loop, which is implemented as nothing more than a \textit{while loop}. In it, we can process player inputs and refresh the screen, dynamically changing what gets shown. In short, we manage everything that happens while the game is running. In listing \ref{code:pygameLoop} we can see two types of player input, one for quitting the game and a left-mouse click, the latter of which causes a refresh of the header. Specifically, if \textit{Player 2} gets clicked, the header will display \textit{"Player 2 pressed"}, reverting back to its original state after a couple of seconds. The last command, \textit{clock.tick(fps)}, allows us to limit the framerate, effectively slowing down or speeding up the game engine itself by constraining the amount of times per second the game loop repeats itself.
+
+\begin{python}[label={code:pygameIntro}, caption={Pygame base components}]
+pygame.init()                                   # starts pygame
+GREY = (125, 125, 125)                          # define a color
+DISPLAY = pygame.display.set_mode((1000, 1200)) # creates game window 1000x1200 pixels in resolution
+clock = pygame.time.Clock()                     # necessary to mange fps
+font = pygame.font.Font(None, 60)               # creates default font 
+toptext = font.render("Top Text", False, BLACK) # header text
+rect_header = pygame.Rect(0, 0, 1000, 100)      # creates rect for header
+header = pygame.Surface((1000, 100))            # creates surface for header
+header.fill(WHITE)                              # draw on surface 
+
+DISPLAY.blit(header, rect_header)               # draw on DISPLAY the header surface
+                                                # position is given by rect_header                                    
+#...
+# draw text on coordinates
+DISPLAY.blit(toptext, (rect_header.centerx - xoffset, rect_header.centery - yoffset))
+\end{python}
+
+\begin{python}[label={code:pygamePlayer}, caption={Players defined as dataclassess that encapsulate Pygame elements}]
+@dataclass
+class Player:
+    id: int
+    hp: int
+    rc: pygame.Rect     # represent player position and size 
+    ui: pygame.Surface  # expose UI of the player e.g., colour 
+
+player1 = Player(
+    id=1,
+    hp=100,
+    rc=pygame.Rect(585, 685, 80, 80),  # x0, y0, width, height
+    ui=pygame.Surface((80,80))
+)
+player1.ui.fill(RED)                    # colour player red
+DISPLAY.blit(player1.ui, player1.rc)    # draw on display via rect
+\end{python}
+
+\begin{python}[label={code:pygameLoop}, caption={All interactions and frame-by-frame rendering happen in the game loop}]
+while True: # game loop
+    for event in pygame.event.get():    # process player inputs
+        if event.type == pygame.QUIT:
+            pygame.quit()
+
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # left mouse button click
+
+            pos = pygame.mouse.get_pos() # gets mouse position
+
+            if player.rc.collidepoint(pos): # rect allows us to detect collisions
+                toptext = font.render(f"Player {player.id} pressed", False, BLACK)
+
+                DISPLAY.blit(header, rect_header)   # erase previous text
+                DISPLAY.blit(toptext, (rect_header.centerx - xoffset, rect_header.centery - yoffset))
+
+    pygame.display.flip()  # refresh on-screen display
+    clock.tick(60)         # limits framerate
+\end{python}
+
+\subsection{Raftian User Interface}
