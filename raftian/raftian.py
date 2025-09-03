@@ -600,7 +600,7 @@ def handle_pygame():
             xoffset = toptext_rect.width/2
             yoffset = toptext_rect.height/2
 
-            # must first re-draw header surface otherwise previous text remains 
+            # must first redraw header surface otherwise previous text remains 
             # then draws changed header text
             DISPLAY.blit(header, rect_header)
             DISPLAY.blit(toptext, (rect_header.centerx - xoffset, rect_header.centery - yoffset))
@@ -619,19 +619,19 @@ def handle_pygame():
                     if player.hp < 90 and player.hp >= 60:
                         player.ui.set_alpha(190)
                         DISPLAY.blit(player_UI_cleaner, player.rc)  # clean player UI
-                        DISPLAY.blit(player.ui, player.rc)  # re-draw player UI
+                        DISPLAY.blit(player.ui, player.rc)  # redraw player UI
                     elif player.hp < 60 and player.hp >= 30:
                         player.ui.set_alpha(150)
                         DISPLAY.blit(player_UI_cleaner, player.rc)  # clean player UI
-                        DISPLAY.blit(player.ui, player.rc)  # re-draw player UI
+                        DISPLAY.blit(player.ui, player.rc)  # redraw player UI
                     elif player.hp < 30 and player.hp > 0:
                         player.ui.set_alpha(100)
                         DISPLAY.blit(player_UI_cleaner, player.rc)  # clean player UI
-                        DISPLAY.blit(player.ui, player.rc)  # re-draw player UI
+                        DISPLAY.blit(player.ui, player.rc)  # redraw player UI
                     elif player.hp <= 0:
                         player.ui.fill(BLACK)
                         player.ui.set_alpha(200)  
-                        DISPLAY.blit(player.ui, player.rc)  # re-draw player UI
+                        DISPLAY.blit(player.ui, player.rc)  # redraw player UI
                 
 
         # we want to limit display refresh speed

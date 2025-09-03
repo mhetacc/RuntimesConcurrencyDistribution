@@ -67,3 +67,56 @@ while True: # game loop
 \end{python}
 
 \subsection{Raftian User Interface}
+
+Figure \ref{fig:raftianUI} shows different phases of a normal Raftian's game session. Specifically, they demonstrate how the interface changes when the player repeatedly click on (thus \textit{attack}) Player 3, the blue one on the top left. Players' colours become progressively desaturated as their health points decrease, by modifying their alpha channels as shown in listing \ref{code:pygamePlayerDamage}. When a player is dead, its colour change to a darker shade. 
+
+On the header an attack message gets written, reverting back after half a second. Said message changes depending whether the player is still alive; if not, damage is ignored. 
+
+\begin{python}[label={code:pygamePlayerDamage}, caption={All interactions and frame-by-frame rendering happen in the game loop}]
+for player in players:
+    if player.id == order.command and player.hp > 0:
+        player.hp -= 30  # apply damage to player:
+
+        if player.hp < 90 and player.hp >= 60:
+            player.ui.set_alpha(190)
+            DISPLAY.blit(player_UI_cleaner, player.rc)  # clean player UI
+            DISPLAY.blit(player.ui, player.rc)          # redraw player UI
+\end{python}
+
+
+\begin{figure}[h]
+    \centering
+    \begin{subfigure}{0.31\textwidth}
+        \includegraphics[width=\linewidth]{images/raftian1.png}
+        \caption{Game starts}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.31\textwidth}
+        \includegraphics[width=\linewidth]{images/raftian2.png}
+        \caption{Player 3 is attacked}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.31\textwidth}
+        \includegraphics[width=\linewidth]{images/raftian3.png}
+        \caption{Header reverts to default}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.31\textwidth}
+        \includegraphics[width=\linewidth]{images/raftian4.png}
+        \caption{Player 3 is left with forty HP}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.31\textwidth}
+        \includegraphics[width=\linewidth]{images/raftian5.png}
+        \caption{Player 3 is left with ten HP}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.31\textwidth}
+        \includegraphics[width=\linewidth]{images/raftian7.png}
+        \caption{Player 3 cannot be attacked again}
+    \end{subfigure}
+
+    \caption{Different phases of a normal Raftian game session, Player 3 keeps getting damaged until it dies}
+    \Description{Six figures that shows a Raftian game instace in 6 different game phases.}
+    \label{fig:raftianUI}
+\end{figure}
