@@ -99,7 +99,7 @@ class Entry:
   \centering
   \includegraphics[width=.8\linewidth]{images/logStructure.png}
   
-  \caption{Raft's log is fundamentally an array made of entries.}
+  \caption{Raft's log is fundamentally an array made of entries}
   \Description{An array, thus a list of consecutive elements, each of which is an entry with its own index, term and data.}
   \label{fig:logStructure}
 \end{figure}
@@ -137,7 +137,7 @@ Of course, all propagation happens concurrently using a \textit{ThreadPoolExecut
   \centering
   \includegraphics[width=.8\linewidth]{images/newEntries.png}
   
-  \caption{New entries with the last log's entry added to the beginning of the list.}
+  \caption{New entries with the last log's entry added to the beginning of the list}
   \Description{Two arrays, where the first is only one element (the last log's entry) which gets added at the beginning of the second array, i.e., the new entries.}
   \label{fig:newEntries}
 \end{figure}
@@ -287,7 +287,7 @@ To apply entries in our context means that they get appended to the queue \texti
 \begin{figure}[h]
   \centering
   \includegraphics[width=.8\linewidth]{images/applyToState.png}
-  \caption{All entries between \textit{last\_applied} and \textit{commit\_index} (included) get applied to state.}
+  \caption{All entries between \textit{last\_applied} and \textit{commit\_index} (included) get applied to state}
   \Description{An array showing that all entries between the last applied and the last committed get applied to state.}
   \label{fig:applyToState}
 \end{figure}
