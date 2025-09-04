@@ -1,13 +1,13 @@
 # Fdb version 4
-["bibtex report"] 1756993990.15806 "report.aux" "report.bbl" "report" 1756995581.51123 0
+["bibtex report"] 1756996414.36133 "report.aux" "report.bbl" "report" 1756996600.29163 0
   "./report.bib" 1755616945.36247 14486 55810424f9fe398d01ce1ed7cddc9358 ""
   "/usr/share/texlive/texmf-dist/bibtex/bst/acmart/ACM-Reference-Format.bst" 1680299675 90332 18dc4e5c9b5c2ddd337e9f97727d04f1 ""
-  "report.aux" 1756995581.3018 16992 a256f9b153a86ea518b6669ff4dc8e50 "pdflatex"
+  "report.aux" 1756996600.07924 17122 17bb683d4789997acb7f05ca320a400b "pdflatex"
   (generated)
   "report.bbl"
   "report.blg"
   (rewritten before read)
-["pdflatex"] 1756995577.9182 "/home/mhetac/Documents/GitHub/RuntimesConcurrencyDistribution/docs/report/report.tex" "report.pdf" "report" 1756995581.51138 0
+["pdflatex"] 1756996596.67218 "/home/mhetac/Documents/GitHub/RuntimesConcurrencyDistribution/docs/report/report.tex" "report.pdf" "report" 1756996600.29178 0
   "/etc/texmf/web2c/texmf.cnf" 1731932711.72022 475 c0e671620eb5563b2130f56340a5fde8 ""
   "/home/mhetac/Documents/GitHub/RuntimesConcurrencyDistribution/docs/report/report.tex" 1756909115.49268 9089 2dc0c932a9d68f78ef85001fac3381e1 ""
   "/usr/share/texlive/texmf-dist/fonts/enc/dvips/fontawesome5/fa5free0.enc" 1622837620 3083 a707712f77b073b3833e4b1334a30e99 ""
@@ -232,14 +232,14 @@
   "/usr/share/texmf/web2c/texmf.cnf" 1707919699 40399 f2c302f7d2af602abb742093540a5834 ""
   "/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map" 1743673054.10926 5352258 625d145f3708f99ff2144a56c0e20fa1 ""
   "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1743673063 7453521 177a431387c98bb1593578671e94b705 ""
-  "comment.cut" 1756995580.6138 64 0754424945249fbfae64d8991d811e64 "pdflatex"
+  "comment.cut" 1756996599.37624 64 0754424945249fbfae64d8991d811e64 "pdflatex"
   "images/1000dots.png" 1754405057.08062 4011610 c8cfd8393a87bcae88c2675793ca2795 ""
   "images/100dots.png" 1754405057.10062 4011609 6e88aa6c834f2f0454456b5a9e47f075 ""
   "images/TIOBEindex.png" 1754402432.44566 371976 ba4cfcaee9ce89deb54e5d2b6caf0004 ""
   "images/applyToState.png" 1755530868.10706 193787 535f19f9131ca543bfabe7980641eefe ""
   "images/logStructure.png" 1754653728.17861 105000 1a17ee95533d0243cebf2154b58ae00e ""
   "images/newEntries.png" 1754922606.65237 82035 4faed7bb3d227fc8a2b140c4de83de72 ""
-  "images/nodeArchitecture.png" 1756995568.35776 523608 56dfb4e093fbd74faa43a6cc8512c4c8 ""
+  "images/nodeArchitecture.png" 1756995848.09263 538350 4eb7bed5357f6a4843303f8937529cf3 ""
   "images/performance_eval_fps_graph.png" 1754401105.23594 649644 787c62ab1130451a8195c7f121d2cffa ""
   "images/raftMembershipChange.png" 1755617109.73162 124610 f62b240e0ad8e467d440c758489e9ec7 ""
   "images/raftian1.png" 1756907757.9118 4709131 cc67b44e042253ae7da35fa50d182f4a ""
@@ -249,11 +249,11 @@
   "images/raftian5.png" 1756907757.8668 4708898 3ed6bc2f680417e79110c22361087180 ""
   "images/raftian7.png" 1756907757.8568 4708900 c1d08a286fe503073cbf78e49b7d9e2a ""
   "lstlisting_settings.tex" 1754910048.17046 1229 8adb8988fc97d3f33aa2dfed26f9b006 ""
-  "report.aux" 1756995581.3018 16992 a256f9b153a86ea518b6669ff4dc8e50 "pdflatex"
-  "report.bbl" 1756993990.2083 11665 ae0492349b8c0bfa305264aec1c5f1de "bibtex report"
-  "report.out" 1756995581.3028 3338 497bc6ad552cf616142fa64d608b7a94 "pdflatex"
+  "report.aux" 1756996600.07924 17122 17bb683d4789997acb7f05ca320a400b "pdflatex"
+  "report.bbl" 1756996414.4139 11665 ae0492349b8c0bfa305264aec1c5f1de "bibtex report"
+  "report.out" 1756996600.08024 3535 c5e70d6b3cc8c6fb503ffae45be56673 "pdflatex"
   "report.tex" 1756909115.49268 9089 2dc0c932a9d68f78ef85001fac3381e1 ""
-  "sections/architecture.tex" 1756993986.3063 11924 c6e364f1986197f159d18b6187f6f351 ""
+  "sections/architecture.tex" 1756996596.66224 12739 2fbdf7d1481959ed2634186253dd2e1e ""
   "sections/introduction.tex" 1754401580.91341 6662 76c985a3cdf084808e92fbcf130bb55b ""
   "sections/python.tex" 1754910698.93516 12725 b96352603393ed124e1af1a2536ab3be ""
   "sections/raft.tex" 1756992684.52372 26910 610742d322f6e103140c8b673edef598 ""

@@ -180,3 +180,6 @@ while True: # Pygame's main loop
   \label{fig:raftianArch}
 \end{figure}
 
+\subsection{Evaluation and Results}
+
+While we did not have enough time to implement evaluation procedures to measure things like response time or network latency, the game has been thoroughly tested. Responsiveness is good, with no noticeable input latency and a solid framerate way above sixty frames per second (which is still the preferred limit), and both log replication and overwriting functionalities have been confirmed working as intended. The proof of this fact can be observed in the logs at \url{https://github.com/mhetacc/RuntimesConcurrencyDistribution/tree/main/logs}, specifically by comparing logs among folders \textit{bob1}, \textit{bob2}, \textit{bob3}, \textit{bob4}, and \textit{raftian}: all logs (meaning \textit{Raft logs}) contain the same entries, in the same order, between all players.
