@@ -104,7 +104,7 @@ class Entry:
   \label{fig:logStructure}
 \end{figure}
 
-\subsection{Log Replication and Overwriting}
+\subsection{Log Replication and Overwriting} \label{sec:logReplication}
 
 All log propagation revolves around one core remote procedure call named \textit{append\_entries\_rpc}, which the leader calls on a list of server proxies that connects it to the followers, which in turn call on a proxy of the leader. It must be registered in the server to be callable, as can be seen in listing \ref{code:registerFunction}.
 
@@ -276,7 +276,7 @@ As previously stated, followers are \textit{passive}, meaning they do not apply 
 
 The leader does very little when receives entries from the followers: it just puts them into its own \textit{pygame\_commands} queue. They will get processed and propagated eventually, as stated in section \ref{sec:leaderSends}.
 
-\subsection{Apply Log to State}
+\subsection{Apply Log to State} \label{sec:applyToState}
 
 Let's first explain two key attributes: \textit{commit index} and \textit{last applied}. Both of these represent an index, but the former is the highest-index entry successfully propagated in the cluster, while the latter is the highest-index entry already applied to state. 
 
