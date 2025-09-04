@@ -562,6 +562,11 @@ INPUT ./images/raftian7.png
 INPUT ./images/raftian7.png
 INPUT ./images/raftian7.png
 INPUT ./images/raftian7.png
+INPUT ./images/nodeArchitecture.png
+INPUT ./images/nodeArchitecture.png
+INPUT ./images/nodeArchitecture.png
+INPUT ./images/nodeArchitecture.png
+INPUT ./images/nodeArchitecture.png
 OUTPUT comment.cut
 INPUT ./comment.cut
 INPUT ./comment.cut

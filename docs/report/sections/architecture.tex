@@ -72,7 +72,7 @@ Figure \ref{fig:raftianUI} shows different phases of a normal Raftian's game ses
 
 On the header an attack message gets written, reverting back after half a second. Said message changes depending whether the player is still alive; if not, damage is ignored. 
 
-\begin{python}[label={code:pygamePlayerDamage}, caption={All interactions and frame-by-frame rendering happen in the game loop}]
+\begin{python}[label={code:pygamePlayerDamage}, caption={Whenever a player gets damaged, its colour gets desaturated}]
 for player in players:
     if player.id == order.command and player.hp > 0:
         player.hp -= 30  # apply damage to player:
@@ -82,7 +82,6 @@ for player in players:
             DISPLAY.blit(player_UI_cleaner, player.rc)  # clean player UI
             DISPLAY.blit(player.ui, player.rc)          # redraw player UI
 \end{python}
-
 
 \begin{figure}[h]
     \centering
@@ -120,3 +119,49 @@ for player in players:
     \Description{Six figures that shows a Raftian game instace in 6 different game phases.}
     \label{fig:raftianUI}
 \end{figure}
+
+\subsection{Raftian Node Architecture}
+
+The architecture of a Raftian node can be seen at figure \ref{fig:raftianArch}. Let's explain it: first of all, the game loop and the server are encapsulated in two functions to be handed over to two different threads, enabling concurrent execution (listing \ref{code:startMainThreads}). Whenever a player clicks on (i.e., attacks) one of the four players, the game engine does not apply damage immediately. Instead, it generates a \textit{command} which represent, if we want, the \textit{intention} of said player to attack. This \textit{command} is thus appended to a queue called \textit{pygame\_commands}, one of the two synchronized queues necessary to allow communication between server and Pygame's threads (listing \ref{code:queues}). Both are instances of Python's standard library queue module\footnote{Python's queue, a synchronized queue class: \url{https://docs.python.org/3/library/queue.html}}, which implements thread-safe, multi-producer, multi-consumer queues. 
+
+At this point, Pygame does not concern itself anymore with said user input. The server, by itself, periodically checks the \textit{pygame\_commands} queue (as in listing \ref{code:addCommands}) and, when not empty, removes elements from it (as in listing \ref{code:translateCommands}) and propagates them to the Leader (or to the cluster if said server \textit{is} the Leader, as in listing \ref{code:leaderPropagateEntries}).
+
+
+\begin{python}[label={code:startMainThreads}, caption={Start both Pygame and server threads}]
+def handle_pygame():
+    pygame.init()
+    #...
+    While True:
+         #...
+def handle_server():
+    with Raft(...) as server:
+        #...
+        server.serve_forever()
+
+server_thread = threading.Thread(target=handle_server)
+server_thread.start()
+pygame_thread = threading.Thread(target=handle_pygame)
+pygame_thread.start()
+\end{python}
+
+\begin{python}[label={code:queues}, caption={Queues for commands and orders, they allow inter-thread communication}]
+# user inputs trough Pygame which writes them here
+# Raft reads them and propagate them to the cluster
+pygame_commands = Queue()
+
+# commands that have been applied to state are written here by Raft
+# Pygame reads them and update UI accordingly 
+raft_orders = Queue()
+\end{python}
+
+
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\linewidth]{images/nodeArchitecture.png}
+  
+  \caption{Raftian node architecture.}
+  \Description{Fiure showing the architecture of a Raftian node, by showcasin how all different component work between each other.}
+  \label{fig:raftianArch}
+\end{figure}
+
