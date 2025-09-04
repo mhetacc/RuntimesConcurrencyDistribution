@@ -1,5 +1,0 @@
-- [x] check §§ log rep and over
-- [x] check §§ apply log to state
-- [ ] check §§ leader election
-- [x] check §§ what is missing
-- [ ] create next section: raftian
