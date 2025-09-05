@@ -488,8 +488,8 @@ def handle_pygame():
     class Player:
         id: int
         hp: int
-        rc: pygame.Rect     # represent player position and size and exposes useful methods like collidepoint()
-        ui: pygame.Surface  # expose UI of the player e.g., colour 
+        rc: pygame.Rect     # represents player position and size and exposes useful methods like collidepoint()
+        ui: pygame.Surface  # exposes UI of the player e.g., colour 
 
     player1 = Player(
         id=1,

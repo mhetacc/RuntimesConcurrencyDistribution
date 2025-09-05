@@ -28,13 +28,13 @@ DISPLAY.blit(header, rect_header)               # draw on DISPLAY the header sur
 DISPLAY.blit(toptext, (rect_header.centerx - xoffset, rect_header.centery - yoffset))
 \end{python}
 
-\begin{python}[label={code:pygamePlayer}, caption={Players defined as dataclassess that encapsulate Pygame elements}]
+\begin{python}[label={code:pygamePlayer}, caption={Players defined as dataclasses that encapsulate Pygame elements}]
 @dataclass
 class Player:
     id: int
     hp: int
-    rc: pygame.Rect     # represent player position and size 
-    ui: pygame.Surface  # expose UI of the player e.g., colour 
+    rc: pygame.Rect     # represents player position and size 
+    ui: pygame.Surface  # exposes UI of the player e.g., colour 
 
 player1 = Player(
     id=1,

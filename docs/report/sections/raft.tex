@@ -73,13 +73,13 @@ To make sure all nodes believe the leader's alive, it sends periodically (every 
 
 All nodes, except for the leader, are classified as followers. They are not allowed to replicate their own log, and when they receive any request they have to forward it to the leader.
 
-To make sure the cluster never remains without a leader, every follower has an election timeout (between 150ms and 300ms) which resets every time an RPC from the leader gets received. When times out, the follower changes its state to \textit{candidate}, increment its current term and starts a leader election. 
+To make sure the cluster never remains without a leader, every follower has an election timeout (between 150ms and 300ms) which resets every time an RPC from the leader gets received. When times out, the follower changes its state to \textit{candidate}, increments its current term and starts a leader election. 
 
 Followers become candidates in another scenario: whenever they receive an entry from the leader, they compare it with their own last log entry. If the leader's term is smaller the \textit{append entry} is rejected and a new election is started. 
 
 \subsubsection{Candidate Node}
 
-When a follower's election timeout times out, it becomes a candidate, increment its own term and starts an election. It votes for itself and then waits for either of two outcomes: wins, thus becoming a new leader, or loses (either another leader gets elected or the old one manifests itself) thus reverting back to being a follower.
+When a follower's election timeout times out, it becomes a candidate, increments its own term and starts an election. It votes for itself and then waits for either of two outcomes: wins, thus becoming a new leader, or loses (either another leader gets elected or the old one manifests itself) thus reverting back to being a follower.
 
 \subsection{Log}
 
@@ -402,7 +402,7 @@ The implementation of Byzantine fault functionality was beyond the scope of this
 \begin{figure}[h]
   \centering
   \includegraphics[width=.6\linewidth]{images/raftMembershipChange.png}
-  \caption{Cluster goes trough a hybrid configuration to pass from the old to the new one. Source: Raft paper \cite{raft}}
+  \caption{Cluster goes through a hybrid configuration to pass from the old to the new one. Source: Raft paper \cite{raft}}
   \Description{Three configurations for the cluster that overlap themselves as time goes on, to go from the old, to a hybrid to the new one}
   \label{fig:configRaft}
 \end{figure}

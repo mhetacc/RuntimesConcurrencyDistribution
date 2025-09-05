@@ -57,7 +57,7 @@ Thankfully, this does not apply with the \textit{multiprocessing} module, which 
 
 To evaluate which of the two modules is more suited for our purposes, we devised a simple experiment: we created two game instances with one hundred and one thousands coloured dots respectively (figure \ref{fig:randomdots}), that move around the screen offsetting their position each frame by a random amount between minus five and plus five pixels (pseudocode \ref{code:randomdots}).
 
-Then we ran both of them in various scenarios: with the game instance alone (baselines), with a server alive in a thread and with a server alive in a process, and we measured the \textit{frames per second} (FPS) \footnote{Frame rate, most commonly expressed in frames per second or FPS, is typically the frequency (rate) at which consecutive images (frames) are captured or displayed. This definition applies to film and video cameras, computer animation, and motion capture systems, while in the context of computer graphics is the rate at which a system, particularly the graphic card, si able to generate frames. Source: \url{https://en.wikipedia.org/wiki/Frame_rate}} in each case, since it is the most common metric to evaluate game performance. Higher FPS-count translates to a smoother and more responsive, i.e., better, gaming experience.
+Then we ran both of them in various scenarios: with the game instance alone (baselines), with a server alive in a thread and with a server alive in a process, and we measured the \textit{frames per second} (FPS) \footnote{Frame rate, most commonly expressed in frames per second or FPS, is typically the frequency (rate) at which consecutive images (frames) are captured or displayed. This definition applies to film and video cameras, computer animation, and motion capture systems, while in the context of computer graphics is the rate at which a system, particularly the graphic card, is able to generate frames. Source: \url{https://en.wikipedia.org/wiki/Frame_rate}} in each case, since it is the most common metric to evaluate game performance. Higher FPS-count translates to a smoother and more responsive, i.e., better, gaming experience.
 
 \begin{python}[label={code:randomdots}, caption={Pygame graphical dot}]
 # create random offsets for both x and y coordinates
@@ -93,7 +93,7 @@ This leads us to conclude that, for our specific purposes, the \textit{threading
   \centering
   \includegraphics[width=\linewidth]{images/performance_eval_fps_graph.png}
   \caption{Performance evaluation graph: red hues for baselines, blue hues for threading and green hues for multiprocessing. Darker shades for 1000 dots and lighter shades for 100 dots game instances}
-  \Description{Line graph that shows that increasing the graphical load by 10x halves performances, and that module trheading performs 30\% better than multithreading in a low-demanding scenario.}
+  \Description{Line graph that shows that increasing the graphical load by 10x halves performance, and that module trheading performs 30\% better than multithreading in a low-demanding scenario.}
   \label{fig:peval}
 \end{figure}
 

@@ -1,13 +1,13 @@
 # Fdb version 4
-["bibtex report"] 1757065417.7667 "report.aux" "report.bbl" "report" 1757065634.2289 0
+["bibtex report"] 1757066006.09131 "report.aux" "report.bbl" "report" 1757066052.57968 0
   "./report.bib" 1755616945.36247 14486 55810424f9fe398d01ce1ed7cddc9358 ""
   "/usr/share/texlive/texmf-dist/bibtex/bst/acmart/ACM-Reference-Format.bst" 1680299675 90332 18dc4e5c9b5c2ddd337e9f97727d04f1 ""
-  "report.aux" 1757065634.00213 17249 19619fd925bd838de9d5082bdd98fabe "pdflatex"
+  "report.aux" 1757066052.35264 17249 bb45586acaa012904d841b1a95fe1a00 "pdflatex"
   (generated)
   "report.bbl"
   "report.blg"
   (rewritten before read)
-["pdflatex"] 1757065630.58397 "/home/mhetac/Documents/GitHub/RuntimesConcurrencyDistribution/docs/report/report.tex" "report.pdf" "report" 1757065634.22905 0
+["pdflatex"] 1757066048.93011 "/home/mhetac/Documents/GitHub/RuntimesConcurrencyDistribution/docs/report/report.tex" "report.pdf" "report" 1757066052.57982 0
   "/etc/texmf/web2c/texmf.cnf" 1731932711.72022 475 c0e671620eb5563b2130f56340a5fde8 ""
   "/home/mhetac/Documents/GitHub/RuntimesConcurrencyDistribution/docs/report/report.tex" 1757064192.88952 8364 1691c3ff2789bb2b5fec73b4f63c30c9 ""
   "/usr/share/texlive/texmf-dist/fonts/enc/dvips/fontawesome5/fa5free0.enc" 1622837620 3083 a707712f77b073b3833e4b1334a30e99 ""
@@ -248,14 +248,14 @@
   "images/raftian5.png" 1756907757.8668 4708898 3ed6bc2f680417e79110c22361087180 ""
   "images/raftian7.png" 1756907757.8568 4708900 c1d08a286fe503073cbf78e49b7d9e2a ""
   "lstlisting_settings.tex" 1754910048.17046 1229 8adb8988fc97d3f33aa2dfed26f9b006 ""
-  "report.aux" 1757065634.00213 17249 19619fd925bd838de9d5082bdd98fabe "pdflatex"
-  "report.bbl" 1757065417.81953 11665 ae0492349b8c0bfa305264aec1c5f1de "bibtex report"
-  "report.out" 1757065634.00313 3669 017508c05f2be5b5390e351a832503b4 "pdflatex"
+  "report.aux" 1757066052.35264 17249 bb45586acaa012904d841b1a95fe1a00 "pdflatex"
+  "report.bbl" 1757066006.14361 11665 ae0492349b8c0bfa305264aec1c5f1de "bibtex report"
+  "report.out" 1757066052.35364 3669 017508c05f2be5b5390e351a832503b4 "pdflatex"
   "report.tex" 1757064192.88952 8364 1691c3ff2789bb2b5fec73b4f63c30c9 ""
-  "sections/architecture.tex" 1757065542.33192 12808 d687a757e6ab1118999e51d03bdeb411 ""
-  "sections/introduction.tex" 1757065118.45466 6662 741e07a8d4301f2ded38ebcd5cc0953c ""
-  "sections/python.tex" 1757065245.47178 12721 dcab3dedffa1464283986136381b594e ""
-  "sections/raft.tex" 1757065413.85652 26909 f6cb1584c048718830c91ebe85490911 ""
+  "sections/architecture.tex" 1757066048.65464 12809 4bec66f07aeab82126b0f88b873da9d3 ""
+  "sections/introduction.tex" 1757065801.97242 6661 304d689ef496ee2abe9b46e62dda6cb9 ""
+  "sections/python.tex" 1757065884.54251 12720 bc425c8d276f38413e731dbf21a91b80 ""
+  "sections/raft.tex" 1757065969.89359 26912 9b6ee411927807e01dbc13ce272db0b2 ""
   "sections/reflection.tex" 1757065630.33413 2237 1b4e5941611e723485d88ab473e94bd0 ""
   (generated)
   "report.aux"
