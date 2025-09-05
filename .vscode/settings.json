@@ -38,8 +38,13 @@
     "automagically",
     "behaviour",
     "blit",
+    "blitting",
     "colour",
+    "colours",
+    "dataclassess",
+    "desaturated",
     "gameplay",
+    "incentivized",
     "interactability",
     "interactable",
     "linearizability",
@@ -47,7 +52,8 @@
     "Pygame",
     "Raftian",
     "subclassing",
-    "Tkinter"
+    "Tkinter",
+    "Travian"
 ]
 }
  

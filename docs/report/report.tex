@@ -57,8 +57,8 @@
 %% the commands and values with those provided to you when you
 %% complete the rights form.
 \setcopyright{acmlicensed}
-\copyrightyear{2018}
-\acmYear{2018}
+\copyrightyear{2025}
+\acmYear{2025}
 \acmDOI{XXXXXXX.XXXXXXX}
 %% These commands are for a PROCEEDINGS abstract or paper.
 %\acmConference[Conference acronym 'XX]{Make sure to enter the correct
@@ -69,8 +69,8 @@
 %%  from ``Proceedings of ...''!
 %%
 \acmBooktitle{Raftian: Pygame Meets Raft,
-  TODO 03--05, 2025, Padua, IT}
-\acmISBN{978-1-4503-XXXX-X/2018/06}
+  September 09, 2025, Padua, IT}
+\acmISBN{978-1-4503-XXXX-X/2025/09}
 
 
 %%
@@ -105,6 +105,10 @@
 %% the next command will enable that style.
 %%\citestyle{acmauthoryear}
 
+\input{lstlisting_settings}
+
+\usepackage{fontawesome5}
+\usepackage{subcaption}
 
 %%
 %% end of the preamble, start of the body of the document source.
@@ -121,13 +125,15 @@
 %% Of note is the shared affiliation of the first two authors, and the
 %% "authornote" and "authornotemark" commands
 %% used to denote shared contribution to the research.
+\author{Marco Bellò}
+\email{marco.bello.3@studenti.unipd.it}
 \author{Tullio Vardanega}
-\authornote{Both authors contributed equally to this research.}
+%\authornote{Both authors contributed equally to this research.}
 \email{tullio.vardanega@unipd.it}
 \orcid{0000-0002-0089-0889}
-\author{Marco Bellò}
-\authornotemark[1]
-\email{marco.bello.3@studenti.unipd.it}
+
+%\authornotemark[1]
+
 \affiliation{%
   \institution{University of Padua}
   \city{Padua}
@@ -140,7 +146,7 @@
 %% other information printed in the page headers. This command allows
 %% the author to define a more concise list
 %% of authors' names for this purpose.
-\renewcommand{\shortauthors}{Vardanega and Bellò}
+\renewcommand{\shortauthors}{Bellò and Vardanega}
 
 %%
 %% The abstract is a short summary of the work to be presented in the
@@ -168,31 +174,30 @@
        <concept_significance>500</concept_significance>
        </concept>
    <concept>
-       <concept_id>10010147.10010919.10010172.10003824</concept_id>
-       <concept_desc>Computing methodologies~Self-organization</concept_desc>
+       <concept_id>10010147.10010919.10010172</concept_id>
+       <concept_desc>Computing methodologies~Distributed algorithms</concept_desc>
        <concept_significance>500</concept_significance>
        </concept>
    <concept>
-       <concept_id>10010147.10010371.10010387.10010391</concept_id>
-       <concept_desc>Computing methodologies~Graphics input devices</concept_desc>
-       <concept_significance>300</concept_significance>
+       <concept_id>10010147.10011777.10011014</concept_id>
+       <concept_desc>Computing methodologies~Concurrent programming languages</concept_desc>
+       <concept_significance>500</concept_significance>
        </concept>
  </ccs2012>
 \end{CCSXML}
 
 \ccsdesc[500]{Computer systems organization~Fault-tolerant network topologies}
 \ccsdesc[500]{Computing methodologies~Concurrent algorithms}
-\ccsdesc[500]{Computing methodologies~Self-organization}
-\ccsdesc[300]{Computing methodologies~Graphics input devices}
-
+\ccsdesc[500]{Computing methodologies~Distributed algorithms}
+\ccsdesc[500]{Computing methodologies~Concurrent programming languages}
 %%
 %% Keywords. The author(s) should pick words that accurately describe
 %% the work being presented. Separate the keywords with commas.
-\keywords{Python, Raft, Distribution, Consensus, Gaming, Multiplayer, Multithreading, RPC, Pygame}
+\keywords{Python, Raft, Shared Consensus, Gaming, Multiplayer, Multithreading, RPC, Pygame}
 
-\received{20 February 2007}
-\received[revised]{12 March 2009}
-\received[accepted]{5 June 2009}
+\received{05/09/2025}
+\received[revised]{--}
+\received[accepted]{--}
 
 %%
 %% This command processes the author and affiliation and title
@@ -201,126 +206,28 @@
 
 \input{sections/introduction}
 
-\section{Acknowledgments}
+\input{sections/python}
 
-Identification of funding sources and other support, and thanks to
-individuals and groups that assisted in the research and the
-preparation of the work should be included in an acknowledgment
-section, which is placed just before the reference section in your
-document.
+\input{sections/raft}
 
-This section has a special environment:
-\begin{verbatim}
-  \begin{acks}
-  ...
-  \end{acks}
-\end{verbatim}
-so that the information contained therein can be more easily collected
-during the article metadata extraction phase, and to ensure
-consistency in the spelling of the section heading.
+\input{sections/architecture}
 
-Authors should not prepare this section as a numbered or unnumbered {\verb|\section|}; please use the ``{\verb|acks|}'' environment.
-
-\section{Appendices}
-
-If your work needs an appendix, add it before the
-``\verb|\end{document}|'' command at the conclusion of your source
-document.
-
-Start the appendix with the ``\verb|appendix|'' command:
-\begin{verbatim}
-  \appendix
-\end{verbatim}
-and note that in the appendix, sections are lettered, not
-numbered. This document has two appendices, demonstrating the section
-and subsection identification method.
-
-\section{Multi-language papers}
-
-Papers may be written in languages other than English or include
-titles, subtitles, keywords and abstracts in different languages (as a
-rule, a paper in a language other than English should include an
-English title and an English abstract).  Use \verb|language=...| for
-every language used in the paper.  The last language indicated is the
-main language of the paper.  For example, a French paper with
-additional titles and abstracts in English and German may start with
-the following command
-\begin{verbatim}
-\documentclass[sigconf, language=english, language=german,
-               language=french]{acmart}
-\end{verbatim}
-
-The title, subtitle, keywords and abstract will be typeset in the main
-language of the paper.  The commands \verb|\translatedXXX|, \verb|XXX|
-begin title, subtitle and keywords, can be used to set these elements
-in the other languages.  The environment \verb|translatedabstract| is
-used to set the translation of the abstract.  These commands and
-environment have a mandatory first argument: the language of the
-second argument.  See \verb|sample-sigconf-i13n.tex| file for examples
-of their usage.
-
-\section{SIGCHI Extended Abstracts}
-
-The ``\verb|sigchi-a|'' template style (available only in \LaTeX\ and
-not in Word) produces a landscape-orientation formatted article, with
-a wide left margin. Three environments are available for use with the
-``\verb|sigchi-a|'' template style, and produce formatted output in
-the margin:
-\begin{description}
-\item[\texttt{sidebar}:]  Place formatted text in the margin.
-\item[\texttt{marginfigure}:] Place a figure in the margin.
-\item[\texttt{margintable}:] Place a table in the margin.
-\end{description}
+\input{sections/reflection.tex}
 
 %%
 %% The acknowledgments section is defined using the "acks" environment
 %% (and NOT an unnumbered section). This ensures the proper
 %% identification of the section in the article metadata, and the
 %% consistent spelling of the heading.
-\begin{acks}
-To Robert, for the bagels and explaining CMYK and color spaces.
-\end{acks}
+%% \begin{acks}
+%% To Robert, for the bagels and explaining CMYK and color spaces.
+%% \end{acks}
 
 %%
 %% The next two lines define the bibliography style to be used, and
 %% the bibliography file.
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{report}
-
-
-%%
-%% If your work has an appendix, this is the place to put it.
-\appendix
-
-\section{Research Methods}
-
-\subsection{Part One}
-
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi
-malesuada, quam in pulvinar varius, metus nunc fermentum urna, id
-sollicitudin purus odio sit amet enim. Aliquam ullamcorper eu ipsum
-vel mollis. Curabitur quis dictum nisl. Phasellus vel semper risus, et
-lacinia dolor. Integer ultricies commodo sem nec semper.
-
-\subsection{Part Two}
-
-Etiam commodo feugiat nisl pulvinar pellentesque. Etiam auctor sodales
-ligula, non varius nibh pulvinar semper. Suspendisse nec lectus non
-ipsum convallis congue hendrerit vitae sapien. Donec at laoreet
-eros. Vivamus non purus placerat, scelerisque diam eu, cursus
-ante. Etiam aliquam tortor auctor efficitur mattis.
-
-\section{Online Resources}
-
-Nam id fermentum dui. Suspendisse sagittis tortor a nulla mollis, in
-pulvinar ex pretium. Sed interdum orci quis metus euismod, et sagittis
-enim maximus. Vestibulum gravida massa ut felis suscipit
-congue. Quisque mattis elit a risus ultrices commodo venenatis eget
-dui. Etiam sagittis eleifend elementum.
-
-Nam interdum magna at lectus dignissim, ac dignissim lorem
-rhoncus. Maecenas eu arcu ac neque placerat aliquam. Nunc pulvinar
-massa et mattis lacinia.
 
 
 \end{document}
