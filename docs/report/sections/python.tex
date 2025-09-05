@@ -45,7 +45,7 @@ For this project, we extended \textit{SimpleXMLRPCServer} to create a class that
 
 \subsection{Concurrency} \label{sec:threading}
 
-In this project the need for concurrent programming arises from two challenges: every server have an internal timer that fires at certain intervals, and every node has to run a game engine and the server itself at the same time, both of which can be simplified as two \textit{"while true"} loops. 
+In this project the need for concurrent programming arises from two challenges: every server has an internal timer that fires at certain intervals, and every node has to run a game engine and the server itself at the same time, both of which can be simplified as two \textit{"while true"} loops. 
 
 Most Raft implementations achieve concurrency with asynchronous programming, using libraries such as \textit{asyncio} \footnote{asyncio is a library to write concurrent code using the async/await syntax: \url{https://docs.python.org/3/library/asyncio.html}}, which while powerful and efficient, makes writing code a bit awkward and cumbersome. We thus opted for a more traditional approach using multithreaded programming: in computer science, a thread of execution is the smallest sequence of programmed instruction that can be managed independently by the scheduler \cite{lamportMultiprocessor}, and multiple threads may be executed concurrently sharing resources such as memory, which is directly counterpointed to multiprocessing where each process has its own storage space (moreover, processes are typically made of threads). 
 
@@ -83,8 +83,8 @@ Results, shown in the graph at figure \ref{fig:peval} shows us that:
 
 \begin{itemize}
     \item Increasing the number of dots from 100 to 1000 halves the FPS count;
-    \item Adding a server in a separate thread halves performances;
-    \item Using \textit{multiprocessing} yields worse performances than \textit{threading} in the 100-dots scenario (about -30\%) while performs similarly in the 1000-dots one.
+    \item Adding a server in a separate thread halves performance;
+    \item Using \textit{multiprocessing} yields worse performance than \textit{threading} in the 100-dots scenario (about -30\%) while performing similarly in the 1000-dots one.
 \end{itemize}
 
 This leads us to conclude that, for our specific purposes, the \textit{threading} module is the best choice, especially since the final game will be way less computationally expensive from a graphical standpoint, hence using a lighter weight alternative should be even more beneficial than tested.
@@ -113,7 +113,7 @@ All tests have been performed with the following machine:
 
 \subsection{Game Engines} \label{sec:pygame}
 
-There are many ways to implement a graphical user interface: from clever shell tricks like htop \footnote{htop is a cross-platform text-mode interactive process viewer: \url{https://htop.dev/}}, to full fledged game engines like Unity \footnote{Unity is a cross-platform game engine developed by Unity Technologies: \url{https://unity.com/}} or Godot \footnote{Godot is a cross-platform open-source game engine: \url{https://godotengine.org/}} that often come with their own editor and a \textit{top-down} approach, meaning build the UI first and then go down to code as needed for scripting and refining.
+There are many ways to implement a graphical user interface: from clever shell tricks like htop \footnote{htop is a cross-platform text-mode interactive process viewer: \url{https://htop.dev/}}, to full-fledged game engines like Unity \footnote{Unity is a cross-platform game engine developed by Unity Technologies: \url{https://unity.com/}} or Godot \footnote{Godot is a cross-platform open-source game engine: \url{https://godotengine.org/}} that often come with their own editor and a \textit{top-down} approach, meaning build the UI first and then go down to code as needed for scripting and refining.
 
 Unfortunately our needs are quite opposite: what we want is a code-only, mono-language framework that while slowing down game development should simplify merging Raft with it. The choice thus boiled down to two alternatives: tkinter and Pygame. 
 

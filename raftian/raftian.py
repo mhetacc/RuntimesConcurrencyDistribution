@@ -36,11 +36,11 @@ logger.addHandler(filehandle)
 ########################################################################
 
 # user inputs trough Pygame which writes them here
-# Raft reads them and propagate them to the cluster
+# Raft reads them and propagates them to the cluster
 pygame_commands = Queue()
 
 # commands that have been applied to state are written here by Raft
-# Pygame reads them and update UI accordingly 
+# Pygame reads them and updates UI accordingly 
 raft_orders = Queue() 
 
 

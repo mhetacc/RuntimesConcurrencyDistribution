@@ -68,9 +68,9 @@ while True: # game loop
 
 \subsection{Raftian User Interface}
 
-Figure \ref{fig:raftianUI} shows different phases of a normal Raftian's game session. Specifically, they demonstrate how the interface changes when the player repeatedly click on (thus \textit{attack}) Player 3, the blue one on the top left. Players' colours become progressively desaturated as their health points decrease, by modifying their alpha channels as shown in listing \ref{code:pygamePlayerDamage}. When a player is dead, its colour change to a darker shade. 
+Figure \ref{fig:raftianUI} shows different phases of a normal Raftian's game session. Specifically, they demonstrate how the interface changes when the player repeatedly clicks on (thus \textit{attack}) Player 3, the blue one on the top left (players are represented as four coloured squares on the board). Players' colours become progressively desaturated as their health points decrease, by modifying their alpha channels as shown in listing \ref{code:pygamePlayerDamage}. When a player is dead, its colour changes to a darker shade. 
 
-On the header an attack message gets written, reverting back after half a second. Said message changes depending whether the player is still alive; if not, damage is ignored. 
+In the header an attack message gets written, reverting back after half a second. Said message changes depending whether the player is still alive; if not, damage is ignored. 
 
 \begin{python}[label={code:pygamePlayerDamage}, caption={Whenever a player gets damaged, its colour gets desaturated}]
 for player in players:
@@ -115,7 +115,7 @@ for player in players:
         \caption{Player 3 cannot be attacked again}
     \end{subfigure}
 
-    \caption{Different phases of a normal Raftian's game session, Player 3 keeps getting damaged until it dies}
+    \caption{Different phases of a normal Raftian's game session. Player 3 keeps getting damaged until it dies}
     \Description{Six figures that shows a Raftian game instace in 6 different game phases.}
     \label{fig:raftianUI}
 \end{figure}
@@ -126,7 +126,7 @@ The architecture of a Raftian node can be seen at figure \ref{fig:raftianArch}. 
 
 At this point, Pygame does not concern itself anymore with said user input. The server, by itself, periodically checks the \textit{pygame\_commands} queue (as in listing \ref{code:addCommands}) and, when not empty, removes elements from it (as in listing \ref{code:translateCommands}) and propagates them as entries to the Leader (or to the whole cluster if said server \textit{is} the Leader, as in listing \ref{code:leaderPropagateEntries}).
 
-Then, the Leader propagates to the whole cluster the commands received, which we will now call \textit{orders}. Each server add received orders to its own log, as explained in section \ref{sec:logReplication}, so that they can later be appended to the \textit{raft\_orders} queue when entries get applied to state (as in section \ref{sec:applyToState}). This way, the original user input gets propagated back to the server that generated it in the first place.
+Then, the Leader propagates to the whole cluster the commands received, which we will now call \textit{orders}. Each server adds received orders to its own log, as explained in section \ref{sec:logReplication}, so that they can later be appended to the \textit{raft\_orders} queue when entries get applied to state (as in section \ref{sec:applyToState}). This way, the original user input gets propagated back to the server that generated it in the first place.
 
 Finally, Pygame checks (periodically) the \textit{raft\_orders} queue for orders. When it finds them, it removes them from the queue and updates the user interface accordingly (an example can be seen at listing \ref{code:updateUI}).
 
@@ -150,12 +150,12 @@ pygame_thread.start()
 \end{python}
 
 \begin{python}[label={code:queues}, caption={Queues for commands and orders, they allow inter-thread communication}]
-# user inputs trough Pygame which writes them here
-# Raft reads them and propagate them to the cluster
+# user inputs through Pygame which writes them here
+# Raft reads them and propagates them to the cluster
 pygame_commands = Queue()
 
 # commands that have been applied to state are written here by Raft
-# Pygame reads them and update UI accordingly 
+# Pygame reads them and updates UI accordingly 
 raft_orders = Queue()
 \end{python}
 
