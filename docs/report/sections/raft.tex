@@ -10,7 +10,7 @@ Our Raft class directly extends \textit{simpleXMLRPCServer} from XML-RPC module,
 
 Lastly, to fire off non-blocking concurrent RPCs on the cluster, we leverage the \textit{concurrent.futures} module using \textit{ThreadPoolExecutor}. To avoid creating and destroying pools every time a server needs to communicate with the cluster, we embedded a finite amount of workers as class attributes (code \ref{code:threadPool}).
 
-\begin{python}[label={code:raft}, caption={Class Raft definition}]
+\begin{lstlisting}[language={Python},label={code:raft}, caption={Class Raft definition}]
 class Raft(SimpleXMLRPCServer):
     def __init__(self, 
                  addr: tuple[str, int],
@@ -19,22 +19,22 @@ class Raft(SimpleXMLRPCServer):
                  last_index_on_server: list[tuple[int, int]] | None = None
                  ):
         SimpleXMLRPCServer.__init__(self, addr=addr, allow_none=allow_none)
-\end{python}
+\end{lstlisting}
 
-\begin{python}[label={code:threadPool}, caption={ThreadPoolExecutor created with as many workers as there are servers in the cluster}]
+\begin{lstlisting}[language={Python},label={code:threadPool}, caption={ThreadPoolExecutor created with as many workers as there are servers in the cluster}]
 class Raft(SimpleXMLRPCServer):
     def __init__(self, 
                  # ...
                  )
         # start executors pool
         self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=len(self.cluster))
-\end{python}
+\end{lstlisting}
 
 \subsection{Node Types} \label{sec:nodes}
 
 As previously stated, there are three node types: leader, follower and candidate (code \ref{code:nodeModes}). In this section we are going to show their characteristics and similarities. Note that all nodes have a timer: it is randomized for each of them and has been implemented by extending \textit{threading.Timer}, thus making it thread-safe (code \ref{code:loopingTimer})
 
-\begin{python}[label={code:nodeModes}, caption={Node modes}]
+\begin{lstlisting}[language={Python},label={code:nodeModes}, caption={Node modes}]
 class Raft(SimpleXMLRPCServer):
     class Mode(Enum):
         LEADER = 1
@@ -45,9 +45,9 @@ class Raft(SimpleXMLRPCServer):
                  # ...
                  mode: Mode = Mode.FOLLOWER,
                  )
-\end{python}
+\end{lstlisting}
 
-\begin{python}[label={code:loopingTimer}, caption={Threadsafe looping timer}]
+\begin{lstlisting}[language={Python},label={code:loopingTimer}, caption={Threadsafe looping timer}]
 class LoopTimer(Timer):
     def __init__(self, interval, function, args=None, kwawrgs=None):
         Timer.__init__(self, interval, function, args, kwawrgs)
@@ -61,7 +61,7 @@ class Raft(SimpleXMLRPCServer):
         # start timer
         self.timer = LoopTimer(timeout, self.on_timeout)
         self.timer.start()
-\end{python}
+\end{lstlisting}
 
 \subsubsection{Leader Node}
 
@@ -87,13 +87,13 @@ As stated, the leader's job is to accept requests (in our specific case they are
 
 The log is basically a \textit{list} (or an \textit{array}) of entries, where \textit{entry} is an element that encapsulates data (like an integer or a string), has an index (unique for each entry) and the term of its creation (figure \ref{fig:logStructure}). We defined entries as \textit{Data Classes} \footnote{Data Classes module provides a decorator and functions for automatically adding generated special methods to user-defined classes: \url{https://docs.python.org/3/library/dataclasses.html}} (decorators that simulate C's structures) as seen in code \ref{code:entry}.
 
-\begin{python}[label={code:entry}, caption={Dataclass Entry definition}]
+\begin{lstlisting}[language={Python},label={code:entry}, caption={Dataclass Entry definition}]
 @dataclass
 class Entry:
     term: int
     index: int
     command: str 
-\end{python}
+\end{lstlisting}
 
 \begin{figure}[h]
   \centering
@@ -108,14 +108,14 @@ class Entry:
 
 All log propagation revolves around one remote procedure call named \textit{append\_entries\_rpc}, which the leader calls on a list of server proxies that connects it to the followers, which in turn call on a proxy of the leader. It must be registered in the server to be callable, as seen in listing \ref{code:registerFunction}.
 
-\begin{python}[label={code:registerFunction}, caption={Register, thus making it callable, the remote procedure call \textit{append\_entries\_rpc}}]
+\begin{lstlisting}[language={Python},label={code:registerFunction}, caption={Register, thus making it callable, the remote procedure call \textit{append\_entries\_rpc}}]
 def handle_server():                                    # enclose server in a callable function
     with Raft(...) as server:                           # creates SimpleXMLRPCSever
         def append_entries_rpc(entries, term, commit_index, all_log):
             # ...
         server.register_function(append_entries_rpc)    # makes function callable on the other side
         server.serve_forever()                          # keeps server alive 
-\end{python}
+\end{lstlisting}
 
 \subsubsection{Leader Propagates Entries} \label{sec:leaderSends}
 
@@ -142,16 +142,16 @@ Of course, all propagation happens concurrently using a \textit{ThreadPoolExecut
   \label{fig:newEntries}
 \end{figure}
 
-\begin{python}[label={code:addCommands}, caption={Periodically checks whether there are new commands}]
+\begin{lstlisting}[language={Python},label={code:addCommands}, caption={Periodically checks whether there are new commands}]
 def service_actions(self):                      # RUN method of the server, override
     if time.time() - self.countdown >= .005:    # do actions every .005 seconds
         global pygame_commands
 
         if not pygame_commands.empty():         # propagate entries to cluster
             self.propagate_entries()
-\end{python}
+\end{lstlisting}
 
-\begin{python}[label={code:translateCommands}, caption={Translates commands into new entries}]
+\begin{lstlisting}[language={Python},label={code:translateCommands}, caption={Translates commands into new entries}]
 def propagate_entries():
 # ...
     while not pygame_commands.empty():
@@ -162,9 +162,9 @@ def propagate_entries():
             index=log_index,
             command=command
         ))
-\end{python}
+\end{lstlisting}
 
-\begin{python}[label={code:leaderPropagateEntries}, caption={Leader propagation procedure, for complete code refer to project's repository}]
+\begin{lstlisting}[language={Python},label={code:leaderPropagateEntries}, caption={Leader propagation procedure, for complete code refer to project's repository}]
 def propagate_entries(self):        
     # ...          
     if self.log:                            # travel backwards through self.log for each reject
@@ -193,7 +193,6 @@ def propagate_entries(self):
                     propagation_successful = True
 
         return propagation_successful # to propagate_entries, make propagation counter increase 
-        # encapsulate_proxy ends
 
     results = []
 
@@ -218,7 +217,7 @@ def propagate_entries(self):
         self.commit_index = self.log[-1].index          # ensure log gets eventually applied
     else:
     #   new entries are not cleared, so they will be propagated again
-\end{python}
+\end{lstlisting}
 
 \subsubsection{Follower Receives Entries}
 
@@ -236,12 +235,12 @@ If it finds an entry equal to leader's previous (i.e., $followerLog(someEntry) =
 
 The code can be seen at listing \ref{code:searchFollowerLog} (for the complete one refer to the repository).
 
-\begin{python}[label={code:clearLog}, caption={Follower clears its own log to overwrite it with the leader's}]
+\begin{lstlisting}[language={Python},label={code:clearLog}, caption={Follower clears its own log to overwrite it with the leader's}]
 if all_log == True:
     server.log.clear() # if leader sent all its log, clear and rewrite log (leader's log forcing)
-\end{python}
+\end{lstlisting}
 
-\begin{python}[label={code:searchFollowerLog}, caption={Follower search in its own log for an entry equal to leader's prev}]
+\begin{lstlisting}[language={Python},label={code:searchFollowerLog}, caption={Follower search in its own log for an entry equal to leader's prev}]
 if commit_index is not None:                    
         server.commit_index = commit_index  # update commit index 
 
@@ -264,7 +263,7 @@ if entries is not None:     # not an heartbeat
         del server.log[(entry_log_index ):] # delete all log following leader prev 
 
     server.log.extend(entries) # append new entries
-\end{python}
+\end{lstlisting}
 
 \subsubsection{Follower Sends Entries}
 
@@ -292,7 +291,7 @@ To apply entries in our context means that they get appended to the queue \texti
   \label{fig:applyToState}
 \end{figure}
 
-\begin{python}[label={code:applyToState}, caption={All nodes apply entries to state based on \textit{commit\_index}}]
+\begin{lstlisting}[language={Python},label={code:applyToState}, caption={All nodes apply entries to state based on \textit{commit\_index}}]
 def service_actions(self):
         # ...
         if self.commit_index is not None and self.commit_index > self.last_applied:   
@@ -313,7 +312,7 @@ def service_actions(self):
                 self.last_applied = self.log[log_iterator].index
                 log_iterator = log_iterator + 1
             # here self.last_applied == self.commit_index
-\end{python}
+\end{lstlisting}
 
 \subsection{Log Compaction}
 
@@ -329,7 +328,7 @@ This method requires more pre-processing to generate the JSON, and more post-pro
 
 It goes without saying, but whichever method is ultimately chosen, every new snapshot must comprise all information contained in the old ones.
 
-\begin{python}[label={code:snapJson}, caption={The JSON for a snapshot that saves cluster's state would look something like this}]
+\begin{lstlisting}[language={Python},label={code:snapJson}, caption={The JSON for a snapshot that saves cluster's state would look something like this}]
 {
     servers:[
         {
@@ -344,7 +343,7 @@ It goes without saying, but whichever method is ultimately chosen, every new sna
     lastTerm : 3,
     lastConfig : 8
 }
-\end{python}
+\end{lstlisting}
 
 \subsection{Leader Election}
 
@@ -354,7 +353,7 @@ At this point there are two possible outcomes: more than half of the cluster vot
 
 One last eventuality is that the old leader manifests itself. In this case, if the old one is equally or more up-to-date than the new one (both term and last index count), the latter reverts back to follower and the preceding monarch gets reinstantiated.
 
-\begin{python}[label={code:requestVoteRPC}, caption={Pseudocode for \textit{request\_vote\_rpc}}]
+\begin{lstlisting}[language={Python},label={code:requestVoteRPC}, caption={Pseudocode for \textit{request\_vote\_rpc}}]
 def request_vote_rpc(...):
     # if candidate less up to date -> reject
     if self.term > candidate_term:
@@ -369,9 +368,9 @@ def request_vote_rpc(...):
     return (self.term, True)
 #...
 server.register_function(request_vote_rpc)
-\end{python}
+\end{lstlisting}
 
-\begin{python}[label={code:toCandidate}, caption={Pseudocode for \textit{to\_candidate}, gets fired on \textit{election timer} timeout}]
+\begin{lstlisting}[language={Python},label={code:toCandidate}, caption={Pseudocode for \textit{to\_candidate}, gets fired on \textit{election timer} timeout}]
 def to_candidate(self):
     self.mode = Raft.Mode.CANDIDATE
     self.term += 1
@@ -389,7 +388,7 @@ def to_candidate(self):
     
     if votes > len(self.cluster) / 2:
         self.to_leader()    # handles mode change and heartbeat
-\end{python}
+\end{lstlisting}
 
 \subsection{What is Missing} \label{sec:raftMissing}
 

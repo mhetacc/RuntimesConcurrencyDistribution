@@ -25,21 +25,21 @@ The library provides both server and client implementations, encapsulating the f
 
 In code \ref{code:client}, \textit{client} is an instance of \textit{ServerProxy}, which acts as the client-side interface for XML-RPC, allowing to call the remote procedure \textit{test\_foo} as if it were a local function, even though it executes on a server in a different networked location.
 
-\begin{python}[label={code:client}, caption={Client as server proxy}]
+\begin{lstlisting}[language={Python},label={code:client}, caption={Client as server proxy}]
 with xmlrpc.client.ServerProxy('http://localhost:8000', allow_none=True) as client:
     print(client.test_foo(42)) # print returned value
-\end{python}
+\end{lstlisting}
 
 The server must be instantiated and kept running by calling its event loop (e.g., using \textit{serve\_forever}), and all remote procedure calls must be registered using the \textit{register\_function} method of \textit{SimpleXMLRPCServer} (code \ref{code:server}).
 
-\begin{python}[label={code:server}, caption={Server}]
+\begin{lstlisting}[language={Python},label={code:server}, caption={Server}]
 with SimpleXMLRPCServer (('localhost', 8000)) as server:
     def test_foo(number):
         return f'The number is {number}'
 
     server.register_function(test_foo)  
     server.serve_forever() # keep server alive
-\end{python}
+\end{lstlisting}
 
 For this project, we extended \textit{SimpleXMLRPCServer} to create a class that implements the Raft protocol (more details in section \ref{sec:raft})
 
@@ -59,14 +59,14 @@ To evaluate which of the two modules is more suited for our purposes, we devised
 
 Then we ran both of them in three scenarios: with the game instance alone (baselines), with a server alive in a thread and with a server alive in a process, and we measured the \textit{frames per second} (FPS) \footnote{Frame rate, most commonly expressed in frames per second or FPS, is typically the frequency (rate) at which consecutive images (frames) are captured or displayed. This definition applies to film and video cameras, computer animation, and motion capture systems, while in the context of computer graphics is the rate at which a system, particularly the graphic card, is able to generate frames. Source: \url{https://en.wikipedia.org/wiki/Frame_rate}} in each case, since it is the most common metric to evaluate game performance. Higher FPS-count translates to a smoother and more responsive, i.e., better, gaming experience.
 
-\begin{python}[label={code:randomdots}, caption={Pygame graphical dot offset}]
+\begin{lstlisting}[language={Python},label={code:randomdots}, caption={Pygame graphical dot offset}]
 # create random offsets for both x and y coordinates
 xmov = random.randint(-5,5)
 ymov = random.randint(-5,5)
 
 # move the dot by a certain offset
 dot.move_by(xmov, ymov)
-\end{python}
+\end{lstlisting}
 
 \begin{figure}[h]
   \centering
