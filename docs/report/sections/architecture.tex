@@ -10,7 +10,7 @@ Pygame, being low-level in nature, is very flexible and allows us to do pretty m
 
 Finally, Pygame gives us direct access to the game loop, which is implemented as nothing more than a \textit{while loop}. In it, we can process player inputs and refresh the screen, dynamically changing what is displayed. In short, we manage everything that happens while the game is running. In listing \ref{code:pygameLoop} we can see two types of player input, one for quitting the game and a left-mouse click, the latter of which causes a refresh of the header. Specifically, if \textit{Player 2} gets clicked, the header will display \textit{"Player 2 pressed"}, reverting back to its original state after a couple of seconds. The last command, \textit{clock.tick(fps)}, allows us to limit the framerate, effectively slowing down or speeding up the game engine itself by constraining the amount of times per second the game loop repeats itself.
 
-\begin{python}[label={code:pygameIntro}, caption={Pygame base components}]
+\begin{lstlisting}[language={Python},label={code:pygameIntro}, caption={Pygame base components}]
 pygame.init()                                   # starts pygame
 GREY = (125, 125, 125)                          # define a color
 DISPLAY = pygame.display.set_mode((1000, 1200)) # creates game window 1000x1200 pixels in resolution
@@ -26,9 +26,9 @@ DISPLAY.blit(header, rect_header)               # draw on DISPLAY the header sur
 #...
 # draw text on coordinates
 DISPLAY.blit(toptext, (rect_header.centerx - xoffset, rect_header.centery - yoffset))
-\end{python}
+\end{lstlisting}
 
-\begin{python}[label={code:pygamePlayer}, caption={Players defined as dataclasses that encapsulate Pygame elements}]
+\begin{lstlisting}[language={Python},label={code:pygamePlayer}, caption={Players defined as dataclasses that encapsulate Pygame elements}]
 @dataclass
 class Player:
     id: int
@@ -44,9 +44,9 @@ player1 = Player(
 )
 player1.ui.fill(RED)                    # colour player red
 DISPLAY.blit(player1.ui, player1.rc)    # draw on display via rect
-\end{python}
+\end{lstlisting}
 
-\begin{python}[label={code:pygameLoop}, caption={All interactions and frame-by-frame rendering happen in the game loop}]
+\begin{lstlisting}[language={Python},label={code:pygameLoop}, caption={All interactions and frame-by-frame rendering happen in the game loop}]
 while True: # game loop
     for event in pygame.event.get():    # process player inputs
         if event.type == pygame.QUIT:
@@ -64,7 +64,7 @@ while True: # game loop
 
     pygame.display.flip()  # refresh on-screen display
     clock.tick(60)         # limits framerate
-\end{python}
+\end{lstlisting}
 
 \subsection{Raftian User Interface}
 
@@ -72,7 +72,7 @@ Figure \ref{fig:raftianUI} shows different phases of a normal Raftian's game ses
 
 In the header an attack message gets written, reverting back after half a second. Said message changes depending whether the player is still alive; if not, damage is ignored. 
 
-\begin{python}[label={code:pygamePlayerDamage}, caption={Whenever a player gets damaged, its colour gets desaturated}]
+\begin{lstlisting}[language={Python},label={code:pygamePlayerDamage}, caption={Whenever a player gets damaged, its colour gets desaturated}]
 for player in players:
     if player.id == order.command and player.hp > 0:
         player.hp -= 30  # apply damage to player:
@@ -81,7 +81,7 @@ for player in players:
             player.ui.set_alpha(190)
             DISPLAY.blit(player_UI_cleaner, player.rc)  # clean player UI
             DISPLAY.blit(player.ui, player.rc)          # redraw player UI
-\end{python}
+\end{lstlisting}
 
 \begin{figure}[h]
     \centering
@@ -132,7 +132,7 @@ Finally, Pygame checks (periodically) the \textit{raft\_orders} queue for orders
 
 The whole idea is to keep server and game engine as separated as possible: the former reads commands, propagates them and writes received orders, the latter reads orders, updates the UI, and writes commands, following a unidirectional cyclic communication pattern.
 
-\begin{python}[label={code:startMainThreads}, caption={Start both Pygame and server's threads}]
+\begin{lstlisting}[language={Python},label={code:startMainThreads}, caption={Start both Pygame and server's threads}]
 def handle_pygame():
     pygame.init()
     #...
@@ -147,9 +147,9 @@ server_thread = threading.Thread(target=handle_server)
 server_thread.start()
 pygame_thread = threading.Thread(target=handle_pygame)
 pygame_thread.start()
-\end{python}
+\end{lstlisting}
 
-\begin{python}[label={code:queues}, caption={Queues for commands and orders, they allow inter-thread communication}]
+\begin{lstlisting}[language={Python},label={code:queues}, caption={Queues for commands and orders, they allow inter-thread communication}]
 # user inputs through Pygame which writes them here
 # Raft reads them and propagates them to the cluster
 pygame_commands = Queue()
@@ -157,9 +157,9 @@ pygame_commands = Queue()
 # commands that have been applied to state are written here by Raft
 # Pygame reads them and updates UI accordingly 
 raft_orders = Queue()
-\end{python}
+\end{lstlisting}
 
-\begin{python}[label={code:updateUI}, caption={Pygame periodically checks whether there are new orders and updates the UI accordingly}]
+\begin{lstlisting}[language={Python},label={code:updateUI}, caption={Pygame periodically checks whether there are new orders and updates the UI accordingly}]
 while True: # Pygame's main loop
     #...
     while not raft_orders.empty():
@@ -169,7 +169,7 @@ while True: # Pygame's main loop
             if player.id == order.command and player.hp > 0:
                 player.hp -= 30  # apply damage to player:
                 #...
-\end{python}
+\end{lstlisting}
 
 \begin{figure}[h]
   \centering
