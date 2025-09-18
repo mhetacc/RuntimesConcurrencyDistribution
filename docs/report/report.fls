@@ -383,7 +383,6 @@ INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/newtx/nxlmia.tfm
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/newtx/ntxsym.tfm
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/newtx/ntxsyc.tfm
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/newtx/ntxexa.tfm
-INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/libertine/LinLibertineTI-tlf-t1.tfm
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/libertine/LinLibertineT-tlf-t1.tfm
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/libertine/LinLibertineT-tlf-t1.tfm
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/libertine/LinLibertineT-tlf-t1.tfm
@@ -427,13 +426,11 @@ INPUT ./sections/python.tex
 INPUT ./sections/python.tex
 INPUT ./sections/python.tex
 INPUT sections/python.tex
-INPUT /usr/share/texlive/texmf-dist/fonts/vf/public/libertine/LinLibertineTI-tlf-t1.vf
-INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/libertine/LinLibertineTI-tlf-t1--base.tfm
-INPUT /usr/share/texlive/texmf-dist/fonts/enc/dvips/libertine/lbtn_7grukw.enc
 INPUT /usr/share/texlive/texmf-dist/fonts/vf/public/libertine/LinLibertineT-tlf-t1.vf
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/libertine/LinLibertineT-tlf-t1--base.tfm
 INPUT /usr/share/texlive/texmf-dist/fonts/vf/public/libertine/LinLibertineT-tlf-t1.vf
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/libertine/LinLibertineT-tlf-t1--base.tfm
+INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/libertine/LinLibertineTI-tlf-t1.tfm
 INPUT ./images/TIOBEindex.png
 INPUT ./images/TIOBEindex.png
 INPUT ./images/TIOBEindex.png
@@ -443,6 +440,9 @@ INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/libertine/LinBiolinumT-tlf-
 INPUT /usr/share/texlive/texmf-dist/tex/latex/listings/lstlang1.sty
 INPUT /usr/share/texlive/texmf-dist/tex/latex/listings/lstlang1.sty
 INPUT /usr/share/texlive/texmf-dist/tex/latex/listings/lstlang1.sty
+INPUT /usr/share/texlive/texmf-dist/fonts/vf/public/libertine/LinLibertineTI-tlf-t1.vf
+INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/libertine/LinLibertineTI-tlf-t1--base.tfm
+INPUT /usr/share/texlive/texmf-dist/fonts/enc/dvips/libertine/lbtn_7grukw.enc
 INPUT /usr/share/texlive/texmf-dist/fonts/vf/public/libertine/LinBiolinumT-tlf-t1.vf
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/libertine/LinBiolinumT-tlf-t1--base.tfm
 INPUT /usr/share/texlive/texmf-dist/tex/latex/inconsolata/t1zi4.fd
@@ -456,11 +456,11 @@ INPUT /usr/share/texlive/texmf-dist/tex/latex/inconsolata/ts1zi4.fd
 INPUT /usr/share/texlive/texmf-dist/tex/latex/inconsolata/ts1zi4.fd
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/inconsolata/ts1-zi4r.tfm
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/inconsolata/t1-zi4b-4.tfm
-INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/libertine/LinBiolinumTI-tlf-t1.tfm
 INPUT /usr/share/texlive/texmf-dist/fonts/vf/public/libertine/LinLibertineT-tlf-t1.vf
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/libertine/LinLibertineT-tlf-t1--base.tfm
 INPUT /usr/share/texlive/texmf-dist/fonts/enc/dvips/inconsolata/i4-t1-4.enc
 INPUT /usr/share/texlive/texmf-dist/fonts/enc/dvips/inconsolata/i4-ts1.enc
+INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/libertine/LinBiolinumTI-tlf-t1.tfm
 INPUT ./images/100dots.png
 INPUT ./images/100dots.png
 INPUT ./images/100dots.png
@@ -501,8 +501,6 @@ INPUT ./images/logStructure.png
 INPUT ./images/logStructure.png
 INPUT ./images/logStructure.png
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/libertine/LinBiolinumTI-tlf-t1.tfm
-INPUT /usr/share/texlive/texmf-dist/fonts/vf/public/libertine/LinBiolinumTI-tlf-t1.vf
-INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/libertine/LinBiolinumTI-tlf-t1--base.tfm
 INPUT /usr/share/texlive/texmf-dist/tex/latex/fontawesome5/ufontawesomefree0.fd
 INPUT /usr/share/texlive/texmf-dist/tex/latex/fontawesome5/ufontawesomefree0.fd
 INPUT /usr/share/texlive/texmf-dist/tex/latex/fontawesome5/ufontawesomefree0.fd
@@ -512,6 +510,8 @@ INPUT ./images/newEntries.png
 INPUT ./images/newEntries.png
 INPUT ./images/newEntries.png
 INPUT ./images/newEntries.png
+INPUT /usr/share/texlive/texmf-dist/fonts/vf/public/libertine/LinBiolinumTI-tlf-t1.vf
+INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/libertine/LinBiolinumTI-tlf-t1--base.tfm
 INPUT /usr/share/texlive/texmf-dist/fonts/vf/public/newtx/nxlmia.vf
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/newtx/LibertineMathRM.tfm
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/newtx/txmiaSTbb.tfm

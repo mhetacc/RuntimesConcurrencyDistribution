@@ -4,7 +4,7 @@ Let's now discuss problems, potential future expansions and learning outcomes of
 
 \subsection{Self-Assessment}
 
-Using \textit{XML-RPC} and \textit{threading} libraries proved to be sub-optimal: the former has a very contrived syntax and makes writing procedure calls a bit unintuitive, since forces the programmer to think in the "opposite direction". When writing a remote procedure call (i.e., those functions that get registered by \textit{register\_function()}) is important to keep in mind that they are going to be used by the caller and not by sender (in whom code block they are written in). Regarding \textit{threading}, a potentially easier approach would have been leveraging asynchronous programming instead (thanks to \textit{asyncio} library).
+Using \textit{XML-RPC} and \textit{threading} libraries proved to be sub-optimal: the former has a very contrived syntax and makes writing procedure calls a bit unintuitive, since forces the programmer to think in the "opposite direction". When writing a remote procedure call (i.e., those functions that get registered by \textit{register\_function()}) is important to keep in mind that they are going to be used by the caller and not by sender (in whom code block they are written in).
 
 Code could be less coupled: both server and game loop reside in the same file, and a lot of components are either internal classes or nested functions. Moreover, both command and order queues are global variables, which is generally a practice to be avoided.  
 

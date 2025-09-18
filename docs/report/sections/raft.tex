@@ -1,8 +1,8 @@
 \section{Raft} \label{sec:raft}
 
-It is not our intention to plagiarize Ongaro and Ousterhout's excellent work \textit{"In Search of an Understandable Consensus Algorithm"} \cite{raft} by presenting the Raft algorithm's specifications. Instead, we will discuss how we molded it to our own use case.
+It is not our intention to plagiarize Ongaro and Ousterhout's excellent work \textit{"In Search of an Understandable Consensus Algorithm"} \cite{raft} by presenting the Raft algorithm's specifications. Instead, we \textcolor{changes}{are going to} discuss how we molded it to our own use case.
 
-The algorithm uses three types of nodes, namely \textit{leader}, \textit{follower} and \textit{candidate}, and revolves around three core functionalities: leader election, log replication and cluster membership change. Log compaction is also mentioned, while a byzantine fault tolerant variant is never explored by the original authors.
+The algorithm \textcolor{changes}{divides its nodes into three roles}, namely \textit{leader}, \textit{follower} and \textit{candidate}, and revolves around three core functionalities: leader election, log replication and cluster membership change. Log compaction is also mentioned, while a byzantine fault tolerant variant is never explored by the original authors. \textcolor{changes}{To grant consistency, Raft's design choice is to centralize all decisions on one node, the above mentioned leader, that synchronizes all cluster's nodes}.
 
 One last component, instrumental to the functioning of the algorithm, is the \textit{term}: everything happens in a certain term, which divides time logically and increments every election. This is necessary to recognize out-of-date leaders: if some follower has a term greater than the leader's, said leader is outdated. 
 
@@ -65,13 +65,13 @@ class Raft(SimpleXMLRPCServer):
 
 \subsubsection{Leader Node}
 
-The algorithm revolves around one leader node, whose job is to synchronize all servers' logs to ensure data consistency. It does so by replicating its own log on all followers (the non-leader nodes) by sending new or, if needed, old entries via remote procedure calls. 
+The algorithm revolves around, \textcolor{changes}{and requires the existence of,} one \textcolor{changes}{and only one} leader node, whose job is to synchronize all servers' logs to ensure data consistency. It does so by replicating its own log on all followers (the non-leader nodes) by sending new or, if needed, old entries via remote procedure calls. 
 
 To make sure all nodes believe the leader's alive, periodically sends an empty remote procedure call called \textit{heartbeat} (every 150-300ms).
 
 \subsubsection{Follower Node}
 
-All nodes, except for the leader, are classified as followers. They are not allowed to replicate their own log, and they have to forward any request to the leader.
+All nodes, except for the leader, \textcolor{changes}{perform} as followers. They are not allowed to replicate their own log, and they have to forward any request to the leader.
 
 To make sure the cluster never remains without a leader, every follower has an election timeout (between 150ms and 300ms) which resets every time an RPC from the leader is received. If it times out, the follower changes its state to \textit{candidate}, increments its current term and starts a leader election. 
 
@@ -79,7 +79,7 @@ Followers become candidates in another scenario: whenever they receive an entry 
 
 \subsubsection{Candidate Node}
 
-When a follower's election timeout times out, it becomes a candidate, increments its own term and starts an election. Votes for itself and then waits for either of two outcomes: wins, thus becoming a new leader, or loses (either another leader gets elected or the old one manifests itself) thus reverting back to being a follower.
+When a follower's election timeout times out, it becomes a candidate, increments its own term and starts an election. Votes for itself and then waits for \textcolor{changes}{one} of two outcomes: wins, thus becoming a new leader, or loses (either another leader gets elected or the old one manifests itself) thus reverting back to being a follower.
 
 \subsection{Log}
 
@@ -106,7 +106,7 @@ class Entry:
 
 \subsection{Log Replication and Overwriting} \label{sec:logReplication}
 
-All log propagation revolves around one remote procedure call named \textit{append\_entries\_rpc}, which the leader calls on a list of server proxies that connects it to the followers, which in turn call on a proxy of the leader. It must be registered in the server to be callable, as seen in listing \ref{code:registerFunction}.
+All log propagation revolves around one remote procedure call named \textit{append\_entries\_rpc}, which the leader calls on a list of server proxies that \textcolor{changes}{connect} it to the followers. \textcolor{changes}{On their end, each follower calls the RPC on a proxy of the leader}. It must be registered in the server to be callable, as seen in listing \ref{code:registerFunction}.
 
 \begin{lstlisting}[language={Python},label={code:registerFunction}, caption={Register, thus making it callable, the remote procedure call \textit{append\_entries\_rpc}}]
 def handle_server():                                    # enclose server in a callable function
@@ -119,13 +119,13 @@ def handle_server():                                    # enclose server in a ca
 
 \subsubsection{Leader Propagates Entries} \label{sec:leaderSends}
 
-The leader (each server as a matter of fact) periodically checks whether there are new commands to propagate (always stored in queue \textit{pygame\_commands}, more details in section \ref{sec:raftian}), by overriding \textit{SimpleXMLRPCServer}'s method \textit{service\_actions} (listing \ref{code:addCommands}).
+The leader (each \textcolor{changes}{node} as a matter of fact) periodically checks whether there are new commands to propagate (always stored in queue \textit{pygame\_commands}, more details in section \ref{sec:raftian}), by overriding \textit{SimpleXMLRPCServer}'s method \textit{service\_actions} (listing \ref{code:addCommands}).
 
-Then, translates them into entries by giving each of them the current term and a log index that starts from $lastLogEntry(index) + 1$ and increases by one for each entry. To clarify: if $lastLogEntry(index) = 7$ and we have three new commands, their indexes will respectively be eight (8), nine (9) and ten (10). The translation can be seen at listing \ref{code:translateCommands}.
+Then, \textcolor{changes}{it} translates them into entries by giving each of them the current term and a log index that starts from $lastLogEntry(index) + 1$ and increases by one for each entry. To clarify: if $lastLogEntry(index) = 7$ and we have three new commands, their \textcolor{changes}{indices} will respectively be eight (8), nine (9) and ten (10). The translation can be seen at listing \ref{code:translateCommands}.
 
 At this point, it propagates \textit{new\_entries} to the whole cluster, updating the commit index (necessary for applying log to state) as soon as propagations are successful on at least half of the cluster, like so: $commitIndex = lastNewEntry(index)$. 
 
-What happens if the \textit{append entries} gets rejected? The leader adds to \textit{new\_entries} its own last log entry: $new\_entries = lastLogEntry + new\_entries$ (figure \ref{fig:newEntries}). Then repeats the propagation procedure, for each reject a new \textit{last log entry} gets added, progressively traversing the log backwards. If, at a certain point, $new\_entries == allLog + new\_entries$ (i.e., all leader's log gets propagated) the flag \textit{all\_log} is set to \textit{True}. 
+What happens if the \textit{append entries} gets rejected? The leader adds to \textit{new\_entries} its own last log entry: $new\_entries = lastLogEntry + new\_entries$ (figure \ref{fig:newEntries}). Then, \textcolor{changes}{it} repeats the propagation procedure, for each reject a new \textit{last log entry} gets added, progressively traversing the log backwards. If, at a certain point, $new\_entries == allLog + new\_entries$ (i.e., all leader's log gets propagated) the flag \textit{all\_log} is set to \textit{True}. 
 
 Since every server may reject or accept different sets of entries, depending on their own local log, every propagation must be "local" for each follower. 
 
@@ -137,7 +137,7 @@ Of course, all propagation happens concurrently using a \textit{ThreadPoolExecut
   \centering
   \includegraphics[width=.8\linewidth]{images/newEntries.png}
   
-  \caption{New entries with the last log's entry added to the beginning of the list}
+  \caption{New entries with the last log's entry \textcolor{changes}{pushed to the top} of the list}
   \Description{Two arrays, where the first is only one element (the last log's entry) which gets added at the beginning of the second array, i.e., the new entries.}
   \label{fig:newEntries}
 \end{figure}
@@ -223,7 +223,7 @@ def propagate_entries(self):
 
 When a follower receives an \textit{append entries} request from the leader, first checks whether leader is up to date. If it's not, i.e., $leaderTerm < followerTerm$, rejects by answering with the tuple $(False, followerTerm)$. In this context, \textit{answering} is done via the remote procedure call's return value.
 
-On the other hand, if the leader's term is equal or greater than its own (i.e., $leaderTerm \geq followerTerm$), the follower updates its commit index and, if $leaderEntries \neq \emptyset$, checks the \textit{all\_log} flag. If it's \textit{True}, clears all its own log to overwrite it with the leader's (fundamental to log forcing, listing \ref{code:clearLog}). Otherwise ($all\_log \neq True$), the leader did not send all its log, so the follower searches through its own log for an entry equal to the leader's previous one (i.e., the entry preceding the new ones). Let's make an example: 
+On the other hand, if the leader's term is equal or greater than its own (i.e., $leaderTerm \geq followerTerm$), the follower updates its commit index and, if $leaderEntries \neq \emptyset$, checks the \textit{all\_log} flag. If it's \textit{True}, \textcolor{changes}{it} clears all its own log to overwrite it with the leader's (fundamental to log forcing, listing \ref{code:clearLog}). Otherwise ($all\_log \neq True$), the leader did not send all its log, so the follower searches through its own log for an entry equal to the leader's previous one (i.e., the entry preceding the new ones). Let's make an example: 
 
 \begin{itemize}
     \item Leader's log = $[1, 2, 3, 4, 5]$;
@@ -316,13 +316,13 @@ def service_actions(self):
 
 \subsection{Log Compaction}
 
-This functionality and all the successive ones have not been implemented due to time constraints. We decided to include them anyway since they were still the product of careful consideration and could prove useful in future implementations.
+This functionality, \textcolor{changes}{as well as the following ones}, have not been implemented due to time constraints. We decided to include them anyway since they were still the product of careful consideration and could prove useful in future implementations.
 
-Log compaction, also called \textit{snapshot}, is a way to clean servers' logs and save them in persistent memory, necessary in long-running or message-heavy applications. Every node autonomously decides when to do it.
+Log compaction, also called \textit{snapshot}, is a way to \textcolor{changes}{clear} servers' logs and save them in persistent memory, necessary in long-running or message-heavy applications. Every node autonomously decides when to do it.
 
-The idea follows: inside their function \textit{service\_actions}, servers check whether their log is larger than a certain size (to be determined by testing) and then call a \textit{snapshot} method accordingly, which saves all entries in a JSON file progressively deleting them from the log, from the first one up to (but excluding) the \textit{last applied}.
+\textcolor{changes}{The idea is as follows}: inside their function \textit{service\_actions}, servers check whether their log is larger than a certain size (\textcolor{changes}{to be determined}) and then call a \textit{snapshot} method accordingly, which saves all entries in a JSON file progressively deleting them from the log, from the first one up to (but excluding) the \textit{last applied}.
 
-An alternative interpretation, closer to Ongaro and Ousterhout's idea, is saving the state of the cluster. When applied to our context, we can imagine a JSON file that describes all servers' (i.e., players') state, by saving for each of them \textit{id}, \textit{url}, \textit{port}, and \textit{hp} values. \textit{Index} and \textit{term} of the last snapshotted entry should also be saved, as well as the current configuration (which will be mentioned in section \ref{sec:raftMissing}). An example of the JSON structure can be seen at listing \ref{code:snapJson}. 
+An alternative interpretation, closer to Ongaro and Ousterhout's idea, is saving the state of the cluster. When applied to our context, we can imagine a JSON file that describes \textcolor{changes}{all servers'} state, by saving for each of them \textit{id}, \textit{url}, \textit{port}, and \textit{hp} values. \textit{Index} and \textit{term} of the last snapshotted entry should also be saved, as well as the current configuration (which will be mentioned in section \ref{sec:raftMissing}). An example of the JSON structure can be seen at listing \ref{code:snapJson}. 
 
 This method requires more pre-processing to generate the JSON, and more post-processing to later check log's correctness, but is also more compact, which helps when the leader calls \textit{install snapshot}, a remote procedure call that can sometimes be needed to bring up to speed new or outdated servers by sending them the leader's snapshot. 
 
@@ -347,7 +347,7 @@ It goes without saying, but whichever method is ultimately chosen, every new sna
 
 \subsection{Leader Election}
 
-To grant consistency, Raft's design choice is to centralize all decisions on one node, called leader, that synchronizes all cluster's nodes. To make the protocol fault tolerant, the leader can dynamically change over time via a distributed election: whenever a follower finds out that the leader is either outdated or missing (i.e., internal follower's timer times out before receiving any call from it), said follower starts an election. It changes its internal state to \textit{candidate}, increases its own term by one, votes for itself, and then propagates to the whole cluster a specialized remote procedure call named \textit{request\_vote\_rpc} (code, removed in the final version, at listing \ref{code:requestVoteRPC}). Votes are given on a first-come-first-served basis, and to prevent split votes each server's election timeout is randomized between 150ms and 300ms at the start of every election. This ensures that in most cases only one server will be candidate at a time.
+\textcolor{changes}{As aforementioned, the leader is fundamental to grant consistency.} To make the protocol fault tolerant, \textcolor{changes}{it} can dynamically change over time via a distributed election: whenever a follower finds out that the leader is either outdated or missing (i.e., internal follower's timer times out before receiving any call from it), said follower starts an election. It changes its internal state to \textit{candidate}, increases its own term by one, votes for itself, and then propagates to the whole cluster a specialized remote procedure call named \textit{request\_vote\_rpc} (code, removed in the final version, at listing \ref{code:requestVoteRPC}). Votes are given on a first-come-first-served basis, and to prevent split votes each server's election timeout is randomized between 150ms and 300ms at the start of every election. This ensures that in most cases only one server will be candidate at a time.
 
 At this point there are two possible outcomes: more than half of the cluster votes for the candidate (which we will call \textit{"A"}), that therefore becomes leader and propagates a heartbeat to the whole cluster, or another candidate (which we will call \textit{"B"}) is more up-to-date (i.e., \textit{B's} \textit{term} is greater than \textit{A}'s or equal but with a greater \textit{lastIndex}). In this last case, candidate \textit{A} reverts back to follower and votes for \textit{B}. The pseudocode for all the above can be seen at listing \ref{code:toCandidate}.
 
@@ -392,7 +392,7 @@ def to_candidate(self):
 
 \subsection{What is Missing} \label{sec:raftMissing}
 
-There is one last functionality discussed by Ongaro and Ousterhout, which is gracefully managing changes in the cluster's members by leveraging a configuration attribute and keeping multiple configurations alive at the same time (figure \ref{fig:configRaft}). We never intended to include it due to time constraints, therefore there is nothing we can add beyond the original work. 
+There is one last functionality discussed by Ongaro and Ousterhout, which is gracefully managing changes in the cluster's members by leveraging a configuration attribute and keeping multiple configurations alive \textcolor{changes}{simultaneously for a certain period of time} (figure \ref{fig:configRaft}). We never intended to include it due to time constraints, therefore there is nothing we can add beyond the original work. 
 
 Another concern, which was not considered in the Raft paper, is faults caused by bad actors that purposely send malicious information. This is a real problem for our use case, since players want to win and are therefore incentivized to act maliciously by cheating (a practice so widespread that has created its own multimillion-dollar market \cite{wiredCheat}).
 

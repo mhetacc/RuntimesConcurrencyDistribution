@@ -9,6 +9,15 @@
             },
             "cursorLeft"
         ],
+        "color_text": [
+            {
+                "command": "type",
+                "args": {
+                    "text": "\\textcolor{changes}{}"
+                }
+            },
+            "cursorLeft"
+        ],
         "markdown_code_block": [
             {
                 "command": "type",
