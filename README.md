@@ -26,4 +26,4 @@ Then, the leader propagates the received commands to the whole cluster, which we
 
 Finally, Pygame checks (periodically) the *raft_orders* queue for orders. When it finds them, it removes them from the queue and updates the user interface accordingly.
 
-![System Architecture](docs/report/images/nodeArchitecture.png)
+![System Architecture](docs/report/images/nodeArchitecture.jpg)
