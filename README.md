@@ -1,4 +1,4 @@
-# RuntimesConcurrencyDistribution
+# Raftian: Pygame Meets Raft
 
 [Travian](https://www.travian.com/international) clone made with [Pygame](https://www.pygame.org/news) as a mean to apply the consensus algorithm [Raft](https://raft.github.io/).
 
