@@ -8,12 +8,7 @@ Report, that fully explains how the system work and came into fruition can be se
 
 Different phases of a normal Raftian’s game session. Specifically, they demonstrate how the interface changes when the player repeatedly clicks on (thus attack) Player 3, the blue one on the top left (players are represented as four coloured squares on the board). Players’ colours become progressively desaturated as their health points decrease, by modifying their alpha channels. When a player is dead, its colour changes to a darker shade. In the header an attack message gets written, reverting back after half a second. Said message changes depending whether the player is still alive; if not, damage is ignored.
 
-<img src="docs/report/images/raftian1.png" alt="Game starts" width="300"/>
-<img src="docs/report/images/raftian2.png"alt="Player 3 is attacked"   width="300"/>
-<img src="docs/report/images/raftian3.png"alt="Header reverts to default"   width="300"/>
-<img src="docs/report/images/raftian4.png" alt="Player 3 is left with forty HP" width="300"/>
-<img src="docs/report/images/raftian5.png"alt="Player 3 is left with ten HP"  width="300"/>
-<img src="docs/report/images/raftian7.png"alt="Player 3 cannot be attacked again" width="300"/>
+![](docs/report/images/gameStates.png)
 
 
  ## System Architecture 
